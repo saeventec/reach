@@ -1,0 +1,20 @@
+# Files git must never save.
+# Each pattern below matches files or folders by name.
+# Learn more: docs/learn/gitignore.md
+
+# Secrets and local settings: the repo is public.
+.env
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Editor files (we keep .vscode/extensions.json, which is shared on purpose)
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Build output and downloaded dependencies
+bin/
+dist/
+node_modules/

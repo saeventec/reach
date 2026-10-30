@@ -1,0 +1,20 @@
+# Learning notes
+
+Your personal textbook. One short note per concept or tool, written the first time it appears in the project. Code comments link here.
+
+## How to add one
+
+1. Copy `_template.md`.
+2. Name it after the concept, in lowercase: `docker.md`, `websocket.md`.
+3. Keep it short: what it is, why we use it, a tiny example, the alternatives.
+
+## Notes so far
+
+- [Git](git.md)
+- [Monorepo](monorepo.md)
+- [Markdown](markdown.md)
+- [mise](mise.md)
+- [Task](task.md)
+- [.gitignore](gitignore.md)
+- [.gitattributes](gitattributes.md)
+- [.editorconfig](editorconfig.md)

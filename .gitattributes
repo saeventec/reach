@@ -1,0 +1,3 @@
+# Store every text file with LF line endings, on Mac and Windows alike.
+# Learn more: docs/learn/gitattributes.md
+* text=auto eol=lf

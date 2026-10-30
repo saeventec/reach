@@ -1,0 +1,15 @@
+# All common project commands live here. Run "task" to list them.
+# Learn more: docs/learn/task.md
+
+version: "3"
+
+tasks:
+  default:
+    desc: List all available tasks
+    cmds:
+      - task --list
+
+  setup:
+    desc: Install the tool versions from .mise.toml
+    cmds:
+      - mise install
