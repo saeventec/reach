@@ -6,7 +6,7 @@ Reach is built from scratch as a learning project, to practice professional soft
 
 ## Status
 
-Milestone 0: the repository skeleton. There is no application code yet. See [docs/milestones/](docs/milestones/).
+Milestone 1 in progress: hello world end to end. See [docs/milestones/](docs/milestones/).
 
 ## Set up
 

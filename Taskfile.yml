@@ -13,3 +13,9 @@ tasks:
     desc: Install the tool versions from .mise.toml
     cmds:
       - mise install
+
+  test:
+    desc: Run the tests of the hello service
+    dir: services/hello # run the commands inside this folder
+    cmds:
+      - go test ./...

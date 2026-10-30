@@ -18,3 +18,8 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [.gitignore](gitignore.md)
 - [.gitattributes](gitattributes.md)
 - [.editorconfig](editorconfig.md)
+- [Go](go.md)
+- [HTTP and web servers](http.md)
+- [Testing](testing.md)
+- [Environment variables](environment-variables.md)
+- [Logging](logging.md)
