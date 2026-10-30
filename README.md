@@ -10,11 +10,12 @@ Milestone 0: the repository skeleton. There is no application code yet. See [doc
 
 ## Set up
 
-You need three tools: [Git](https://git-scm.com/downloads), [Docker Desktop](https://docs.docker.com/get-started/get-docker/), and [mise](https://mise.jdx.dev/getting-started.html). On Windows, work inside WSL2.
+You need three tools: [Git](https://git-scm.com/downloads), [Docker Desktop](https://docs.docker.com/get-started/get-docker/), and [mise](https://mise.jdx.dev/getting-started.html). On Windows, work inside WSL2. Activate mise in your shell once, as shown in [docs/learn/mise.md](docs/learn/mise.md).
 
 ```sh
-git clone <this repository's url>
+git clone https://github.com/saeventec/reach.git
 cd reach
+mise trust     # allows mise to read this project's .mise.toml
 mise install   # installs Go, Node.js and Task, in the versions from .mise.toml
 task setup     # prepares the project
 ```

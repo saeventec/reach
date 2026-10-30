@@ -37,6 +37,8 @@ mise must be **activated** in your shell, so it can switch versions when you ent
 eval "$(mise activate zsh)"   # on WSL2 with bash: mise activate bash
 ```
 
+If you installed mise with Homebrew, use the line exactly as shown, without a path. A line like `eval "$(~/.local/bin/mise activate zsh)"` only works when mise was installed with its own install script. Run `mise doctor` to check: it should say `activated: yes`.
+
 The first time mise sees a project's config file, it may ask you to **trust** it (`mise trust`). This is a safety check: config files can run commands, so mise only reads files you approved.
 
 ## Alternatives
