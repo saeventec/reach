@@ -39,4 +39,4 @@ Start milestone 0: check the environment, then create the repository skeleton de
 
 ## Next step
 
-Check the setup on Windows (WSL2), then start [milestone 1](../milestones/m01-hello-world.md).
+Start [milestone 1](../milestones/m01-hello-world.md). The Windows (WSL2) check is postponed: the owner does it later.
