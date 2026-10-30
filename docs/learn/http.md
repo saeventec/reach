@@ -21,7 +21,7 @@ Go's built-in `net/http` package has everything we need:
 
 ## Health checks
 
-A health check is a small endpoint that answers "I'm alive". Our services use `GET /healthz`, which answers `200 OK` with the body `ok`. Docker Compose, and later Kubernetes, call it regularly. If it stops answering, they restart the service.
+A health check is a small endpoint that answers "I'm alive". Our services use `GET /healthz`, which answers `200 OK` with the body `ok`. Docker Compose, and later Kubernetes, call it regularly. Docker Compose only shows the result (`healthy` or `unhealthy` in `docker compose ps`), and other containers can wait until a service is healthy before they start. Kubernetes goes further: it restarts a container that stops answering.
 
 The `z` at the end is an old Google convention, so the name doesn't clash with a real page called `/health`.
 

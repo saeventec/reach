@@ -23,3 +23,6 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [Testing](testing.md)
 - [Environment variables](environment-variables.md)
 - [Logging](logging.md)
+- [Docker](docker.md)
+- [Docker Compose](docker-compose.md)
+- [Graceful shutdown](graceful-shutdown.md)

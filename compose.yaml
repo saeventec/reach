@@ -1,0 +1,17 @@
+# Starts the whole Reach system with Docker Compose. Run it with "task dev".
+# Each entry under "services" becomes one container.
+# Learn more: docs/learn/docker-compose.md
+
+services:
+  hello:
+    # Build the image from services/hello/Dockerfile.
+    build: ./services/hello
+    ports:
+      # "host:container". Port 8080 on your computer forwards to port 8080
+      # in the container. 127.0.0.1 means only your own computer can reach
+      # it, not other devices on your network.
+      - "127.0.0.1:8080:8080"
+    # Docker calls /healthz regularly and shows the result in
+    # "docker compose ps" as healthy or unhealthy. wget comes with Alpine.
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/healthz"]

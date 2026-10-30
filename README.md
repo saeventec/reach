@@ -18,6 +18,7 @@ cd reach
 mise trust     # allows mise to read this project's .mise.toml
 mise install   # installs Go, Node.js and Task, in the versions from .mise.toml
 task setup     # prepares the project
+task dev       # builds and starts the whole system (Ctrl+C stops it)
 ```
 
 Run `task` to see all available commands.
