@@ -13,3 +13,4 @@ protoc-gen-connect-go = "2.0.2" # generator: Go code for Connect services
 
 # Linting. Learn more: docs/learn/linting.md
 golangci-lint = "2.15.0" # many Go linters in one tool
+lefthook = "2.2.2"        # runs the checks before each git commit

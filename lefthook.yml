@@ -1,0 +1,27 @@
+# Lefthook runs these checks before each "git commit". If one fails, the
+# commit stops, so you can fix the problem first ("task format" fixes the
+# formatting). Learn more: docs/learn/lefthook.md
+#
+# Each job runs only when the commit contains files that match its "glob".
+
+# Load .lefthookrc first, so the project's tools are found, also when git is
+# run by your editor instead of your terminal.
+rc: .lefthookrc
+
+pre-commit:
+  jobs:
+    - name: go
+      glob: "services/**/*.go"
+      run: task lint:go
+
+    - name: web
+      # Lefthook's "**" means one or more folders, so the files directly in
+      # apps/web/ need their own pattern.
+      glob:
+        - "apps/web/*"
+        - "apps/web/**/*"
+      run: task lint:web
+
+    - name: proto
+      glob: "proto/**/*.proto"
+      run: task lint:proto

@@ -17,6 +17,8 @@ tasks:
       # Install the web app's libraries on your computer too, so your editor
       # can check the code. (The container installs its own copy.)
       - npm ci --prefix apps/web
+      # Turn on the checks that run before each git commit (lefthook.yml).
+      - lefthook install
 
   create-env:
     internal: true # a helper: hidden from "task --list"

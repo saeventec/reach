@@ -1,0 +1,7 @@
+# Loaded by the git hook before Lefthook runs ("rc" in lefthook.yml).
+#
+# Editors like VS Code can run git without your shell's setup, so the
+# project's tools (task, go, npm, buf, ...) would not be found. mise keeps a
+# "shim" for each tool in this folder: a small stand-in that runs the
+# version from .mise.toml. Learn more: docs/learn/lefthook.md
+export PATH="$HOME/.local/share/mise/shims:$PATH"

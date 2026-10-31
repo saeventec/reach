@@ -38,3 +38,4 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [Tailwind CSS](tailwind.md)
 - [Caddy and the gateway](caddy.md)
 - [Linting and formatting](linting.md)
+- [Git hooks and Lefthook](lefthook.md)
