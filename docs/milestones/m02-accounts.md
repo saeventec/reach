@@ -16,7 +16,7 @@ Each step is one small commit that runs, reviewed by the owner before the next o
 
 - [x] 1. Plan: this file and the decisions below
 - [x] 2. The `auth` service skeleton, built from the useful parts of `hello` (config, health check, Dockerfile, graceful shutdown). Each service gets its own database and its own database user, created by `postgres-setup`. Compose knows about it, and `task lint` and `task test` cover both services.
-- [ ] 3. sqlc and the first migration: the `users` table
+- [x] 3. sqlc and the first migration: the `users` table, with the username rules as database constraints
 - [ ] 4. Sign up: the `auth.v1` API in Protobuf, with passwords stored as argon2id hashes. Caddy routes `/auth.v1.*` to the auth service (moved here from step 2, so there is no route to nothing).
 - [ ] 5. Log in: create a session, send its token in an HttpOnly cookie, store only the token's hash
 - [ ] 6. Devices: each login is a device. List your devices, log out, log out another device.
@@ -38,6 +38,7 @@ The steps can change as we learn. Any change is written here.
 ## Concepts learned
 
 - Database: [one user per service, idempotent setup](../learn/postgresql.md#one-user-per-service)
+- Database: [UUIDv7 ids, constraints and the username pattern](../learn/postgresql.md#ids-and-constraints), [sqlc](../learn/sqlc.md)
 - Tooling: [why the Lefthook rc path needs `./`](../learn/lefthook.md)
 
 ## Done when

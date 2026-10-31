@@ -74,6 +74,47 @@ docker compose exec -e PGPASSWORD=localauthpassword postgres psql --host=localho
 # → User does not have CONNECT privilege.
 ```
 
+## IDs and constraints
+
+The `users` table ([services/auth/migrations/00001_create_users_table.sql](../../services/auth/migrations/00001_create_users_table.sql)) shows two new ideas.
+
+**UUIDv7 ids.** `greetings` numbers its rows 1, 2, 3. `users` uses a **UUID**: a 128-bit random-looking id like `019a3f2c-7b1e-7c4d-9a2b-3c4d5e6f7a8b`. Why:
+
+- Anyone can create one without asking the database, so later the apps can create ids for messages themselves, even offline (see the brief, "Ready for offline sync").
+- Ids don't reveal how many users there are, or let anyone guess the next one.
+- **Version 7** puts the creation time first, so new ids sort after old ones. That keeps the database's index fast, like plain numbers. Ids made at about the same moment start with the same characters.
+
+`DEFAULT uuidv7()` makes Postgres create one for each new row. The function is built into Postgres 18.
+
+**Constraints** are rules the database checks on every insert and update. A row that breaks one is refused with an error:
+
+```sql
+username text NOT NULL UNIQUE,                                     -- must exist; no two the same
+CONSTRAINT username_length CHECK (char_length(username) BETWEEN 3 AND 32)
+```
+
+The Go code will check the same rules first, to give the user a friendly message. The database check is the safety net: it holds even if the Go code has a bug.
+
+The username rule uses a **regular expression** (a small pattern language for text). `~` means "matches the pattern":
+
+```
+^[a-z0-9]([._-]?[a-z0-9])*$
+```
+
+- `^` and `$`: the start and the end of the text, so the whole name must match.
+- `[a-z0-9]`: one lowercase letter or digit. So the name starts with one.
+- `( ... )*`: the part in brackets, repeated zero or more times.
+- `[._-]?`: one `.`, `_` or `-`, or none (`?` means "optional").
+- So after the first character, each step adds "maybe one separator, then a letter or digit". The name always ends with a letter or digit, and two separators can never touch.
+
+| Username | Result |
+| --- | --- |
+| `sadra`, `sadra.samadi`, `s-2` | allowed |
+| `Sadra` | refused: uppercase |
+| `.sadra`, `sadra.` | refused: starts or ends with a separator |
+| `sa..dra`, `sa._dra` | refused: two separators in a row |
+| `ab` | refused: too short |
+
 ## Alternatives
 
 - **MySQL / MariaDB:** also popular, slightly fewer features.

@@ -1,0 +1,21 @@
+# Settings for sqlc, which turns the SQL queries in queries/ into Go
+# functions in gen/queries/. Run it with "task generate".
+#
+# Each query starts with a line like "-- name: CreateUser :one". It gives
+# the Go function's name, and what it returns (":one" means exactly one
+# row). Comments below that line become the function's doc comment.
+# Learn more: docs/learn/sqlc.md
+version: "2"
+sql:
+  - engine: "postgresql"
+    # sqlc reads the migrations to learn the tables and their columns. It
+    # understands goose files, and skips the "Down" parts.
+    schema: "migrations"
+    queries: "queries"
+    gen:
+      go:
+        package: "queries"
+        out: "gen/queries"
+        # Generate code for pgx, the driver we already use, instead of Go's
+        # general database/sql package.
+        sql_package: "pgx/v5"

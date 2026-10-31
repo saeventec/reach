@@ -28,3 +28,10 @@ An account has a unique **username** and a password. No email for now. **Anyone 
 - Without email, a forgotten password can't be reset yet. That is fine on a development machine.
 - Usernames must be unique. We must decide simple rules for them (allowed characters, length, and whether "Sadra" and "sadra" are the same name) when we build sign-up.
 - Before Reach runs on a real server (milestone 10), revisit invites, email, or both.
+
+**Update (2026-10-31), the username rules** (milestone 2, step 3):
+
+- Lowercase only (the owner's choice): "Sadra" becomes "sadra", so each name has one spelling and look-alikes like "SADRA" can't be registered.
+- 3 to 32 characters: `a-z`, `0-9`, and the separators `.`, `_`, `-` (the owner's choice).
+- Starts and ends with a letter or digit, and never two separators in a row (no `.sadra`, `sadra.`, `sa..dra`). Proposed by the agent to handle the edge cases of `.` and `-`.
+- The database enforces them with `CHECK` constraints on the `users` table. Letters from other alphabets were considered and left out, because look-alike letters make impersonation easy.

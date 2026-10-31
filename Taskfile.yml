@@ -38,10 +38,11 @@ tasks:
       - docker compose up --build --watch
 
   generate:
-    desc: Check the .proto files and generate code from them
+    desc: Generate code from the .proto files (buf) and the SQL queries (sqlc)
     cmds:
       - buf lint
       - buf generate
+      - cd services/auth && sqlc generate
 
   lint:
     desc: Check all code for likely bugs and formatting (changes nothing)
