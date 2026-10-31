@@ -402,7 +402,7 @@ These are ideas only, not part of any milestone yet. An agent must not build the
 | Tool | What it is | Why it could fit | When | Alternatives |
 | --- | --- | --- | --- | --- |
 | sqlc | Generates type-safe Go code from plain SQL queries | You write and read real SQL, no hidden ORM magic | Milestone 2 (ADR 0012) | pgx by hand, GORM, Ent |
-| TanStack Query | Fetches, caches and refreshes server data in React | Removes lots of hand-written loading and caching code | Milestone 2 | SWR, plain fetch |
+| TanStack Query | Fetches, caches and refreshes server data in React | Removes lots of hand-written loading and caching code | Later (not needed in milestone 2) | SWR, plain fetch |
 | Playwright | End-to-end tests in a real browser | Tests full user flows across Chrome, Firefox and Safari engines | Milestone 3 | Cypress |
 | Testcontainers | Starts real Postgres and NATS in tests | Integration tests against real services | Milestone 2 | Compose-based test setup |
 | Mailpit | A fake email server with a web inbox, for development | Test invite and password-reset emails locally | Milestone 2 | MailHog |
