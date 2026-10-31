@@ -50,6 +50,9 @@ services:
     # "docker compose ps" as healthy or unhealthy. wget comes with Alpine.
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/healthz"]
+      # Check every second while starting, like postgres above.
+      start_period: 30s
+      start_interval: 1s
     depends_on:
       # Start only after the migrations finished without an error.
       hello-migrate:

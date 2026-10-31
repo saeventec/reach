@@ -25,7 +25,7 @@ services:
 ```
 
 - **ports:** without this line, the service is only reachable inside the Compose network. `127.0.0.1` keeps it private to your computer.
-- **healthcheck:** we keep Docker's default timing. It checks every 30 seconds, so a new container shows `(health: starting)` for up to 30 seconds before `(healthy)`. `wget --spider` asks for the page without saving it.
+- **healthcheck:** Docker runs the `test` command regularly. `wget --spider` asks for the page without saving it. The timing is explained in "Start order" below.
 
 ## Start order: depends_on
 
@@ -45,7 +45,7 @@ hello:
 
 So `task dev` starts: postgres (healthy) → hello-migrate (finished) → hello.
 
-`start_period` and `start_interval` in a health check mean: while the container is starting, check often (every second), not every 30 seconds. Postgres uses them, so the next containers don't wait long.
+`start_period` and `start_interval` in a health check mean: while the container is starting (the first 30 seconds), check every second. After that, Docker checks every 30 seconds (its default). Both postgres and hello use them, so they show `(healthy)` within seconds and the next containers don't wait long.
 
 ## Settings from .env
 
