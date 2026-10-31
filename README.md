@@ -6,7 +6,7 @@ Reach is built from scratch as a learning project, to practice professional soft
 
 ## Status
 
-Milestone 1 in progress: hello world end to end. See [docs/milestones/](docs/milestones/).
+Milestone 1 done: a React page shows a greeting read from Postgres, through the Caddy gateway, all started with `task dev`. See [docs/milestones/](docs/milestones/).
 
 ## Set up
 
