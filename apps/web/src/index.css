@@ -1,0 +1,3 @@
+/* Loads Tailwind: its base styles and all its utility classes.
+   Learn more: docs/learn/tailwind.md */
+@import "tailwindcss";

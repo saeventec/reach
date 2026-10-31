@@ -35,3 +35,4 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [Vite](vite.md)
 - [TypeScript](typescript.md)
 - [npm and package.json](npm.md)
+- [Tailwind CSS](tailwind.md)
