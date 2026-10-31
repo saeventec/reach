@@ -38,7 +38,7 @@ From then on, the browser adds `Cookie: reach_session=kQ3v...` to every request 
 
 **CSRF** ("cross-site request forgery"): another website could make your browser send a request to Reach. Without protection, the browser would add your cookie, and the request would run as you. `SameSite=Strict` tells the browser to never add the cookie to requests that another site starts. Our React app runs on our own site, so its requests always get the cookie.
 
-**`COOKIE_SECURE`:** your computer has no HTTPS yet (`http://localhost:8080`). Chrome and Firefox accept `Secure` cookies on `localhost` anyway, but other browsers (like Safari) may not, and we haven't tested them. So `.env.example` sets `COOKIE_SECURE=false`. If the setting is missing, it is **true**: a real server is safe even if someone forgets it. HTTPS comes in milestone 10.
+**`COOKIE_SECURE`:** your computer has no HTTPS yet (`http://localhost:8080`). Chrome and Firefox accept `Secure` cookies on `localhost` anyway, but other browsers (like Safari) may not, and we haven't tested them. So `.env.example` sets `COOKIE_SECURE=false`. If the setting is missing, it is **true**: a real server is safe even if someone forgets it. HTTPS comes in milestone 11.
 
 **The token never appears in a response body.** It is only in the cookie, so the page's code never sees it. `LogIn` and `GetCurrentUser` return only the user's id and name.
 

@@ -27,7 +27,7 @@ An account has a unique **username** and a password. No email for now. **Anyone 
 
 - Without email, a forgotten password can't be reset yet. That is fine on a development machine.
 - Usernames must be unique. We must decide simple rules for them (allowed characters, length, and whether "Sadra" and "sadra" are the same name) when we build sign-up.
-- Before Reach runs on a real server (milestone 10), revisit invites, email, or both.
+- Before Reach runs on a real server (milestone 11), revisit invites, email, or both.
 
 **Update (2026-10-31), the username rules** (milestone 2, step 3):
 

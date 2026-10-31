@@ -120,7 +120,7 @@ Ctrl+C in the `task dev` terminal stops the containers. They still exist, stoppe
 ## Alternatives
 
 - **Plain `docker run` commands:** fine for one container, messy for many.
-- **Kubernetes (k3s, kind):** made for many servers. We move there in milestone 11.
+- **Kubernetes (k3s, kind):** made for many servers. We move there in milestone 12.
 - **Podman Compose:** the same idea for Podman.
 
 ## Learn more

@@ -61,8 +61,8 @@ All chosen or confirmed by the owner:
 
 Known gaps, kept for later on purpose (written in the ADRs and notes):
 
-- Password rules below NIST's advice (ADR 0025) and real client addresses behind Docker (ADR 0027): before a real server, milestone 10.
-- Rate-limit counts are per copy of the service (ADR 0027): milestone 11.
+- Password rules below NIST's advice (ADR 0025) and real client addresses behind Docker (ADR 0027): before a real server, milestone 11.
+- Rate-limit counts are per copy of the service (ADR 0027): milestone 12.
 - Expired sessions are never deleted; the built app must be served with an `index.html` fallback; the goose Dockerfile and service base are copied twice; the first auth image build is slower because of test libraries.
 - Not yet checked on the Mac: `task setup`, three new `.env` lines, and login in Safari.
 

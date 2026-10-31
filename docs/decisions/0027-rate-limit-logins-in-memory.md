@@ -33,6 +33,6 @@ The client's address comes from the `X-Forwarded-For` header set by Caddy, which
 
 ## Consequences
 
-- With several copies of the service (milestone 11), each copy counts on its own, so the real limit grows with the number of copies. Then move the counts to a shared store (Valkey).
-- **On a real server (milestone 10):** check that Docker passes the real client addresses through to Caddy. Locally all requests come from Docker's gateway address (`172.18.0.1`), so everyone shares one address limit.
+- With several copies of the service (milestone 12), each copy counts on its own, so the real limit grows with the number of copies. Then move the counts to a shared store (Valkey).
+- **On a real server (milestone 11):** check that Docker passes the real client addresses through to Caddy. Locally all requests come from Docker's gateway address (`172.18.0.1`), so everyone shares one address limit.
 - The numbers are constants in [services/auth/rate_limit.go](../../services/auth/rate_limit.go), easy to change.

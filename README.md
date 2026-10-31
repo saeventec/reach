@@ -4,7 +4,7 @@
 
 Reach is a communication app: chat (1:1 and groups), voice and video calls, and file sharing. It starts as a web app that runs fully on your own computer, and grows into native apps that also work offline.
 
-Reach is built from scratch as a learning project, to practice professional software engineering end to end: backend, frontend, databases, security, messaging, containers, CI/CD and more. The full plan is in the [project brief](docs/PROJECT_BRIEF.md).
+Reach is built from scratch as a learning project and a showcase. It practices what senior engineers use for enterprise-grade software, at a tiny scale that runs on one computer: backend, frontend, APIs, databases, security, networking, messaging, containers, CI/CD, observability, clean architecture, versioning, releases and more. Every decision is written down with its reasons and trade-offs. The full plan is in the [project brief](docs/PROJECT_BRIEF.md).
 
 ## Status
 
@@ -32,7 +32,7 @@ Run `task` to see all available commands.
 
 - [Project brief](docs/PROJECT_BRIEF.md): goals, architecture, tech stack, milestones
 - [Rules for agents](AGENTS.md): how code is written and how work is done
-- [Decisions](docs/decisions/), [learning notes](docs/learn/), [milestones](docs/milestones/), [sessions](docs/sessions/), [reviews](docs/reviews/)
+- [Decisions](docs/decisions/), [design docs](docs/design/), [learning notes](docs/learn/), [milestones](docs/milestones/), [sessions](docs/sessions/), [reviews](docs/reviews/)
 
 ## License
 

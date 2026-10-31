@@ -42,13 +42,13 @@ The buckets live in a Go `map` in the service's memory:
 
 - **A mutex** (`sync.Mutex`, "mutual exclusion") protects the map. Requests run at the same time in separate goroutines, and a Go map breaks if two goroutines change it at once. `Lock()` waits until no other goroutine holds the lock; `defer Unlock()` releases it when the function returns.
 - **Cleanup:** every minute, a goroutine removes buckets that are full again. A full bucket behaves exactly like a new one, so nothing is lost, and the map doesn't keep every address ever seen. It stops when the service stops (`ctx.Done()`).
-- **The cost:** the counts are lost on a restart, and each copy of the service has its own. The brief wants services that keep no *important* data in memory; a few minutes of counts is not important. When Reach runs several copies (milestone 11), the counts move to a shared store like Valkey.
+- **The cost:** the counts are lost on a restart, and each copy of the service has its own. The brief wants services that keep no *important* data in memory; a few minutes of counts is not important. When Reach runs several copies (milestone 12), the counts move to a shared store like Valkey.
 
 ## The client's address
 
 Every request reaches the service through Caddy, so the connection always comes from Caddy. Caddy puts the real client's address in the `X-Forwarded-For` header, and **replaces** any `X-Forwarded-For` a client sends itself, so a client can't fake its address. We tested it: 21 logins, each with a different fake address, and the 21st was still refused. `clientIP` in [services/auth/client_address.go](../../services/auth/client_address.go) reads the last address in the header, the one our gateway added.
 
-**On your computer**, all requests arrive from `172.18.0.1`: Docker's own gateway address, which is how your computer looks from inside Docker's network. So locally everyone shares one address limit. On a real server (milestone 10), we must make sure Docker passes the real client addresses through, or everyone would share one limit there too.
+**On your computer**, all requests arrive from `172.18.0.1`: Docker's own gateway address, which is how your computer looks from inside Docker's network. So locally everyone shares one address limit. On a real server (milestone 11), we must make sure Docker passes the real client addresses through, or everyone would share one limit there too.
 
 ## Alternatives
 

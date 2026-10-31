@@ -7,20 +7,22 @@ Oct 30, 2026 · @Sadra Samadi
 This is the source of truth for the Reach project. Every agent (Claude Code or any other) must read it fully before doing any work in the repository.
 
 - **Who it is for:** the owner of the project (a junior engineer who is learning) and any AI agent that helps build it.
-- **First use:** an agent uses it to initialize the repository scaffold. The exact task is in the section "Initialization task".
-- **After that:** this document is saved in the repo as `docs/PROJECT_BRIEF.md`. Its rules are summarized in AGENTS.md (which CLAUDE.md imports), so every future agent session follows them automatically.
+- **Where it lives:** in the repo as `docs/PROJECT_BRIEF.md`. Its rules are summarized in AGENTS.md (which CLAUDE.md imports), so every agent session follows them automatically.
 - **If something here is unclear or seems wrong:** stop and ask the owner. Never guess.
 - **If a decision changes:** update this document and record the change as a decision record (see "Knowledge folder"). Everything here is flexible, but every change is written down.
 
 ## The goal
 
-Reach is a communication app built from scratch, mainly so the owner learns professional software engineering end to end.
+Reach is a communication app built from scratch, so the owner learns what a senior software engineer knows, and shows it (ADR 0028).
 
 - **What Reach does:** chat (1:1 and groups), voice calls, video calls, and file sharing.
 - **Online and offline:** online through our own server. Later, in the native apps, also offline over local networks (Wi-Fi, LAN, Bluetooth), with an optional sync to the server when back online.
 - **Platforms:** web first. Later Windows, macOS, Linux, Android, iOS and iPadOS.
 - **Who uses it:** for now, the owner and their friends. Not a commercial product, but real people use it, so security and privacy are taken seriously.
-- **The real goal is learning.** The app is the vehicle. The owner wants to learn and practice every area: infrastructure, DevOps, backend, frontend, APIs, databases, security, messaging (NATS, later Kafka), containers (Docker, later Kubernetes), CI/CD, observability, and releasing.
+- **The real goal is learning.** The app is the vehicle. The owner wants to learn the concepts, tools, standards, architectures and practices that engineers use for enterprise-grade software in large companies: infrastructure, DevOps, backend, frontend, APIs, databases, security, networking, operating systems, messaging (NATS, later Kafka), containers (Docker, later Kubernetes), CI/CD, observability, clean code, clean architecture, versioning and release strategy. More areas are in the [learning map](#learning-map).
+- **A showcase.** The repo is the owner's portfolio: others read it to see what the owner can do. So the code, the docs and every decision (with its reasons and trade-offs) must be easy to read and defend.
+- **Real concepts, tiny scale.** Advanced topics are welcome, but small and simple, like a working scale model. Examples: 2 or 3 copies of a service instead of hundreds of servers; Kubernetes with k3s on the owner's computer instead of a cloud; a tiny version of a hard system (a sync protocol, a media server) to understand why the big tools exist. A topic is never skipped only because Reach is small: it becomes a planned, clearly labeled **learning module**, and its ADR says honestly what it teaches and what it would cost in a real project.
+- **Observe first, direct later.** For now the owner doesn't write code: the agent builds and explains everything, and the owner reviews and learns each step before moving on. Later, with the full picture, the owner directs the structure, design and style.
 - **Understanding beats speed.** The owner must understand every file and every line in the project. A slower, clearer solution always wins over a faster, clever one.
 - **The repo is public** on GitHub.
 
@@ -45,6 +47,7 @@ These rules apply to every task, every file and every answer, forever. If a task
 15. **Ask when unsure.** If a request is ambiguous, ask questions before building. Try to understand the owner's real goal, not only the words.
 16. **Stay flexible.** Every decision can change later. Design so a part can be swapped without rewriting everything.
 17. **Security and secrets.** The repo is public: never commit secrets, passwords, keys or tokens. Use example files (`.env.example`) and local files ignored by git.
+18. **Be a senior mentor, not only a builder.** The owner's ideas are a starting point, not orders. Challenge them when there is a better way, point out mistakes and missing pieces, and always add your own suggestion and recommendation.
 
 ## Code rules
 
@@ -175,7 +178,8 @@ These are the current choices. When an agent introduces any of them for the firs
 | Encryption | TLS, then end-to-end with libsodium primitives | After chat works; required before offline mode |
 | Native apps | Flutter (maybe) or Tauri; SQLite locally | Phase 2; Flutter only for native, React stays for web |
 | Event streaming | Kafka | After NATS, as a learning module (event history, analytics) |
-| Orchestration | Kubernetes (k3s) + Kustomize + Argo CD | When moving beyond one Compose host |
+| Releases | release-please + GitHub Container Registry | Milestone 4: versions, changelog and tagged images |
+| Orchestration | Kubernetes (k3s) + Kustomize + Argo CD | Milestone 12, first on the owner's computer |
 | Server setup | Ansible (+ OpenTofu if the provider supports it) | When the owner sets up a VPS |
 | Secrets in git | SOPS + age | When real deployment secrets appear |
 | Load testing | k6 | Once there is something worth stressing |
@@ -250,6 +254,7 @@ reach/
 ├── docs/
 │   ├── PROJECT_BRIEF.md   # this document
 │   ├── decisions/         # decision records (ADRs)
+│   ├── design/            # design docs: one per milestone, before the code
 │   ├── sessions/          # summaries of chats with agents
 │   ├── reviews/           # code review notes and feedback
 │   ├── learn/             # learning notes per concept and milestone
@@ -267,6 +272,7 @@ Everything discussed with an agent is saved as plain Markdown in `docs/` and com
 | Folder | What goes in it | File name pattern | When it is written |
 | --- | --- | --- | --- |
 | `docs/decisions/` | Decision records (ADRs): the choice, the reason, the alternatives considered | `0001-use-go-for-services.md` | Every time a tech or design decision is made or changed |
+| `docs/design/` | Design docs (also called RFCs): the problem, the options, the trade-offs and a diagram, before any code | `m03-real-time-chat.md` | At the start of every milestone |
 | `docs/sessions/` | Summary of each working session with an agent: goal, what was done, what was explained, open questions, next step | `2026-10-30-project-initialization.md` | At the end of every session |
 | `docs/reviews/` | The owner's review feedback and how it was addressed | `2026-11-02-review-auth-service.md` | After each review |
 | `docs/learn/` | Learning notes: simple explanations of concepts and tools, with examples and alternatives | `docker.md`, `websocket.md` | The first time a concept or tool is introduced |
@@ -297,7 +303,7 @@ The owner works on both a Mac and a Windows PC, and everything must work the sam
 The agent writes the code; the owner reviews, learns and gives feedback. Every step must be easy to review.
 
 1. **Read first.** At the start of every session, read `CLAUDE.md`, this brief, the current milestone file, and the latest session summary.
-2. **Plan before coding.** Say in simple words what will change and why. Ask questions if anything is unclear. Wait for the owner's go-ahead on anything big.
+2. **Plan before coding.** At the start of a milestone, write its design doc in `docs/design/` and its plan in `docs/milestones/`. Say in simple words what will change and why. Ask questions if anything is unclear. Wait for the owner's go-ahead on anything big.
 3. **Small changes.** One focused change at a time, a few files at most. One commit per logical step, with a clear message (Conventional Commits, for example `feat(auth): add sign-up endpoint`).
 4. **Explain as you go.** For each new file: what it is for. For each new concept or tool: a short explanation, alternatives and a tiny example, also saved in `docs/learn/`.
 5. **It must run.** After each step, the system starts with `task dev` and the tests pass.
@@ -306,6 +312,7 @@ The agent writes the code; the owner reviews, learns and gives feedback. Every s
 8. **Close the session.** Write a session summary in `docs/sessions/` and update the milestone file. The next agent starts from there.
 9. **Never do unrequested work.** Don't add features, tools or config the owner didn't ask for. Suggest them instead.
 10. **Learning exercises.** Now and then, suggest a small exercise: explain a file back, change something small by hand, or break and fix something on purpose.
+11. **Mentor.** Review the owner's ideas like a senior engineer would (Golden rule 18). When a milestone fits an area from the [learning map](#learning-map), say so.
 
 ## Milestones
 
@@ -317,58 +324,20 @@ There is no timeline; each milestone ends with something that runs and with its 
 | 1 | Hello world end to end: React page → Caddy → Go service → Postgres, all in Docker Compose | Frontend, backend, API, containers, database |
 | 2 | Accounts: sign up, login, sessions, devices | Password hashing (argon2id), tokens, security basics |
 | 3 | Real-time chat: 1:1 and groups, delivered and read status | WebSocket, events, NATS, message ordering |
-| 4 | File sharing | Uploads, object storage |
-| 5 | Observability | Logs, metrics, traces, dashboards |
-| 6 | 1:1 voice and video calls | WebRTC, signaling, NAT traversal (coturn) |
-| 7 | End-to-end encryption | Applied cryptography, keys, device verification |
-| 8 | Native apps (desktop, then mobile) with local copy and sync | Native packaging, local-first, offline sync |
-| 9 | Offline LAN mode, then Bluetooth | Peer-to-peer networking, device discovery |
-| 10 | Server deployment on a VPS | Linux servers, Ansible, HTTPS, backups, CD |
-| 11 | Kubernetes and Kafka | Orchestration, GitOps, event streaming |
-| 12 | Group calls and releases | SFU media servers, signing, app stores, auto-update |
+| 4 | First release, on the owner's computer: version `v0.1.0`, a changelog, tagged images built by CI, and a production-like Compose setup next to the dev one | Semantic versioning, release strategy, changelogs, image registries, dev vs production config |
+| 5 | File sharing | Uploads, object storage |
+| 6 | Observability | Logs, metrics, traces, dashboards |
+| 7 | 1:1 voice and video calls | WebRTC, signaling, NAT traversal (coturn) |
+| 8 | End-to-end encryption | Applied cryptography, keys, device verification |
+| 9 | Native apps (desktop, then mobile) with local copy and sync | Native packaging, local-first, offline sync |
+| 10 | Offline LAN mode, then Bluetooth | Peer-to-peer networking, device discovery, native platform APIs |
+| 11 | Server deployment on a VPS | Linux servers, Ansible, HTTPS, backups, CD |
+| 12 | Kubernetes and Kafka, first with k3s on the owner's computer | Orchestration, several copies of a service, GitOps, event streaming |
+| 13 | Group calls and app releases | SFU media servers, signing, app stores, auto-update |
 
-## Initialization task
+Milestone 4 was added on 2026-11-01, and each later milestone got the next number: the old 4 is now 5, and so on (ADR 0028). It brings releases forward, so every later milestone ends with a new version. When the owner rents a VPS, milestone 11 makes a release reachable for friends.
 
-The agent's first job is milestone 0: create the empty, well-organized skeleton of the repo, with no application code yet.
-
-**Before starting, ask the owner:**
-
-- [ ] Confirm the plan for this session in simple words before creating anything.
-- [ ] Whether the agent should create the GitHub repo (with `gh`) or the owner creates it.
-- [ ] Which machine this session runs on (Mac or Windows/WSL2), to check the tools are installed.
-
-**Check the environment first (read-only):**
-
-- Detect the operating system, the shell, and whether the session runs inside WSL2.
-- Check whether these are installed, and which version: Git, Docker and Docker Compose, mise, Go, Node.js, Task, GitHub CLI (`gh`), VS Code.
-- Compare each with the current stable version from its official source.
-- **Do not install, upgrade or change anything globally.** No package managers, no global npm or Go installs, no edits to shell profiles, PATH or system settings, no `mise install` or `task setup`.
-- Report a simple table: tool, what it is for, found version, latest stable version, status, and the official install link. Explain each tool in one line.
-- The owner installs what is missing. The agent then re-checks.
-- Inside the repo, the agent only creates and edits files.
-
-**Create these files (and explain each one, line by line, in simple words):**
-
-- [ ] `git init`, with `main` as the default branch.
-- [ ] `README.md`: what Reach is, the goal, and how to set up the project (short; links to the docs).
-- [ ] `AGENTS.md`: the Golden rules, Code rules and Working-with-agents workflow from this brief, plus pointers to `docs/`. Keep it short enough to read every session.
-- [ ] `CLAUDE.md`: imports `AGENTS.md` (one line, `@AGENTS.md`) so there is one source of truth for the rules.
-- [ ] `docs/PROJECT_BRIEF.md`: this document, exported as Markdown.
-- [ ] `docs/decisions/`, `docs/sessions/`, `docs/reviews/`, `docs/learn/`, `docs/milestones/`: each with a short `README.md` and a `_template.md`.
-- [ ] First decision records in `docs/decisions/` for the main choices already made: monorepo; microservices in Docker Compose; Go for services; React + TypeScript + Vite for web; Protobuf + Connect for the API; PostgreSQL; NATS; Caddy as gateway; mise + Task for tooling; docs-as-code in `docs/`.
-- [ ] `docs/milestones/m00-initialization.md` and `docs/milestones/m01-hello-world.md` (plan only).
-- [ ] `docs/learn/` notes for the concepts used in this step: Git, monorepo, Markdown, mise, Task, `.gitignore`, `.gitattributes`, `.editorconfig`.
-- [ ] `.gitignore` (OS files, editor files, `.env`, build output), `.gitattributes` (LF line endings), `.editorconfig` (defaults only).
-- [ ] `.env.example` (empty for now, with a comment explaining its purpose).
-- [ ] `.mise.toml` with the current stable versions of Go, Node.js and Task.
-- [ ] `Taskfile.yml` with only `setup` (installs tools via mise) and the default task that lists all tasks.
-- [ ] `.vscode/extensions.json` with recommended extensions (Go, ESLint, Prettier, Docker, EditorConfig).
-- [ ] `LICENSE` with the MIT license (year 2026, the owner's name from their git config).
-- [ ] `docs/sessions/2026-10-31-project-initialization.md`: summary of this session.
-
-**Do not create yet:** services, the web app, `compose.yaml`, the gateway, Protobuf files, or CI workflows. They come in milestone 1, when there is something to run and test. No empty placeholder folders.
-
-**Done when:** the owner can clone the repo on Mac or Windows, run `mise install` and `task setup`, read every file, and understand why each one exists. Then make the first commit (`chore: initialize repository`) and wait for the owner's review.
+Milestone 0 (the repository scaffold) is done. Its plan and checklist are in [m00-initialization.md](milestones/m00-initialization.md).
 
 ## Future considerations
 
@@ -381,13 +350,13 @@ These are ideas only, not part of any milestone yet. An agent must not build the
 | Invite-only sign-up (invite links, QR codes) | Tokens, expiry, abuse prevention | Milestone 2 |
 | Replies, reactions, edits, deletes | The event model in practice | Milestone 3 |
 | Typing indicators and online status | Short-lived data, TTLs | Milestone 3 |
-| Web push notifications (Web Push standard) | Service workers, browser standards | Milestones 3–4 |
-| Message search | Full-text search, later a search index fed by events | Milestone 4+ |
-| Link previews | Server-side request forgery (SSRF) protection | Milestone 4 |
-| Voice messages | Recording in the browser, audio formats | Milestone 4 |
-| Screen sharing | An extra WebRTC stream | Milestone 6 |
+| Web push notifications (Web Push standard) | Service workers, browser standards | Milestones 3–5 |
+| Message search | Full-text search, later a search index fed by events | Milestone 5+ |
+| Link previews | Server-side request forgery (SSRF) protection | Milestone 5 |
+| Voice messages | Recording in the browser, audio formats | Milestone 5 |
+| Screen sharing | An extra WebRTC stream | Milestone 7 |
 | Disappearing messages | Background jobs, scheduled deletion | After milestone 3 |
-| Link a second device by QR code | Multi-device, sharing keys | Milestone 7 |
+| Link a second device by QR code | Multi-device, sharing keys | Milestone 8 |
 | Export my data, delete my account | Privacy by design | Any time |
 | Installable web app (PWA), dark mode, accessibility | Web standards, a11y | Milestones 1–3 |
 
@@ -401,7 +370,7 @@ These are ideas only, not part of any milestone yet. An agent must not build the
 - **Supply-chain security:** automatic dependency updates, vulnerability scanning, signed container images.
 - **Profiling and load testing:** measure before optimizing.
 - **Backups and restore drills:** a backup only counts once a restore has been tested.
-- **Automated releases:** Conventional Commits generate versions and the changelog.
+- **Automated releases:** Conventional Commits generate versions and the changelog (milestone 4).
 
 **Additional tech to consider**
 
@@ -413,13 +382,37 @@ These are ideas only, not part of any milestone yet. An agent must not build the
 | Valkey | In-memory key-value store (open-source Redis fork) | Rate limiting, caching, presence, if NATS KV is not enough | Milestone 3+ | Redis, NATS KV |
 | Renovate | Opens pull requests to update dependencies | Keeps everything up to date automatically | Later (not wanted yet) | Dependabot |
 | Trivy, govulncheck | Scan images and Go code for known vulnerabilities | Security basics for a public repo | Milestone 2+ | Grype, Snyk |
-| cosign | Signs container images | Proves images were built by your CI | Milestone 10 | Notation |
-| Zot | Self-hosted container image registry | Fully self-hosted images | Milestone 10 | Harbor, Docker Registry |
+| cosign | Signs container images | Proves images were built by your CI | Milestone 4 or 11 | Notation |
+| Zot | Self-hosted container image registry | Fully self-hosted images | Milestone 11 | Harbor, Docker Registry |
 | Forgejo + Forgejo Runner | Self-hosted Git and CI | Option if you ever want to leave GitHub | Optional | Gitea, GitLab |
-| Meilisearch | Simple, fast search engine | Better message search than Postgres alone | After milestone 4 | OpenSearch, Typesense |
-| FFmpeg | Converts audio, video and images | Voice messages, thumbnails | Milestone 4 | libvips (images) |
-| pprof | Go's built-in profiler | Find real performance bottlenecks | Milestone 5+ | Pyroscope |
-| release-please | Creates versions and changelogs from commits | Automated, standard releases | Milestone 12 | semantic-release, GoReleaser |
+| Meilisearch | Simple, fast search engine | Better message search than Postgres alone | After milestone 5 | OpenSearch, Typesense |
+| FFmpeg | Converts audio, video and images | Voice messages, thumbnails | Milestone 5 | libvips (images) |
+| pprof | Go's built-in profiler | Find real performance bottlenecks | Milestone 6+ | Pyroscope |
+
+## Learning map
+
+Areas a senior engineer knows, and where Reach can teach them. Like the future considerations above, these are ideas, not plans: an agent brings an area in when a milestone fits it, explains it in `docs/learn/`, and keeps the scale tiny ([the goal](#the-goal)).
+
+| Area | What it covers | Where in Reach |
+| --- | --- | --- |
+| Networking | TCP and UDP, DNS, TLS, NAT, HTTP/2, WebSocket, multicast and mDNS | Chat (3), calls (7), LAN discovery (10), the VPS (11) |
+| Operating systems | Processes, threads, memory, file systems, signals, how containers work (namespaces, cgroups) | Graceful shutdown, Docker, native apps (9) |
+| Hardware and native code | Bluetooth, drivers, platform APIs, battery and background limits | Native and offline (9, 10) |
+| Clean code and design | SOLID, design patterns, refactoring, code smells | Every milestone, in reviews |
+| Clean architecture | Layers, hexagonal ("ports and adapters"), domain-driven design basics, modular monolith vs microservices | From the `chat` service on (3) |
+| Versioning and releases | Semantic versioning, changelogs, API versioning, branching (trunk-based), feature flags, canary and blue-green releases | First release (4), then every milestone |
+| System design | Scaling out, caching, load balancing, the CAP theorem, back-pressure | Chat (3), Kubernetes (12) |
+| Distributed systems | Idempotency, ordering, eventual consistency, the outbox pattern, sagas, retries | Chat (3) onward |
+| Concurrency | Goroutines, race conditions, Go's race detector, locks vs channels | The `realtime` service (3) |
+| Databases, in depth | Transactions, isolation levels, query plans (`EXPLAIN`), replication, backups | Chat (3), the VPS (11) |
+| Security, in depth | Threat modeling, OWASP ASVS, supply chain (SBOM, signing), privacy (GDPR basics) | Every milestone, encryption (8) |
+| Testing strategy | The test pyramid, end-to-end, contract tests, fuzzing (built into Go), load tests, chaos tests | Grows with each milestone |
+| SRE and operations | SLOs, error budgets, alerts, runbooks, incidents, postmortems | Observability (6), the VPS (11) |
+| Performance | Profiling, benchmarks, measuring before optimizing | Observability (6) onward |
+| Frontend engineering | State management, accessibility, PWA, web performance | Chat (3), files (5) |
+| Engineering process | Issues, pull request templates, code review, CODEOWNERS, estimation, roadmaps | Any time |
+| Technical writing | Design docs, C4 architecture diagrams, a README for visitors | Every milestone, `docs/design/` |
+| Data structures and algorithms | Complexity, choosing the right data structure | When a real case appears (sync, search) |
 
 ## Flexible and open decisions
 
@@ -427,7 +420,7 @@ Everything in this brief can change. These points are still open and must not be
 
 - **App name:** "Reach" for now.
 - **License:** MIT (decided). It is short and easy to read, the most widely used open-source license, and lets anyone learn from and reuse the code with only a copyright notice.
-- **Native app stack:** Flutter (native only, React stays for web) or Tauri (wraps the React app). Decided at phase 2.
+- **Native app stack:** Flutter (native only, React stays for web) or Tauri (wraps the React app). Decided at phase 2 (milestone 9).
 - **Exact service split:** starting proposal is `auth`, `chat`, `realtime`; `files` and `calls` added later. The `hello` service from milestone 1 stays as a small example (ADR 0011).
 - **File storage:** Garage or SeaweedFS.
 - **Group call server:** LiveKit, or a small SFU built with Pion for learning.
