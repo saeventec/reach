@@ -26,6 +26,8 @@ function fakeAuthApi(changes: Partial<AuthApi> = {}): AuthApi {
     logIn: async () => sadra,
     getCurrentUser: async () => null,
     logOut: async () => {},
+    listDevices: async () => [],
+    logOutDevice: async () => {},
   };
   // "...": copy all fields of defaults, then overwrite them with changes.
   return { ...defaults, ...changes };

@@ -110,6 +110,23 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 - While the call runs, the button is `disabled`, so a second click can't send the form twice.
 - **Errors:** `errorMessage` in [authClient.ts](../../apps/web/src/auth/authClient.ts) shows the service's message for errors written for people ("the username is already taken"), and a general message for everything else, because an `internal` error's text is not meant for users.
 
+## Lists and keys
+
+From [apps/web/src/auth/DeviceList.tsx](../../apps/web/src/auth/DeviceList.tsx):
+
+```tsx
+<ul>
+  {state.devices.map((device) => (
+    <DeviceItem key={device.id} device={device} ... />
+  ))}
+</ul>
+```
+
+- **`map`** turns each device into a `<DeviceItem>`: a list of data becomes a list of components.
+- **`key`** gives each item a stable name. When the list changes (a device is logged out), React uses the keys to know which item went away, instead of redrawing them all. Use an id from the data, never the position in the list.
+- After logging out a device, `setState((current) => removeDevice(current, deviceId))` changes the list on the screen without loading it again. Passing a **function** to `setState` gets the newest state, even if it changed while the call was running.
+- **`aria-label`** gives a button a name for screen readers and tests: every device's button shows "Log out", but its name is "Log out Safari on iPhone".
+
 ## Folders by feature
 
 Code is grouped by what it does: `src/greeting/` holds the component, its API client and its test, and `src/auth/` holds the login, sign-up and account pages with their API client. `src/gen/` holds generated code (never edit it).

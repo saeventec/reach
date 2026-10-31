@@ -1,7 +1,8 @@
-// The page of a logged-in user: who you are, and logging out.
+// The page of a logged-in user: who you are, your devices, and logging out.
 import { useState } from "react";
 import { errorMessage } from "./authClient.ts";
 import type { AuthApi, User } from "./authClient.ts";
+import { DeviceList } from "./DeviceList.tsx";
 
 type AccountPageProps = {
   user: User;
@@ -29,6 +30,8 @@ export function AccountPage({ user, authApi, onLoggedOut }: AccountPageProps) {
       <p className="text-slate-700">
         Logged in as <strong>{user.username}</strong>
       </p>
+
+      <DeviceList authApi={authApi} />
 
       {error !== "" && <p className="text-red-600">{error}</p>}
 
