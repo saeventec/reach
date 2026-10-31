@@ -69,6 +69,32 @@ With fakes, we can test cases that are hard to create for real, like a database 
 
 `t.Context()` gives each test a context that is cancelled when the test ends. `t.Fatalf` stops the test at once, which is useful when the next checks make no sense after a failure.
 
+## Table-driven tests
+
+When the same check runs on many inputs, write the inputs as a list (a "table") and loop over it. Adding a case is one line. From [services/auth/username_test.go](../../services/auth/username_test.go):
+
+```go
+testCases := []struct {
+	username string
+	want     error
+}{
+	{"sadra", nil},                         // allowed
+	{"ab", errUsernameLength},              // too short
+	{"Sadra", errUsernameCharacters},       // uppercase
+}
+
+for _, testCase := range testCases {
+	got := validateUsername(testCase.username)
+	if !errors.Is(got, testCase.want) {
+		t.Errorf("validateUsername(%q): got %v, want %v", testCase.username, got, testCase.want)
+	}
+}
+```
+
+- `[]struct{...}{...}` is a list of small, unnamed structs: one per case.
+- `errors.Is(got, want)` checks that the error is the expected one. `errors.Is(nil, nil)` is true, so "no error" cases work too.
+- The message names the input, so a failure says exactly which case broke.
+
 ## Web app tests (Vitest)
 
 The web app uses:

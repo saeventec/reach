@@ -32,6 +32,7 @@ The steps can change as we learn. Any change is written here.
 - [0022](../decisions/0022-keep-sessions-in-httponly-cookies.md): sessions are random tokens in an HttpOnly cookie
 - [0023](../decisions/0023-use-testcontainers-for-integration-tests.md): Testcontainers for integration tests
 - [0024](../decisions/0024-create-databases-with-a-setup-container.md): create each service's database and user with a setup container
+- [0025](../decisions/0025-password-rules-and-argon2id.md): password rules (8 to 128 characters, the owner's choice), and argon2id with OWASP's settings
 - Shared Go code is copied into `auth` for now. It moves to a shared package (`packages/go/`) when a third service arrives.
 - TanStack Query: not yet. Plain Connect calls are enough for a few pages ([brief](../PROJECT_BRIEF.md#future-considerations)).
 
@@ -39,6 +40,8 @@ The steps can change as we learn. Any change is written here.
 
 - Database: [one user per service, idempotent setup](../learn/postgresql.md#one-user-per-service)
 - Database: [UUIDv7 ids, constraints and the username pattern](../learn/postgresql.md#ids-and-constraints), [sqlc](../learn/sqlc.md)
+- Security: [password hashing with argon2id, salts, Unicode normalization](../learn/password-hashing.md)
+- Testing: [table-driven tests](../learn/testing.md#table-driven-tests)
 - Tooling: [why the Lefthook rc path needs `./`](../learn/lefthook.md)
 
 ## Done when
