@@ -27,6 +27,6 @@ Sign-up (milestone 2, step 4) needs rules for passwords and a safe way to store 
 
 ## Consequences
 
-- **Below NIST's rules:** 8 characters and no blocklist are fine for a few friends on one computer. **Revisit both before Reach runs on a real server (milestone 10)**, or when a second factor is added.
+- **Below NIST's rules:** 8 characters and no blocklist are fine for a few friends on one computer. **Revisit both before Reach runs on a real server (milestone 11)**, or when a second factor is added.
 - The minimum can be raised later for new passwords, without touching existing hashes.
 - Each sign-up and login spends about 19 MiB and 25 ms on hashing. Rate limiting (step 8) keeps many logins at once from using up the server's memory.

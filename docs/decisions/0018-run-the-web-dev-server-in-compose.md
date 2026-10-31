@@ -24,4 +24,4 @@ Run Vite's development server in a container (`apps/web/Dockerfile`), and keep i
 
 ## Consequences
 
-The libraries are installed twice: in the container, and on your computer (by `task setup`) so the editor and `task test` work. The image is for development only. A real server (milestone 10) will serve the built files instead.
+The libraries are installed twice: in the container, and on your computer (by `task setup`) so the editor and `task test` work. The image is for development only. A real server (milestone 11) will serve the built files instead.

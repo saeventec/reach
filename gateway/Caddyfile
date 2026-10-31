@@ -3,7 +3,7 @@
 #
 # ":80" means: any hostname, on port 80, plain HTTP. With no hostname,
 # Caddy does not turn on automatic HTTPS. HTTPS comes with a real server
-# (milestone 10).
+# (milestone 11).
 :80 {
 	# API calls: their paths start with the API package name, like
 	# /hello.v1.GreetingService/GetGreeting. The * at the end means "starts with".
