@@ -50,16 +50,10 @@ func (server *sessionServer) LogIn(ctx context.Context, request *authv1.LogInReq
 	username := normalizeUsername(request.GetUsername())
 	password := normalizePassword(request.GetPassword())
 
-	// Rate limits: first per IP address (every try counts), then per
-	// username (only failed tries count). Learn more: docs/learn/rate-limiting.md
 	ip := clientIP(callInfo)
-	if !server.limiters.byIP.take(ip) {
-		slog.Warn("too many login tries from one address", "ip", ip)
-		return nil, connect.NewError(connect.CodeResourceExhausted, tooManyAttemptsMessage)
-	}
-	if server.limiters.byUsername.isEmpty(username) {
-		slog.Warn("too many failed logins for one username", "ip", ip)
-		return nil, connect.NewError(connect.CodeResourceExhausted, tooManyAttemptsMessage)
+	err = server.checkLoginLimits(ip, username)
+	if err != nil {
+		return nil, err
 	}
 
 	user, err := server.checkLogin(ctx, username, password)
@@ -72,23 +66,10 @@ func (server *sessionServer) LogIn(ctx context.Context, request *authv1.LogInReq
 		return nil, err
 	}
 
-	token := newSessionToken()
-	tokenHash := hashSessionToken(token)
-	expiresAt := time.Now().Add(sessionLifetime)
-	// Remember the browser, to describe this device later.
-	userAgentHeader := callInfo.RequestHeader().Get("User-Agent")
-	userAgent := limitUserAgent(userAgentHeader)
-
-	err = server.sessions.CreateSession(ctx, user.id, tokenHash, userAgent, expiresAt)
+	err = server.startSession(ctx, callInfo, user.id)
 	if err != nil {
-		slog.Error("could not create the session", "error", err)
-		return nil, connect.NewError(connect.CodeInternal, "could not log in")
+		return nil, err
 	}
-
-	// Send the token to the browser in the cookie, never in the response
-	// message. Learn more: docs/learn/sessions.md#the-cookie
-	cookie := newSessionCookie(token, server.secureCookies)
-	callInfo.ResponseHeader().Add("Set-Cookie", cookie.String())
 
 	slog.Info("a user logged in", "user_id", user.id)
 
@@ -97,6 +78,45 @@ func (server *sessionServer) LogIn(ctx context.Context, request *authv1.LogInReq
 		Username: user.username,
 	}
 	return response, nil
+}
+
+// checkLoginLimits checks the rate limits for a login: first per IP address
+// (every try counts), then per username (only failed tries count, see
+// LogIn). It returns a RESOURCE_EXHAUSTED error when a limit is reached.
+// Learn more: docs/learn/rate-limiting.md
+func (server *sessionServer) checkLoginLimits(ip string, username string) error {
+	if !server.limiters.byIP.take(ip) {
+		slog.Warn("too many login tries from one address", "ip", ip)
+		return connect.NewError(connect.CodeResourceExhausted, tooManyAttemptsMessage)
+	}
+	if server.limiters.byUsername.isEmpty(username) {
+		slog.Warn("too many failed logins for one username", "ip", ip)
+		return connect.NewError(connect.CodeResourceExhausted, tooManyAttemptsMessage)
+	}
+	return nil
+}
+
+// startSession creates a new session for the user, and sends its token to
+// the browser in the session cookie.
+func (server *sessionServer) startSession(ctx context.Context, callInfo *connect.CallInfo, userID string) error {
+	token := newSessionToken()
+	tokenHash := hashSessionToken(token)
+	expiresAt := time.Now().Add(sessionLifetime)
+	// Remember the browser, to describe this device later.
+	userAgentHeader := callInfo.RequestHeader().Get("User-Agent")
+	userAgent := limitUserAgent(userAgentHeader)
+
+	err := server.sessions.CreateSession(ctx, userID, tokenHash, userAgent, expiresAt)
+	if err != nil {
+		slog.Error("could not create the session", "error", err)
+		return connect.NewError(connect.CodeInternal, "could not log in")
+	}
+
+	// The token goes only into the cookie, never into the response message.
+	// Learn more: docs/learn/sessions.md#the-cookie
+	cookie := newSessionCookie(token, server.secureCookies)
+	callInfo.ResponseHeader().Add("Set-Cookie", cookie.String())
+	return nil
 }
 
 // checkLogin returns the user if the username and password are right, and
