@@ -39,6 +39,36 @@ Run all tests:
 task test
 ```
 
+## Fakes
+
+A unit test should not need a real database: that would make it slow and fragile. So the code asks for an **interface** (a list of methods) instead of the real database type, and the test passes in a **fake**: a tiny stand-in that returns whatever the test wants.
+
+From `services/hello`:
+
+```go
+// greeting.go: the server only needs "something with a NewestGreeting method".
+type greetingStore interface {
+	NewestGreeting(ctx context.Context) (string, error)
+}
+
+// greeting_test.go: a fake that returns what the test tells it to.
+type fakeGreetingStore struct {
+	message string
+	err     error
+}
+
+func (store *fakeGreetingStore) NewestGreeting(ctx context.Context) (string, error) {
+	return store.message, store.err
+}
+
+// In a test: pretend the database is down.
+store := &fakeGreetingStore{err: errors.New("connection refused")}
+```
+
+With fakes, we can test cases that are hard to create for real, like a database outage. The real database code is tested later with **integration tests** against a real Postgres (Testcontainers, milestone 2).
+
+`t.Context()` gives each test a context that is cancelled when the test ends. `t.Fatalf` stops the test at once, which is useful when the next checks make no sense after a failure.
+
 ## Alternatives
 
 - **testify:** a popular library with shorter checks (`assert.Equal`). The standard `testing` package is enough for now.

@@ -41,6 +41,9 @@ services:
   hello:
     # Build the image from services/hello/Dockerfile.
     build: ./services/hello
+    environment:
+      # The same database address as hello-migrate uses.
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/hello?sslmode=disable
     ports:
       # "host:container". Port 8080 on your computer forwards to port 8080
       # in the container. 127.0.0.1 means only your own computer can reach

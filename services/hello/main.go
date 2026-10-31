@@ -12,10 +12,12 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-)
 
-// defaultPort is used when the PORT environment variable is empty.
-const defaultPort = "8080"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
+
+	"github.com/saeventec/reach/services/hello/gen/hello/v1/hellov1connect"
+)
 
 // shutdownTimeout is how long open requests get to finish when the service
 // is asked to stop. It is shorter than the 10 seconds Docker waits before
@@ -36,7 +38,8 @@ func main() {
 	}
 }
 
-// run starts the HTTP server and waits until it fails or is asked to stop.
+// run connects to the database, starts the HTTP server, and waits until
+// the server fails or is asked to stop.
 // Learn more: docs/learn/graceful-shutdown.md
 func run() error {
 	// stopSignal is "done" when the operating system asks us to stop:
@@ -44,12 +47,26 @@ func run() error {
 	stopSignal, stopListening := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopListening()
 
+	databaseURL, err := readDatabaseURL()
+	if err != nil {
+		return err
+	}
+
+	pool, err := connectToDatabase(stopSignal, databaseURL)
+	if err != nil {
+		return err
+	}
+	// Close the database connections last, after the server has stopped.
+	defer pool.Close()
+
+	greetings := &postgresGreetingStore{pool: pool}
+
 	port := readPort()
 	address := ":" + port
 
 	server := &http.Server{
 		Addr:    address,
-		Handler: newRouter(),
+		Handler: newRouter(greetings),
 		// Close connections that are too slow to send their request headers.
 		// Without a limit, a slow client could keep connections open forever.
 		ReadHeaderTimeout: 5 * time.Second,
@@ -93,20 +110,17 @@ func shutDown(server *http.Server) error {
 	return nil
 }
 
-// readPort returns the port to listen on, from the PORT environment variable.
-// Configuration comes from the environment, so the same program runs
-// anywhere. Learn more: docs/learn/environment-variables.md
-func readPort() string {
-	port := os.Getenv("PORT")
-	if port == "" {
-		return defaultPort
-	}
-	return port
-}
-
-// newRouter connects each URL path to the function that handles it.
-func newRouter() *http.ServeMux {
+// newRouter connects each URL path to the code that handles it.
+func newRouter(greetings greetingStore) *http.ServeMux {
 	router := http.NewServeMux()
 	router.HandleFunc("GET /healthz", handleHealth)
+
+	// The Connect server answers the API calls defined in proto/. Mount adds
+	// one path per call to our router, like /hello.v1.GreetingService/GetGreeting.
+	greetingService := &greetingServer{greetings: greetings}
+	connectServer := connect.NewServer()
+	hellov1connect.RegisterGreetingServiceHandler(connectServer, greetingService)
+	connecthttp.Mount(router, connectServer)
+
 	return router
 }

@@ -8,6 +8,12 @@ FROM golang:1.27.3-alpine3.24 AS build
 # All the next commands run inside this folder of the image.
 WORKDIR /src
 
+# Download the libraries first, in their own layer. Docker reuses a layer
+# while its input files don't change, so the download only runs again when
+# go.mod or go.sum change, not on every code change.
+COPY go.mod go.sum ./
+RUN go mod download
+
 # Copy the source code from services/hello into the image.
 COPY . .
 

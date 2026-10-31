@@ -29,3 +29,5 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [PostgreSQL](postgresql.md)
 - [Database migrations (goose)](database-migrations.md)
 - [Protobuf, buf and code generation](protobuf.md)
+- [APIs and Connect RPC](connect-rpc.md)
+- [pgx: talking to Postgres from Go](pgx.md)
