@@ -252,6 +252,9 @@ func (server *sessionServer) authenticate(ctx context.Context, callInfo *connect
 	tokenHash := hashSessionToken(token)
 	newExpiresAt := time.Now().Add(sessionLifetime)
 
+	// RenewSession only finds sessions that haven't expired: the expiry check
+	// is in the SQL ("expires_at > now()" in queries/sessions.sql). So an
+	// unknown token and an expired session both give errNoSession.
 	session, err := server.sessions.RenewSession(ctx, tokenHash, newExpiresAt)
 	if errors.Is(err, errNoSession) {
 		return currentSession{}, "", connect.NewError(connect.CodeUnauthenticated, notLoggedInMessage)

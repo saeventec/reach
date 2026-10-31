@@ -21,7 +21,7 @@ Each step is one small commit that runs. The agent commits each finished step ri
 - [x] 5. Log in: create a session, send its token in an HttpOnly cookie, store only the token's hash
 - [x] 6. Devices: each login is a device. List your devices, log out, log out another device.
 - [ ] 7. The web app: sign-up, login and "logged in as …" pages
-- [ ] 8. Security basics and tests: rate limiting on login, integration tests with Testcontainers
+- [ ] 8. Security basics and tests: rate limiting on login, a request size limit, integration tests with Testcontainers (including: an expired session is refused, and a user can't delete another user's session)
 
 The steps can change as we learn. Any change is written here.
 
