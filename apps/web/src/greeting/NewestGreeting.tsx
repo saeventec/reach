@@ -58,7 +58,7 @@ export function NewestGreeting({ loadGreeting }: NewestGreetingProps) {
   return (
     <div className="text-center">
       <p className="text-2xl text-slate-700">{state.greeting.message}</p>
-      <p className="text-sm text-slate-400">Greeting #{state.greeting.id.toString()}</p>
+      <p className="text-sm text-blue-600">Greeting #{state.greeting.id.toString()}</p>
     </div>
   )
 }
