@@ -297,7 +297,7 @@ The agent writes the code; the owner reviews, learns and gives feedback. Every s
 3. **Small changes.** One focused change at a time, a few files at most. One commit per logical step, with a clear message (Conventional Commits, for example `feat(auth): add sign-up endpoint`).
 4. **Explain as you go.** For each new file: what it is for. For each new concept or tool: a short explanation, alternatives and a tiny example, also saved in `docs/learn/`.
 5. **It must run.** After each step, the system starts with `task dev` and the tests pass.
-6. **Owner reviews.** The owner reads the change and asks questions. Feedback and answers are saved in `docs/reviews/`.
+6. **Commit, then the owner reviews.** The agent commits each finished step right away, without waiting, and explains what changed in its summary. The owner then reads the commits and asks questions. Feedback and answers are saved in `docs/reviews/`.
 7. **Record decisions.** Any decision becomes an ADR in `docs/decisions/`.
 8. **Close the session.** Write a session summary in `docs/sessions/` and update the milestone file. The next agent starts from there.
 9. **Never do unrequested work.** Don't add features, tools or config the owner didn't ask for. Suggest them instead.

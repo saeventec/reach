@@ -56,7 +56,7 @@ user, err := userRepository.FindByEmail(normalizedEmail)
 3. **Small changes.** A few files at most. One commit per logical step, using Conventional Commits (`feat(auth): add sign-up endpoint`).
 4. **Explain as you go.** What each new file is for. New concepts and tools also go in `docs/learn/`.
 5. **It must run.** After each step, `task dev` starts the system and tests pass.
-6. **Owner reviews.** Save feedback and answers in `docs/reviews/`.
+6. **Commit, then the owner reviews.** Commit each finished step right away, without waiting, and explain what changed in the summary. The owner reviews the commits afterwards. Save feedback and answers in `docs/reviews/`.
 7. **Record decisions** as ADRs in `docs/decisions/`.
 8. **Close the session.** Write a summary in `docs/sessions/` and update the milestone file.
 9. **Never do unrequested work.** Suggest features, tools or config instead of adding them.

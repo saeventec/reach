@@ -12,7 +12,7 @@ Browser (React) → Caddy → auth service → Postgres (auth database)
 
 ## Steps
 
-Each step is one small commit that runs, reviewed by the owner before the next one starts.
+Each step is one small commit that runs. The agent commits each finished step right away, and the owner reviews the commits afterwards.
 
 - [x] 1. Plan: this file and the decisions below
 - [x] 2. The `auth` service skeleton, built from the useful parts of `hello` (config, health check, Dockerfile, graceful shutdown). Each service gets its own database and its own database user, created by `postgres-setup`. Compose knows about it, and `task lint` and `task test` cover both services.
