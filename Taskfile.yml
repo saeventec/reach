@@ -30,6 +30,12 @@ tasks:
       # --build rebuilds the images, so your latest code changes are used.
       - docker compose up --build
 
+  generate:
+    desc: Check the .proto files and generate code from them
+    cmds:
+      - buf lint
+      - buf generate
+
   test:
     desc: Run the tests of the hello service
     dir: services/hello # run the commands inside this folder

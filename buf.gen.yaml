@@ -1,0 +1,25 @@
+# Tells "buf generate" which code to generate from proto/, and where to put it.
+# Run it with "task generate". Learn more: docs/learn/protobuf.md
+version: v2
+
+# Delete the old generated files first, so files for removed .proto files
+# don't stay behind.
+clean: true
+
+# "Managed mode" sets language options (like the Go import path) here,
+# so the .proto files stay free of Go-specific settings.
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/saeventec/reach/services/hello/gen
+
+# The generators. "local" means they run on your computer (installed by
+# mise), not on buf's cloud service.
+plugins:
+  - local: protoc-gen-go # Go types for the messages
+    out: services/hello/gen
+    opt: paths=source_relative # mirror the folders of proto/
+  - local: protoc-gen-connect-go # Go code for the Connect service
+    out: services/hello/gen
+    opt: paths=source_relative

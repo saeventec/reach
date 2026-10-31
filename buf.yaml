@@ -1,0 +1,12 @@
+# Settings for buf, the Protobuf tool. These are the defaults from
+# "buf config init", plus the folder where our .proto files live.
+# Learn more: docs/learn/protobuf.md
+version: v2
+modules:
+  - path: proto
+lint:
+  use:
+    - STANDARD # buf's recommended style rules
+breaking:
+  use:
+    - FILE # what counts as a breaking change, checked file by file

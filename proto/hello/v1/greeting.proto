@@ -1,0 +1,23 @@
+// The API of the hello service: the contract between the web app and the
+// service. Code for both sides is generated from this file.
+// Learn more: docs/learn/protobuf.md
+syntax = "proto3";
+
+// "v1" is the version of this API. A change that would break old clients
+// goes into a new version (v2) instead.
+package hello.v1;
+
+// GreetingService hands out the greetings stored in the database.
+service GreetingService {
+  // GetGreeting returns the newest greeting.
+  rpc GetGreeting(GetGreetingRequest) returns (GetGreetingResponse) {}
+}
+
+// GetGreetingRequest is empty for now. Having its own type means fields can
+// be added later without changing the method.
+message GetGreetingRequest {}
+
+message GetGreetingResponse {
+  // The number is the field's ID in the binary format. Never reuse or change it.
+  string message = 1;
+}

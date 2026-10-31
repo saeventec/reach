@@ -5,3 +5,8 @@
 go = "1.27.3"
 node = "26.13.0"
 task = "3.54.0"
+
+# Protobuf tools. Learn more: docs/learn/protobuf.md
+buf = "1.75.0"                  # checks .proto files and runs the code generators
+protoc-gen-go = "1.36.12"       # generator: Go types for Protobuf messages
+protoc-gen-connect-go = "2.0.2" # generator: Go code for Connect services

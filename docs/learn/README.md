@@ -28,3 +28,4 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [Graceful shutdown](graceful-shutdown.md)
 - [PostgreSQL](postgresql.md)
 - [Database migrations (goose)](database-migrations.md)
+- [Protobuf, buf and code generation](protobuf.md)
