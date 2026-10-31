@@ -20,23 +20,23 @@ function App() {
     <main>
       <h1>Reach</h1>
     </main>
-  )
+  );
 }
 
-export default App   // so other files can import it
+export default App;   // so other files can import it
 ```
 
 `apps/web/src/main.tsx` puts it into the page:
 
 ```tsx
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />
   </StrictMode>,
-)
+);
 ```
 
-- `document.getElementById('root')` finds the empty `<div id="root">` in `index.html`. React draws the app inside it.
+- `document.getElementById("root")` finds the empty `<div id="root">` in `index.html`. React draws the app inside it.
 - The `!` tells TypeScript "this is never null here". The `<div>` is always in `index.html`.
 - `StrictMode` runs extra checks while developing, to warn about common mistakes. It does nothing in the final build.
 - Files with JSX end in `.tsx` (TypeScript + JSX).
@@ -47,8 +47,8 @@ Props are a component's inputs, like a function's parameters. TypeScript describ
 
 ```tsx
 type NewestGreetingProps = {
-  loadGreeting: () => Promise<Greeting>   // a function that returns a greeting, later
-}
+  loadGreeting: () => Promise<Greeting>;   // a function that returns a greeting, later
+};
 
 export function NewestGreeting({ loadGreeting }: NewestGreetingProps) { ... }
 
@@ -63,23 +63,23 @@ export function NewestGreeting({ loadGreeting }: NewestGreetingProps) { ... }
 From `apps/web/src/greeting/NewestGreeting.tsx`:
 
 ```tsx
-const [state, setState] = useState<LoadState>({ status: 'loading' })
+const [state, setState] = useState<LoadState>({ status: "loading" });
 
 useEffect(() => {
-  let ignore = false
+  let ignore = false;
   async function load() {
-    const greeting = await loadGreeting()
+    const greeting = await loadGreeting();
     if (!ignore) {
-      setState({ status: 'loaded', greeting })
+      setState({ status: "loaded", greeting });
     }
   }
-  load()
-  return () => { ignore = true }     // "cleanup": runs when the effect is no longer needed
-}, [loadGreeting])                   // run again only if loadGreeting changes
+  load();
+  return () => { ignore = true; };    // "cleanup": runs when the effect is no longer needed
+}, [loadGreeting]);                   // run again only if loadGreeting changes
 ```
 
 - The `ignore` flag: in development, `StrictMode` runs every effect twice to find bugs, and a component can disappear before loading ends. The flag makes sure an old result never changes the state.
-- `LoadState` is a **union type**: the state is either loading, loaded (with a greeting), or failed. TypeScript only lets you use `state.greeting` after checking that `state.status === 'loaded'`.
+- `LoadState` is a **union type**: the state is either loading, loaded (with a greeting), or failed. TypeScript only lets you use `state.greeting` after checking that `state.status === "loaded"`.
 - Functions whose names start with `use` are called **hooks**. Call them only at the top of a component, never inside an `if`.
 
 Later (milestone 2), TanStack Query can do this loading for us, with caching and retries. Writing it by hand once shows what such a library saves.

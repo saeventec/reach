@@ -44,10 +44,29 @@ hello/broken.go:6:11: Error return value of `os.Remove` is not checked (errcheck
 
 Read it as: file, line, column, the problem, and the linter's name in brackets.
 
+## Web app: Oxlint and Prettier
+
+- **Oxlint** checks the TypeScript and React code. We use the config from Vite's starter (`apps/web/.oxlintrc.json`): the React, TypeScript and Oxc rule groups, plus two rules turned up. The important one is `rules-of-hooks`: hooks like `useState` must never be called inside an `if`. Oxlint prints nothing when everything is fine.
+- **Prettier** formats TypeScript, CSS, JSON and HTML with its defaults (an empty `.prettierrc`). Its default style uses double quotes and semicolons. `.prettierignore` skips the generated code in `src/gen` and the build output. Prettier's version is pinned exactly (`"3.9.10"`, without `^`), because even small updates can change the format.
+
+Example: Oxlint catching a hook inside an `if`:
+
+```
+src/LintProbe.tsx:4:21: error react-hooks(rules-of-hooks): React Hook "useState" is called conditionally.
+```
+
+VS Code: the recommended extensions "Oxc" and "Prettier" show problems and can format a file on save.
+
+## Proto files: buf
+
+`buf lint` checks the `.proto` files against buf's standard rules (names, versions, comments). `buf format` is Protobuf's standard formatter.
+
 ## Alternatives
 
 - **`go vet` + `gofmt` alone:** built into Go, fewer checks.
 - **staticcheck alone:** very good, but one linter. golangci-lint already includes it.
+- **ESLint (instead of Oxlint):** the long-time standard with the most plugins; more packages and config, much slower. See [ADR 0019](../decisions/0019-use-oxlint-and-prettier-for-the-web-app.md).
+- **Biome or Oxfmt (instead of Prettier):** newer, faster formatters. Oxfmt is not yet at version 1.
 
 ## Learn more
 

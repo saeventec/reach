@@ -1,0 +1,5 @@
+# Files Prettier must not format.
+# Generated code: "task generate" would only undo the formatting.
+src/gen
+# Build output.
+dist

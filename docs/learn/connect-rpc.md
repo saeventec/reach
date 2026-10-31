@@ -63,10 +63,10 @@ The web app calls the same API with generated TypeScript code (`apps/web/src/gen
 From `apps/web/src/greeting/greetingClient.ts`:
 
 ```ts
-const transport = createConnectTransport({ baseUrl: window.location.origin })
-const client = createClient(GreetingService, transport)
+const transport = createConnectTransport({ baseUrl: window.location.origin });
+const client = createClient(GreetingService, transport);
 
-const response = await client.getGreeting({})   // typed: response.message is a string, response.id a bigint
+const response = await client.getGreeting({});   // typed: response.message is a string, response.id a bigint
 ```
 
 `baseUrl: window.location.origin` means "the same address as the page". The browser only talks to one address, the gateway (http://localhost:8080), and the gateway forwards API calls to the hello service. See [caddy.md](caddy.md).

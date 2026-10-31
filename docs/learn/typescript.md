@@ -6,10 +6,10 @@ TypeScript is JavaScript with **types**. You say what kind of value each thing i
 
 ```ts
 function greet(name: string): string {
-  return 'Hello, ' + name
+  return "Hello, " + name;
 }
 
-greet(42) // error before the code even runs: 42 is not a string
+greet(42); // error before the code even runs: 42 is not a string
 ```
 
 ## Why we use it

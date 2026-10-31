@@ -1,7 +1,7 @@
 {
   "recommendations": [
     "golang.go",
-    "dbaeumer.vscode-eslint",
+    "oxc.oxc-vscode",
     "esbenp.prettier-vscode",
     "ms-azuretools.vscode-containers",
     "EditorConfig.EditorConfig",

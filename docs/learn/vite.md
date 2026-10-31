@@ -23,7 +23,7 @@ export default defineConfig({
   server: {
     host: true,         // listen on all network interfaces (needed in a container)
   },
-})
+});
 ```
 
 - `index.html`: the one HTML page. It loads `src/main.tsx`.

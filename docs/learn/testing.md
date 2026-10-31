@@ -80,18 +80,18 @@ The web app uses:
 From `apps/web/src/greeting/NewestGreeting.test.tsx`:
 
 ```tsx
-test('shows the greeting once it has loaded', async () => {
-  const loadGreeting = async () => ({ id: 2n, message: 'Hello, test!' })   // a fake
+test("shows the greeting once it has loaded", async () => {
+  const loadGreeting = async () => ({ id: 2n, message: "Hello, test!" });   // a fake
 
-  render(<NewestGreeting loadGreeting={loadGreeting} />)
+  render(<NewestGreeting loadGreeting={loadGreeting} />);
 
-  screen.getByText('Loading the greeting…')    // must be on the page now
-  await screen.findByText('Hello, test!')      // waits for it to appear
-})
+  screen.getByText("Loading the greeting…");    // must be on the page now
+  await screen.findByText("Hello, test!");      // waits for it to appear
+});
 ```
 
 - `2n` is a `bigint` literal (the `n` at the end).
-- `vi.spyOn(console, 'error')` replaces `console.error` with a stand-in, so a test can check that an error was logged.
+- `vi.spyOn(console, "error")` replaces `console.error` with a stand-in, so a test can check that an error was logged.
 - `cleanup()` after each test removes what it drew.
 
 `task test` runs the Go tests and the web tests.

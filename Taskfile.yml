@@ -44,6 +44,8 @@ tasks:
     desc: Check all code for likely bugs and formatting (changes nothing)
     cmds:
       - task: lint:go
+      - task: lint:web
+      - task: lint:proto
 
   lint:go:
     desc: Check the Go code
@@ -51,16 +53,43 @@ tasks:
     cmds:
       - golangci-lint run ./...
 
+  lint:web:
+    desc: Check the web app's code (Oxlint) and formatting (Prettier)
+    dir: apps/web
+    cmds:
+      - npm run lint
+      - npm run format:check
+
+  lint:proto:
+    desc: Check the .proto files and their formatting (buf)
+    cmds:
+      - buf lint
+      # --diff shows what would change; --exit-code fails if anything would.
+      - buf format --diff --exit-code
+
   format:
     desc: Format all code the standard way (changes files)
     cmds:
       - task: format:go
+      - task: format:web
+      - task: format:proto
 
   format:go:
     desc: Format the Go code
     dir: services/hello
     cmds:
       - golangci-lint fmt ./...
+
+  format:web:
+    desc: Format the web app's code (Prettier)
+    dir: apps/web
+    cmds:
+      - npm run format
+
+  format:proto:
+    desc: Format the .proto files (buf)
+    cmds:
+      - buf format --write
 
   test:
     desc: Run all tests (the hello service and the web app)
