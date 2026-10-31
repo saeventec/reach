@@ -40,6 +40,28 @@ tasks:
       - buf lint
       - buf generate
 
+  lint:
+    desc: Check all code for likely bugs and formatting (changes nothing)
+    cmds:
+      - task: lint:go
+
+  lint:go:
+    desc: Check the Go code
+    dir: services/hello
+    cmds:
+      - golangci-lint run ./...
+
+  format:
+    desc: Format all code the standard way (changes files)
+    cmds:
+      - task: format:go
+
+  format:go:
+    desc: Format the Go code
+    dir: services/hello
+    cmds:
+      - golangci-lint fmt ./...
+
   test:
     desc: Run all tests (the hello service and the web app)
     cmds:

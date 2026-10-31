@@ -1,0 +1,13 @@
+# Settings for golangci-lint, which checks all Go code in the repo.
+# Run it with "task lint". Learn more: docs/learn/linting.md
+version: "2"
+
+# Linters: we keep the default set (errcheck, govet, ineffassign,
+# staticcheck, unused), so there is nothing to list here.
+
+# Formatters are off by default. gofmt is Go's one standard format:
+# "golangci-lint run" reports files that are not formatted, and
+# "golangci-lint fmt" fixes them.
+formatters:
+  enable:
+    - gofmt
