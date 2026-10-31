@@ -29,6 +29,10 @@ Browser → Caddy (localhost:8080) ─┬─ /hello.v1.* → hello:8080   (API c
 		reverse_proxy hello:8080
 	}
 
+	handle /auth.v1.* {
+		reverse_proxy auth:8080
+	}
+
 	handle {
 		reverse_proxy web:5173
 	}
@@ -37,6 +41,7 @@ Browser → Caddy (localhost:8080) ─┬─ /hello.v1.* → hello:8080   (API c
 
 - `:80 { ... }`: a **site**. Any hostname, on port 80, plain HTTP. With no hostname, Caddy doesn't turn on automatic HTTPS. That's right on your own computer; HTTPS comes in milestone 10.
 - `handle /hello.v1.* { ... }`: requests whose path starts with `/hello.v1.` (the `*` at the end means "starts with"). All Connect calls of the hello API look like `/hello.v1.GreetingService/GetGreeting`.
+- `handle /auth.v1.* { ... }`: the same for the auth service, like `/auth.v1.AccountService/SignUp`.
 - `handle { ... }` with no path: the **fallback**. Only one `handle` runs per request, and this one is used when no other matches.
 - `reverse_proxy hello:8080`: forward the request to the hello service, found by its Compose name. WebSockets (used by Vite's live page updates) are forwarded too, automatically.
 - Caddy indents its config with **tabs**. `.editorconfig` says so for the Caddyfile.

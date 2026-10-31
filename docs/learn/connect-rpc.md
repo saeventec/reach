@@ -54,7 +54,7 @@ return nil, connect.NewError(connect.CodeNotFound, "there is no greeting yet")
 {"code":"not_found","message":"there is no greeting yet"}
 ```
 
-Common codes: `not_found`, `invalid_argument` (bad input), `unauthenticated` (not logged in), `internal` (a bug or outage on our side). For `internal` errors we log the details and send only a general message, because details can reveal how the system works inside.
+Common codes: `not_found`, `invalid_argument` (bad input), `already_exists` (for example, a taken username), `unauthenticated` (not logged in), `internal` (a bug or outage on our side). For `internal` errors we log the details and send only a general message, because details can reveal how the system works inside.
 
 ## The TypeScript client
 

@@ -72,9 +72,25 @@ The fix: keep `message = 1`, and give the new field the next free number, `id = 
 - `buf.yaml`: where the `.proto` files are (`proto/`) and which lint rules to use.
 - `buf.gen.yaml`: which generators to run and where their output goes. "Managed mode" sets the Go import path there, so the `.proto` files contain no Go-specific settings.
 
+### One API per service
+
+Each service is its own Go module, so each one gets only its own API's Go code:
+
+```yaml
+- local: protoc-gen-go
+  out: services/auth/gen/proto
+  types: [auth.v1]   # only the auth.v1 package
+```
+
+- **`types`** keeps only the listed Protobuf packages for that generator. (buf can't limit a generator by file, only by package or type.)
+- **`path: auth`** in the managed-mode `override` gives each folder of `proto/` its own Go import path.
+- `auth`'s Protobuf code goes into `gen/proto/`, not straight into `gen/`, because sqlc writes into `gen/queries/`. `clean: true` empties each generator's `out` folder first, and would otherwise delete sqlc's code.
+- The web app talks to every service, so its generator has no `types`: it gets all APIs.
+- Side effect: with `types`, buf rebuilds the API description that is embedded in the generated Go code, and leaves out empty `{}` options. That is why `hello`'s `greeting.pb.go` changed a little in milestone 2, with no real change.
+
 ## TypeScript
 
-A third generator, `protoc-gen-es`, writes TypeScript for the web app: `apps/web/src/gen/hello/v1/greeting_pb.ts`. It contains the message types (`GetGreetingResponse`) and the service (`GreetingService`). `int64` fields become `bigint`, JavaScript's type for big whole numbers.
+A third generator, `protoc-gen-es`, writes TypeScript for the web app: `apps/web/src/gen/hello/v1/greeting_pb.ts` (and `auth/v1/account_pb.ts`). It contains the message types (`GetGreetingResponse`) and the service (`GreetingService`). `int64` fields become `bigint`, JavaScript's type for big whole numbers.
 
 This generator is an npm package of the web app, not a mise tool. That way its version always matches the `@bufbuild/protobuf` library the generated code needs. So `task setup` (which runs `npm ci`) must run before `task generate`.
 

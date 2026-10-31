@@ -12,6 +12,12 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
+
+	"github.com/saeventec/reach/services/auth/gen/proto/auth/v1/authv1connect"
+	"github.com/saeventec/reach/services/auth/gen/queries"
 )
 
 // shutdownTimeout is how long open requests get to finish when the service
@@ -52,16 +58,18 @@ func run() error {
 		return err
 	}
 	// Close the database connections last, after the server has stopped.
-	// The pool is not used by any request yet: the users table and the
-	// API come in the next steps.
 	defer pool.Close()
+
+	// queries.New wraps the pool with the functions sqlc generated.
+	userQueries := queries.New(pool)
+	users := &postgresUserStore{queries: userQueries}
 
 	port := readPort()
 	address := ":" + port
 
 	server := &http.Server{
 		Addr:    address,
-		Handler: newRouter(),
+		Handler: newRouter(users),
 		// Close connections that are too slow to send their request headers.
 		// Without a limit, a slow client could keep connections open forever.
 		ReadHeaderTimeout: 5 * time.Second,
@@ -106,8 +114,16 @@ func shutDown(server *http.Server) error {
 }
 
 // newRouter connects each URL path to the code that handles it.
-func newRouter() *http.ServeMux {
+func newRouter(users userStore) *http.ServeMux {
 	router := http.NewServeMux()
 	router.HandleFunc("GET /healthz", handleHealth)
+
+	// The Connect server answers the API calls defined in proto/. Mount adds
+	// one path per call to our router, like /auth.v1.AccountService/SignUp.
+	accountService := &accountServer{users: users}
+	connectServer := connect.NewServer()
+	authv1connect.RegisterAccountServiceHandler(connectServer, accountService)
+	connecthttp.Mount(router, connectServer)
+
 	return router
 }
