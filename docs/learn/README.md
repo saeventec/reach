@@ -35,6 +35,7 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [Password hashing (argon2id)](password-hashing.md)
 - [Sessions and tokens](sessions.md)
 - [React](react.md)
+- [React Router](react-router.md)
 - [Vite](vite.md)
 - [TypeScript](typescript.md)
 - [npm and package.json](npm.md)

@@ -33,6 +33,7 @@ The steps can change as we learn. Any change is written here.
 - [0023](../decisions/0023-use-testcontainers-for-integration-tests.md): Testcontainers for integration tests
 - [0024](../decisions/0024-create-databases-with-a-setup-container.md): create each service's database and user with a setup container
 - [0025](../decisions/0025-password-rules-and-argon2id.md): password rules (8 to 128 characters, the owner's choice), and argon2id with OWASP's settings
+- [0026](../decisions/0026-use-react-router.md): React Router for the web app's pages (the owner's choice)
 - Shared Go code is copied into `auth` for now. It moves to a shared package (`packages/go/`) when a third service arrives.
 - TanStack Query: not yet. Plain Connect calls are enough for a few pages ([brief](../PROJECT_BRIEF.md#future-considerations)).
 
@@ -44,6 +45,7 @@ The steps can change as we learn. Any change is written here.
 - Security: [sessions, tokens, cookies, CSRF and SameSite, safe logins](../learn/sessions.md), [devices and logging out](../learn/sessions.md#logging-out)
 - API: [lists, Timestamps and default values in Protobuf](../learn/protobuf.md#lists-dates-and-default-values)
 - Database: [indexes](../learn/sessions.md#devices)
+- Frontend: [React Router](../learn/react-router.md), [forms](../learn/react.md#forms)
 - Configuration: [settings with a safe default](../learn/environment-variables.md#settings-with-a-safe-default)
 - Testing: [table-driven tests](../learn/testing.md#table-driven-tests)
 - Tooling: [why the Lefthook rc path needs `./`](../learn/lefthook.md)

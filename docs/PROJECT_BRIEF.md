@@ -160,6 +160,7 @@ These are the current choices. When an agent introduces any of them for the firs
 | Protobuf tooling | buf | Lint, breaking-change checks and code generation | Catches API-breaking changes; generators run locally (ADR 0017) | protoc |
 | Styling | Tailwind CSS | Small utility classes written in the markup | Owner's choice: popular, styles next to the markup (ADR 0013) | CSS Modules, plain CSS |
 | Frontend tests | Vitest + Testing Library | Frontend unit and component tests | Vite's own test runner, fast, standard | Jest |
+| Web routing | React Router (declarative mode) | One address per page: `/login`, `/account` | Owner's choice: real addresses, Back button works (ADR 0026) | Plain React state, TanStack Router |
 
 **Planned for later** (explained in full when we get there)
 
