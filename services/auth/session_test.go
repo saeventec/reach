@@ -18,29 +18,31 @@ type fakeSessionStore struct {
 	// What CreateSession was asked to save.
 	savedUserID    string
 	savedTokenHash []byte
+	savedUserAgent string
 	savedExpiresAt time.Time
 
-	// What RenewSession was asked for, and the user it returns.
+	// What RenewSession was asked for, and the session it returns.
 	renewedTokenHash []byte
-	sessionUser      sessionUser
+	session          currentSession
 }
 
-func (store *fakeSessionStore) CreateSession(ctx context.Context, userID string, tokenHash []byte, expiresAt time.Time) error {
+func (store *fakeSessionStore) CreateSession(ctx context.Context, userID string, tokenHash []byte, userAgent string, expiresAt time.Time) error {
 	if store.err != nil {
 		return store.err
 	}
 	store.savedUserID = userID
 	store.savedTokenHash = tokenHash
+	store.savedUserAgent = userAgent
 	store.savedExpiresAt = expiresAt
 	return nil
 }
 
-func (store *fakeSessionStore) RenewSession(ctx context.Context, tokenHash []byte, newExpiresAt time.Time) (sessionUser, error) {
+func (store *fakeSessionStore) RenewSession(ctx context.Context, tokenHash []byte, newExpiresAt time.Time) (currentSession, error) {
 	if store.err != nil {
-		return sessionUser{}, store.err
+		return currentSession{}, store.err
 	}
 	store.renewedTokenHash = tokenHash
-	return store.sessionUser, nil
+	return store.session, nil
 }
 
 // testLoginUser is the account the fake user store finds in these tests.
@@ -51,11 +53,19 @@ var testLoginUser = loginUser{
 	passwordHash: hashPassword("purple tram winter"),
 }
 
+// testSession is the session the fake session store finds in these tests.
+var testSession = currentSession{
+	id:       "019a3f2c-0000-7000-8000-000000000001",
+	userID:   testUserID,
+	username: "sadra",
+}
+
 // callAPI sends a Connect call with a JSON body through the router, the
 // way the browser does, and returns the recorded response.
 func callAPI(router http.Handler, path string, body string, cookieHeader string) *httptest.ResponseRecorder {
 	request := httptest.NewRequest(http.MethodPost, path, strings.NewReader(body))
 	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("User-Agent", testUserAgent)
 	if cookieHeader != "" {
 		request.Header.Set("Cookie", cookieHeader)
 	}
@@ -73,6 +83,9 @@ func findSessionCookie(recorder *httptest.ResponseRecorder) *http.Cookie {
 	}
 	return nil
 }
+
+// testUserAgent is the browser every test request claims to be.
+const testUserAgent = "Mozilla/5.0 (X11; Linux x86_64; rv:132.0) Gecko/20100101 Firefox/132.0"
 
 const (
 	logInPath          = "/auth.v1.SessionService/LogIn"
@@ -103,6 +116,9 @@ func TestLogInSetsTheSessionCookie(t *testing.T) {
 	}
 	if sessions.savedUserID != testUserID {
 		t.Errorf("saved user id: got %q, want %q", sessions.savedUserID, testUserID)
+	}
+	if sessions.savedUserAgent != testUserAgent {
+		t.Errorf("saved user agent: got %q, want %q", sessions.savedUserAgent, testUserAgent)
 	}
 	// The session ends in 30 days. Allow one minute for slow test machines.
 	wantExpiresAt := time.Now().Add(sessionLifetime)
@@ -155,7 +171,7 @@ func TestLogInHidesDatabaseErrors(t *testing.T) {
 }
 
 func TestGetCurrentUserReturnsTheUserAndRenewsTheCookie(t *testing.T) {
-	sessions := &fakeSessionStore{sessionUser: sessionUser{id: testUserID, username: "sadra"}}
+	sessions := &fakeSessionStore{session: testSession}
 	router := newRouter(&fakeUserStore{}, sessions, true)
 
 	recorder := callAPI(router, getCurrentUserPath, `{}`, "theme=dark; reach_session=the-token")

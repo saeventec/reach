@@ -11,11 +11,13 @@ import (
 )
 
 type Session struct {
-	ID        pgtype.UUID
-	UserID    pgtype.UUID
-	TokenHash []byte
-	CreatedAt time.Time
-	ExpiresAt time.Time
+	ID         pgtype.UUID
+	UserID     pgtype.UUID
+	TokenHash  []byte
+	CreatedAt  time.Time
+	ExpiresAt  time.Time
+	UserAgent  string
+	LastUsedAt time.Time
 }
 
 type User struct {

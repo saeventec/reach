@@ -18,16 +18,17 @@ import (
 // existed, or it has expired.
 var errNoSession = errors.New("no valid session")
 
-// sessionUser is the user a session belongs to.
-type sessionUser struct {
+// currentSession is a valid session and the user it belongs to.
+type currentSession struct {
 	id       string
+	userID   string
 	username string
 }
 
 // sessionStore is what the session server needs from the database.
 type sessionStore interface {
-	CreateSession(ctx context.Context, userID string, tokenHash []byte, expiresAt time.Time) error
-	RenewSession(ctx context.Context, tokenHash []byte, newExpiresAt time.Time) (sessionUser, error)
+	CreateSession(ctx context.Context, userID string, tokenHash []byte, userAgent string, expiresAt time.Time) error
+	RenewSession(ctx context.Context, tokenHash []byte, newExpiresAt time.Time) (currentSession, error)
 }
 
 // postgresSessionStore keeps the sessions in the auth database.
@@ -35,8 +36,9 @@ type postgresSessionStore struct {
 	queries *queries.Queries
 }
 
-// CreateSession saves a new session for a user.
-func (store *postgresSessionStore) CreateSession(ctx context.Context, userID string, tokenHash []byte, expiresAt time.Time) error {
+// CreateSession saves a new session for a user, made in the browser that
+// sent this User-Agent.
+func (store *postgresSessionStore) CreateSession(ctx context.Context, userID string, tokenHash []byte, userAgent string, expiresAt time.Time) error {
 	databaseUserID, err := parseUUID(userID)
 	if err != nil {
 		return err
@@ -45,6 +47,7 @@ func (store *postgresSessionStore) CreateSession(ctx context.Context, userID str
 	parameters := queries.CreateSessionParams{
 		UserID:    databaseUserID,
 		TokenHash: tokenHash,
+		UserAgent: userAgent,
 		ExpiresAt: expiresAt,
 	}
 	err = store.queries.CreateSession(ctx, parameters)
@@ -55,26 +58,27 @@ func (store *postgresSessionStore) CreateSession(ctx context.Context, userID str
 }
 
 // RenewSession finds the valid session with this token hash, moves its
-// expiry to newExpiresAt, and returns its user. It returns errNoSession if
-// there is no valid session.
-func (store *postgresSessionStore) RenewSession(ctx context.Context, tokenHash []byte, newExpiresAt time.Time) (sessionUser, error) {
+// expiry to newExpiresAt, and returns it with its user. It returns
+// errNoSession if there is no valid session.
+func (store *postgresSessionStore) RenewSession(ctx context.Context, tokenHash []byte, newExpiresAt time.Time) (currentSession, error) {
 	parameters := queries.RenewSessionParams{
 		TokenHash:    tokenHash,
 		NewExpiresAt: newExpiresAt,
 	}
 	row, err := store.queries.RenewSession(ctx, parameters)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return sessionUser{}, errNoSession
+		return currentSession{}, errNoSession
 	}
 	if err != nil {
-		return sessionUser{}, fmt.Errorf("renew the session: %w", err)
+		return currentSession{}, fmt.Errorf("renew the session: %w", err)
 	}
 
-	user := sessionUser{
-		id:       row.ID.String(),
+	session := currentSession{
+		id:       row.SessionID.String(),
+		userID:   row.UserID.String(),
 		username: row.Username,
 	}
-	return user, nil
+	return session, nil
 }
 
 // parseUUID turns a UUID in text form into the type the queries use.

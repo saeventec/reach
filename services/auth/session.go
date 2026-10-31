@@ -55,8 +55,11 @@ func (server *sessionServer) LogIn(ctx context.Context, request *authv1.LogInReq
 	token := newSessionToken()
 	tokenHash := hashSessionToken(token)
 	expiresAt := time.Now().Add(sessionLifetime)
+	// Remember the browser, to describe this device later.
+	userAgentHeader := callInfo.RequestHeader().Get("User-Agent")
+	userAgent := limitUserAgent(userAgentHeader)
 
-	err = server.sessions.CreateSession(ctx, user.id, tokenHash, expiresAt)
+	err = server.sessions.CreateSession(ctx, user.id, tokenHash, userAgent, expiresAt)
 	if err != nil {
 		slog.Error("could not create the session", "error", err)
 		return nil, connect.NewError(connect.CodeInternal, "could not log in")
@@ -127,7 +130,7 @@ func (server *sessionServer) GetCurrentUser(ctx context.Context, request *authv1
 	tokenHash := hashSessionToken(token)
 	newExpiresAt := time.Now().Add(sessionLifetime)
 
-	user, err := server.sessions.RenewSession(ctx, tokenHash, newExpiresAt)
+	session, err := server.sessions.RenewSession(ctx, tokenHash, newExpiresAt)
 	if errors.Is(err, errNoSession) {
 		return nil, connect.NewError(connect.CodeUnauthenticated, notLoggedInMessage)
 	}
@@ -141,8 +144,8 @@ func (server *sessionServer) GetCurrentUser(ctx context.Context, request *authv1
 	callInfo.ResponseHeader().Add("Set-Cookie", cookie.String())
 
 	response := &authv1.GetCurrentUserResponse{
-		UserId:   user.id,
-		Username: user.username,
+		UserId:   session.userID,
+		Username: session.username,
 	}
 	return response, nil
 }

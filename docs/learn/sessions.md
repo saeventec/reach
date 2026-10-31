@@ -71,10 +71,24 @@ user_id uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
 
 `REFERENCES users (id)` is a **foreign key**: the database refuses a session whose `user_id` is not an existing user. `ON DELETE CASCADE` means: when a user is deleted, their sessions are deleted too, so no session can point to a missing user.
 
+## Devices
+
+On the web, each login is one **device**: one row in `sessions`. Logging in on your laptop and on your phone gives two devices. (Later, the native apps will have real device records with their own keys. The brief asks the data model to allow many devices per user from the start, and this is the first part of that.)
+
+Each session remembers:
+
+- **`user_agent`:** the browser's `User-Agent` header, sent with every request. For example: `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36`. It is stored as sent (up to 512 bytes).
+- **`last_used_at`:** updated by `RenewSession`, so on every use.
+
+"your devices" shows a readable name instead of the raw text: `describeUserAgent` in [services/auth/device.go](../../services/auth/device.go) makes "Chrome on Windows" with a few plain `strings.Contains` checks. The order of the checks matters: for historical reasons, Edge's text also contains "Chrome", and Chrome's also contains "Safari", so the more specific names are checked first. It is a guess, not exact, and a client can send any text it likes. That's fine for a name in a list, but never use it for security decisions.
+
+The name is worked out when the list is shown, not stored. So when the guessing gets better, older devices get better names too.
+
+**An index** (`sessions_user_id_index`) makes "all sessions of this user" fast. Without it, Postgres would read every row of the table to find them. Indexes cost a little space and a little time on each insert, so we add one only when a query needs it.
+
 ## Not done yet
 
 - **Old sessions stay in the table** after they expire. They are harmless (`RenewSession` ignores them), but the table grows. Deleting them regularly is a "background job", a later topic.
-- **Logging out** and **seeing your devices** come in step 6.
 
 ## Alternatives
 

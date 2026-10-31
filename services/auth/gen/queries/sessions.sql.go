@@ -13,30 +13,100 @@ import (
 )
 
 const createSession = `-- name: CreateSession :exec
-INSERT INTO sessions (user_id, token_hash, expires_at)
-VALUES ($1, $2, $3)
+INSERT INTO sessions (user_id, token_hash, user_agent, expires_at)
+VALUES ($1, $2, $3, $4)
 `
 
 type CreateSessionParams struct {
 	UserID    pgtype.UUID
 	TokenHash []byte
+	UserAgent string
 	ExpiresAt time.Time
 }
 
 // Saves a new login. sqlc.arg(name) gives the Go parameter a clear name.
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) error {
-	_, err := q.db.Exec(ctx, createSession, arg.UserID, arg.TokenHash, arg.ExpiresAt)
+	_, err := q.db.Exec(ctx, createSession,
+		arg.UserID,
+		arg.TokenHash,
+		arg.UserAgent,
+		arg.ExpiresAt,
+	)
 	return err
+}
+
+const deleteSession = `-- name: DeleteSession :execrows
+DELETE FROM sessions
+WHERE id = $1
+  AND user_id = $2
+`
+
+type DeleteSessionParams struct {
+	SessionID pgtype.UUID
+	UserID    pgtype.UUID
+}
+
+// Ends one session. The user_id check means a user can only end their own
+// sessions, even if they send someone else's session id. ":execrows"
+// returns how many rows were deleted: 0 means there was no such session.
+func (q *Queries) DeleteSession(ctx context.Context, arg DeleteSessionParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteSession, arg.SessionID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const listSessions = `-- name: ListSessions :many
+SELECT id, user_agent, created_at, last_used_at
+FROM sessions
+WHERE user_id = $1
+  AND expires_at > now()
+ORDER BY last_used_at DESC
+`
+
+type ListSessionsRow struct {
+	ID         pgtype.UUID
+	UserAgent  string
+	CreatedAt  time.Time
+	LastUsedAt time.Time
+}
+
+// All valid sessions of one user, the most recently used first.
+func (q *Queries) ListSessions(ctx context.Context, userID pgtype.UUID) ([]ListSessionsRow, error) {
+	rows, err := q.db.Query(ctx, listSessions, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListSessionsRow
+	for rows.Next() {
+		var i ListSessionsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserAgent,
+			&i.CreatedAt,
+			&i.LastUsedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const renewSession = `-- name: RenewSession :one
 UPDATE sessions
-SET expires_at = $1
+SET expires_at = $1,
+    last_used_at = now()
 FROM users
 WHERE sessions.token_hash = $2
   AND sessions.expires_at > now()
   AND users.id = sessions.user_id
-RETURNING users.id, users.username
+RETURNING sessions.id AS session_id, users.id AS user_id, users.username
 `
 
 type RenewSessionParams struct {
@@ -45,16 +115,17 @@ type RenewSessionParams struct {
 }
 
 type RenewSessionRow struct {
-	ID       pgtype.UUID
-	Username string
+	SessionID pgtype.UUID
+	UserID    pgtype.UUID
+	Username  string
 }
 
-// Finds the session with this token hash, if it has not expired yet, and
-// moves its end to the new expiry, all in one step. It returns the session's
-// user. No row means: no valid session.
+// Finds the session with this token hash, if it has not expired yet, moves
+// its end to the new expiry and records that it was used, all in one step.
+// It returns the session and its user. No row means: no valid session.
 func (q *Queries) RenewSession(ctx context.Context, arg RenewSessionParams) (RenewSessionRow, error) {
 	row := q.db.QueryRow(ctx, renewSession, arg.NewExpiresAt, arg.TokenHash)
 	var i RenewSessionRow
-	err := row.Scan(&i.ID, &i.Username)
+	err := row.Scan(&i.SessionID, &i.UserID, &i.Username)
 	return i, err
 }
