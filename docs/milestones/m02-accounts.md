@@ -15,9 +15,9 @@ Browser (React) → Caddy → auth service → Postgres (auth database)
 Each step is one small commit that runs, reviewed by the owner before the next one starts.
 
 - [x] 1. Plan: this file and the decisions below
-- [ ] 2. The `auth` service skeleton, built from the useful parts of `hello` (config, health check, Dockerfile, graceful shutdown). It gets its own database and its own database user. Compose and Caddy know about it, and `task lint` and `task test` cover both services.
+- [x] 2. The `auth` service skeleton, built from the useful parts of `hello` (config, health check, Dockerfile, graceful shutdown). Each service gets its own database and its own database user, created by `postgres-setup`. Compose knows about it, and `task lint` and `task test` cover both services.
 - [ ] 3. sqlc and the first migration: the `users` table
-- [ ] 4. Sign up: the `auth.v1` API in Protobuf, with passwords stored as argon2id hashes
+- [ ] 4. Sign up: the `auth.v1` API in Protobuf, with passwords stored as argon2id hashes. Caddy routes `/auth.v1.*` to the auth service (moved here from step 2, so there is no route to nothing).
 - [ ] 5. Log in: create a session, send its token in an HttpOnly cookie, store only the token's hash
 - [ ] 6. Devices: each login is a device. List your devices, log out, log out another device.
 - [ ] 7. The web app: sign-up, login and "logged in as …" pages
@@ -31,11 +31,14 @@ The steps can change as we learn. Any change is written here.
 - [0021](../decisions/0021-log-in-with-a-username-and-open-sign-up.md): log in with a username, open sign-up
 - [0022](../decisions/0022-keep-sessions-in-httponly-cookies.md): sessions are random tokens in an HttpOnly cookie
 - [0023](../decisions/0023-use-testcontainers-for-integration-tests.md): Testcontainers for integration tests
+- [0024](../decisions/0024-create-databases-with-a-setup-container.md): create each service's database and user with a setup container
+- Shared Go code is copied into `auth` for now. It moves to a shared package (`packages/go/`) when a third service arrives.
 - TanStack Query: not yet. Plain Connect calls are enough for a few pages ([brief](../PROJECT_BRIEF.md#future-considerations)).
 
 ## Concepts learned
 
-Filled in as we go, with links to `docs/learn/`.
+- Database: [one user per service, idempotent setup](../learn/postgresql.md#one-user-per-service)
+- Tooling: [why the Lefthook rc path needs `./`](../learn/lefthook.md)
 
 ## Done when
 

@@ -8,7 +8,7 @@ Compose also creates a private network, so containers can reach each other by th
 
 ## Why we use it
 
-Reach is made of several services (now: Postgres, hello-migrate, hello, the web app and the Caddy gateway). Compose starts all of them with `task dev`. Each Compose service maps to one Kubernetes deployment later.
+Reach is made of several services (now: Postgres, postgres-setup, hello-migrate, hello, auth, the web app and the Caddy gateway). Compose starts all of them with `task dev`. Each Compose service maps to one Kubernetes deployment later.
 
 ## Tiny example
 
@@ -35,10 +35,15 @@ services:
 `depends_on` makes a service wait for another one. The `condition` says what to wait for:
 
 ```yaml
-hello-migrate:
+postgres-setup:
   depends_on:
     postgres:
       condition: service_healthy                 # wait until its health check passes
+
+hello-migrate:
+  depends_on:
+    postgres-setup:
+      condition: service_completed_successfully  # wait until it exited with code 0
 
 hello:
   depends_on:
@@ -46,7 +51,7 @@ hello:
       condition: service_completed_successfully  # wait until it exited with code 0
 ```
 
-So `task dev` starts: postgres (healthy) → hello-migrate (finished) → hello.
+So `task dev` starts: postgres (healthy) → postgres-setup (finished) → hello-migrate (finished) → hello. `auth` also waits for postgres-setup. It has no migrations yet.
 
 `start_period` and `start_interval` in a health check mean: while the container is starting (the first 30 seconds), check every second. After that, Docker checks every 30 seconds (its default). Both postgres and hello use them, so they show `(healthy)` within seconds and the next containers don't wait long.
 

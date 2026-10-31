@@ -240,6 +240,8 @@ reach/
 ├── proto/                 # Protobuf definitions: the single API contract
 ├── gateway/
 │   └── Caddyfile          # routes browser requests to services
+├── postgres/
+│   └── setup.sql          # one database and one user per service (ADR 0024)
 ├── infra/                 # later: ansible/, k8s/, ...
 ├── docs/
 │   ├── PROJECT_BRIEF.md   # this document

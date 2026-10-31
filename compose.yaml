@@ -1,6 +1,7 @@
 # Starts the whole Reach system with Docker Compose. Run it with "task dev".
 # Each entry under "services" becomes one container.
-# Start order: postgres (healthy) → hello-migrate (finished) → hello.
+# Start order: postgres (healthy) → postgres-setup (finished) →
+# hello-migrate (finished) → hello, and auth.
 # web and gateway start right away. Open http://localhost:8080.
 # Learn more: docs/learn/docker-compose.md
 
@@ -12,8 +13,6 @@ services:
       # ${...} is filled in from the .env file. ":?" stops with this
       # message if the setting is missing.
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (run "task setup")}
-      # Create the hello service's own database on the first start.
-      POSTGRES_DB: hello
     volumes:
       # Keep the data in a named volume, so it survives when the container
       # is removed. Postgres 18 images keep their data in this folder.
@@ -21,30 +20,53 @@ services:
     healthcheck:
       # pg_isready comes with Postgres. It succeeds once the database
       # accepts connections.
-      test: ["CMD", "pg_isready", "--username=postgres", "--dbname=hello"]
+      test: ["CMD", "pg_isready", "--username=postgres"]
       # While starting (the first 30 seconds), check every second instead
       # of every 30 seconds, so the next containers don't wait long.
       start_period: 30s
       start_interval: 1s
+
+  # Creates each service's database and user if they are missing, then
+  # exits. It runs postgres/setup.sql with psql, which comes with the
+  # Postgres image. Learn more: docs/learn/postgresql.md#one-user-per-service
+  postgres-setup:
+    image: postgres:18.6
+    # Replace the image's normal program (the database server) with psql.
+    # --host is the service name above: inside Compose, containers find
+    # each other by name.
+    entrypoint: ["psql", "--host=postgres", "--username=postgres", "--file=/setup/setup.sql"]
+    environment:
+      # psql reads the superuser's password from PGPASSWORD.
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      # setup.sql gives these passwords to the hello and auth users.
+      HELLO_DATABASE_PASSWORD: ${HELLO_DATABASE_PASSWORD:?Set HELLO_DATABASE_PASSWORD in .env (see .env.example)}
+      AUTH_DATABASE_PASSWORD: ${AUTH_DATABASE_PASSWORD:?Set AUTH_DATABASE_PASSWORD in .env (see .env.example)}
+    volumes:
+      # Share the postgres/ folder (with setup.sql), read-only.
+      - ./postgres:/setup:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   # Applies the hello database migrations once, then exits.
   hello-migrate:
     build: ./services/hello/migrations
     environment:
       GOOSE_DRIVER: postgres
-      # The database address. "postgres" (after the @) is the service name
-      # above: inside Compose, containers find each other by name.
-      GOOSE_DBSTRING: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/hello?sslmode=disable
+      # The database address: user hello, with its password, on the
+      # "postgres" container, database hello.
+      GOOSE_DBSTRING: postgres://hello:${HELLO_DATABASE_PASSWORD}@postgres:5432/hello?sslmode=disable
     depends_on:
-      postgres:
-        condition: service_healthy
+      # Start only after the hello user and database exist.
+      postgres-setup:
+        condition: service_completed_successfully
 
   hello:
     # Build the image from services/hello/Dockerfile.
     build: ./services/hello
     environment:
       # The same database address as hello-migrate uses.
-      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/hello?sslmode=disable
+      DATABASE_URL: postgres://hello:${HELLO_DATABASE_PASSWORD}@postgres:5432/hello?sslmode=disable
     # No "ports": the browser reaches the hello service only through the
     # gateway. Inside Compose, the gateway finds it as hello:8080.
     # Docker calls /healthz regularly and shows the result in
@@ -65,6 +87,25 @@ services:
     depends_on:
       # Start only after the migrations finished without an error.
       hello-migrate:
+        condition: service_completed_successfully
+
+  # Accounts, login, sessions and devices. Learn more: services/auth/main.go
+  auth:
+    build: ./services/auth
+    environment:
+      DATABASE_URL: postgres://auth:${AUTH_DATABASE_PASSWORD}@postgres:5432/auth?sslmode=disable
+    # Like hello: no "ports", and a health check on /healthz.
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/healthz"]
+      start_period: 30s
+      start_interval: 1s
+    develop:
+      watch:
+        - action: rebuild
+          path: ./services/auth
+    depends_on:
+      # Start only after the auth user and database exist.
+      postgres-setup:
         condition: service_completed_successfully
 
   # The web app's development server (Vite). Reached through the gateway.
