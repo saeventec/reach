@@ -1,0 +1,59 @@
+# CI ("continuous integration"): GitHub runs these checks on its own
+# computers for every push to main and every pull request. It uses the same
+# tools and Task commands as your computer. Learn more: docs/learn/ci.md
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# The workflow only reads the repo. Giving it no more rights than it needs
+# limits the damage if a step is ever compromised.
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Lint, test and build
+    runs-on: ubuntu-latest
+    steps:
+      # Actions are pinned to an exact commit (the long hex number), because a
+      # tag like "v7" can be moved to different code later. The comment says
+      # which version that commit is.
+      - name: Get the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The full history, so buf can compare with older commits.
+          fetch-depth: 0
+          # Don't leave the GitHub token in the checked-out repo: no later
+          # step needs it to push.
+          persist-credentials: false
+
+      - name: Install the tools from .mise.toml
+        uses: jdx/mise-action@6612f0ef07ed2a736cd1e00a94a065522dd41195 # v5.2.5
+
+      - name: Set up the project
+        run: task setup
+
+      - name: Lint
+        run: task lint
+
+      - name: Check that the generated code is up to date
+        # Generate again; if anything changed, someone forgot "task generate".
+        run: |
+          task generate
+          git diff --exit-code
+
+      - name: Check for breaking API changes
+        # Compare the .proto files with the commit before this change: the
+        # pull request's base, or the previous commit on main.
+        env:
+          BASE_COMMIT: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: buf breaking --against ".git#ref=$BASE_COMMIT"
+
+      - name: Test
+        run: task test
+
+      - name: Build
+        run: task build

@@ -34,6 +34,7 @@ Each step is one small commit that runs, reviewed by the owner before the next o
 - [0017](../decisions/0017-use-buf-with-local-generators.md): buf with local generators, generated code committed
 - [0018](../decisions/0018-run-the-web-dev-server-in-compose.md): run the web development server in Compose, with Compose Watch
 - [0019](../decisions/0019-use-oxlint-and-prettier-for-the-web-app.md): Oxlint and Prettier for the web app
+- [0020](../decisions/0020-ci-with-github-actions-mise-and-task.md): CI with GitHub Actions, using mise and Task
 
 ## Concepts to learn
 

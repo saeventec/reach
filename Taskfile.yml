@@ -93,6 +93,13 @@ tasks:
     cmds:
       - buf format --write
 
+  build:
+    desc: Build the web app and all container images (checks that everything compiles)
+    cmds:
+      # tsc type-checks the code, then Vite bundles it into apps/web/dist.
+      - npm run build --prefix apps/web
+      - docker compose build
+
   test:
     desc: Run all tests (the hello service and the web app)
     cmds:
