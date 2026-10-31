@@ -39,7 +39,7 @@ type CreateUserParams struct {
 type CreateUserRow struct {
 	ID        pgtype.UUID
 	Username  string
-	CreatedAt pgtype.Timestamptz
+	CreatedAt time.Time // see "Time values" below
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)

@@ -5,7 +5,9 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"os"
+	"strconv"
 )
 
 // defaultPort is used when the PORT environment variable is empty.
@@ -29,4 +31,24 @@ func readDatabaseURL() (string, error) {
 		return "", errors.New("the DATABASE_URL environment variable is not set")
 	}
 	return databaseURL, nil
+}
+
+// readCookieSecure says whether cookies get the Secure flag, which tells the
+// browser to send them only over HTTPS. It comes from the COOKIE_SECURE
+// environment variable, and is true unless it is set to "false". So a real
+// server is safe even if someone forgets the setting. On your computer there
+// is no HTTPS yet, so .env sets it to false.
+// Learn more: docs/learn/sessions.md#the-cookie
+func readCookieSecure() (bool, error) {
+	value := os.Getenv("COOKIE_SECURE")
+	if value == "" {
+		return true, nil
+	}
+
+	// ParseBool understands "true", "false", "1", "0" and a few more.
+	secure, err := strconv.ParseBool(value)
+	if err != nil {
+		return false, fmt.Errorf("COOKIE_SECURE must be true or false, not %q", value)
+	}
+	return secure, nil
 }

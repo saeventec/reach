@@ -53,6 +53,11 @@ func run() error {
 		return err
 	}
 
+	secureCookies, err := readCookieSecure()
+	if err != nil {
+		return err
+	}
+
 	pool, err := connectToDatabase(stopSignal, databaseURL)
 	if err != nil {
 		return err
@@ -61,15 +66,16 @@ func run() error {
 	defer pool.Close()
 
 	// queries.New wraps the pool with the functions sqlc generated.
-	userQueries := queries.New(pool)
-	users := &postgresUserStore{queries: userQueries}
+	databaseQueries := queries.New(pool)
+	users := &postgresUserStore{queries: databaseQueries}
+	sessions := &postgresSessionStore{queries: databaseQueries}
 
 	port := readPort()
 	address := ":" + port
 
 	server := &http.Server{
 		Addr:    address,
-		Handler: newRouter(users),
+		Handler: newRouter(users, sessions, secureCookies),
 		// Close connections that are too slow to send their request headers.
 		// Without a limit, a slow client could keep connections open forever.
 		ReadHeaderTimeout: 5 * time.Second,
@@ -114,7 +120,7 @@ func shutDown(server *http.Server) error {
 }
 
 // newRouter connects each URL path to the code that handles it.
-func newRouter(users userStore) *http.ServeMux {
+func newRouter(users userStore, sessions sessionStore, secureCookies bool) *http.ServeMux {
 	router := http.NewServeMux()
 	router.HandleFunc("GET /healthz", handleHealth)
 
@@ -123,6 +129,9 @@ func newRouter(users userStore) *http.ServeMux {
 	accountService := &accountServer{users: users}
 	connectServer := connect.NewServer()
 	authv1connect.RegisterAccountServiceHandler(connectServer, accountService)
+
+	sessionService := &sessionServer{users: users, sessions: sessions, secureCookies: secureCookies}
+	authv1connect.RegisterSessionServiceHandler(connectServer, sessionService)
 	connecthttp.Mount(router, connectServer)
 
 	return router

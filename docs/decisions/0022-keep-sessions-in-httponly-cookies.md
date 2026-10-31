@@ -29,3 +29,10 @@ At login, the `auth` service creates a long **random session token**. The browse
 - Cookies are sent automatically, so we must protect against requests from other websites (CSRF). We set the cookie's `SameSite` rule when we build login, and explain it then.
 - Every request that needs a logged-in user asks the `auth` database whether the token is valid. That is fine at our size.
 - The exact cookie settings (`Secure`, `SameSite`, how long a session lives) are decided and explained in step 5.
+
+**Update (2026-10-31), the cookie settings** (milestone 2, step 5, chosen by the owner):
+
+- **Lifetime:** 30 days, renewed on every use. Each `GetCurrentUser` moves the session's expiry 30 days ahead and sends the cookie again.
+- **`SameSite=Strict`:** the cookie is never sent with requests that another site starts. Our app only calls the API from its own pages, so nothing breaks.
+- **`Secure`:** from the `COOKIE_SECURE` setting, `true` unless set to `false`. `.env.example` sets `false`, because localhost has no HTTPS yet.
+- Explained in [docs/learn/sessions.md](../learn/sessions.md#the-cookie).

@@ -17,6 +17,37 @@ It is the simplest safe way to stay logged in on the web, and logging out really
 3. **Every later request:** the browser sends the cookie. The service hashes the token again and looks for a session with that hash that hasn't expired.
 4. **Renewed on use:** finding the session also moves its expiry 30 days ahead, in the same SQL statement (`RenewSession` in [queries/sessions.sql](../../services/auth/queries/sessions.sql)). So you stay logged in while you use Reach, and are logged out after 30 days of not using it.
 
+## The cookie
+
+After a successful login, the service answers with a `Set-Cookie` header ([services/auth/session_cookie.go](../../services/auth/session_cookie.go)):
+
+```
+Set-Cookie: reach_session=kQ3v...; Path=/; Max-Age=2592000; HttpOnly; SameSite=Strict
+```
+
+From then on, the browser adds `Cookie: reach_session=kQ3v...` to every request to our site, by itself. Each part of the `Set-Cookie` line:
+
+| Part | What it means | Why |
+| --- | --- | --- |
+| `reach_session=kQ3v...` | the name and the token | |
+| `Path=/` | send it to every path of the site | the API paths start with `/auth.v1.`, `/hello.v1.`, ... |
+| `Max-Age=2592000` | keep it for 30 days (in seconds) | matches the session. `GetCurrentUser` sends the cookie again, so the browser's 30 days restart too. |
+| `HttpOnly` | the page's JavaScript can't read it | an attacker's script on our page can't steal the token |
+| `SameSite=Strict` | only send it with requests our own site starts | see CSRF below |
+| `Secure` (on a real server) | only send it over HTTPS | on public networks, plain HTTP can be read by others |
+
+**CSRF** ("cross-site request forgery"): another website could make your browser send a request to Reach. Without protection, the browser would add your cookie, and the request would run as you. `SameSite=Strict` tells the browser to never add the cookie to requests that another site starts. Our React app runs on our own site, so its requests always get the cookie.
+
+**`COOKIE_SECURE`:** your computer has no HTTPS yet (`http://localhost:8080`). Chrome and Firefox accept `Secure` cookies on `localhost` anyway, but other browsers (like Safari) may not, and we haven't tested them. So `.env.example` sets `COOKIE_SECURE=false`. If the setting is missing, it is **true**: a real server is safe even if someone forgets it. HTTPS comes in milestone 10.
+
+**The token never appears in a response body.** It is only in the cookie, so the page's code never sees it. `LogIn` and `GetCurrentUser` return only the user's id and name.
+
+## Logging in safely
+
+- **The same message for a wrong username and a wrong password:** "wrong username or password". Otherwise, login could be used to test which usernames exist.
+- **The same time, too:** checking a password takes about 15 to 25 ms. If an unknown username were answered right away, the speed would tell. So for an unknown username, the service checks the password against a dummy hash anyway (`dummyPasswordHash` in [services/auth/session.go](../../services/auth/session.go)).
+- **No hashing of huge inputs:** a password longer than 128 characters can't be right, so it is refused before hashing.
+
 ## Why only the hash is stored
 
 If someone reads the database (a stolen backup, a bug), they find only hashes. A hash can't be turned back into the token, and the browser must send the token itself, so the hashes are useless to them. It is the same idea as for passwords.
@@ -39,6 +70,11 @@ user_id uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
 ```
 
 `REFERENCES users (id)` is a **foreign key**: the database refuses a session whose `user_id` is not an existing user. `ON DELETE CASCADE` means: when a user is deleted, their sessions are deleted too, so no session can point to a missing user.
+
+## Not done yet
+
+- **Old sessions stay in the table** after they expire. They are harmless (`RenewSession` ignores them), but the table grows. Deleting them regularly is a "background job", a later topic.
+- **Logging out** and **seeing your devices** come in step 6.
 
 ## Alternatives
 

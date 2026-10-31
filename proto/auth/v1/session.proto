@@ -1,0 +1,48 @@
+// The session API of the auth service: logging in, and asking who is
+// logged in. The session token travels in a cookie, never in these
+// messages, so the page's JavaScript never sees it.
+// Learn more: docs/learn/sessions.md
+syntax = "proto3";
+
+package auth.v1;
+
+// SessionService manages logins.
+service SessionService {
+  // LogIn checks the username and password. If they are right, it creates a
+  // session and sets the session cookie. If not, it fails with
+  // UNAUTHENTICATED, with the same message whether the username or the
+  // password was wrong.
+  rpc LogIn(LogInRequest) returns (LogInResponse) {}
+
+  // GetCurrentUser returns the user of the session cookie, and renews the
+  // session for another 30 days. It fails with UNAUTHENTICATED if there is no
+  // valid session.
+  rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse) {}
+}
+
+// LogInRequest is what the person typed in the login form.
+message LogInRequest {
+  // As typed. The service removes spaces around it and makes it lowercase.
+  string username = 1;
+  // As typed. It is only checked against the hash, never stored or logged.
+  string password = 2;
+}
+
+// LogInResponse describes the user who is now logged in.
+message LogInResponse {
+  // The user's id: a UUIDv7, as text.
+  string user_id = 1;
+  // The stored username.
+  string username = 2;
+}
+
+// GetCurrentUserRequest is empty: the session cookie says who is asking.
+message GetCurrentUserRequest {}
+
+// GetCurrentUserResponse describes the logged-in user.
+message GetCurrentUserResponse {
+  // The user's id: a UUIDv7, as text.
+  string user_id = 1;
+  // The stored username.
+  string username = 2;
+}

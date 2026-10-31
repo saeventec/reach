@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/saeventec/reach/services/auth/gen/queries"
@@ -21,17 +22,28 @@ const uniqueViolationCode = "23505"
 // errUsernameTaken means another account already has this username.
 var errUsernameTaken = errors.New("the username is already taken")
 
+// errUserNotFound means no account has this username.
+var errUserNotFound = errors.New("no user with this username")
+
 // createdUser is a new account, as the rest of the service sees it.
 type createdUser struct {
 	id       string
 	username string
 }
 
-// userStore is what the account server needs from the database. It is an
+// loginUser is an account with its password hash, as login needs it.
+type loginUser struct {
+	id           string
+	username     string
+	passwordHash string
+}
+
+// userStore is what the API needs from the users table. It is an
 // interface, so tests can use a fake store instead of a real database.
 // Learn more: docs/learn/testing.md#fakes
 type userStore interface {
 	CreateUser(ctx context.Context, username string, passwordHash string) (createdUser, error)
+	FindUserByUsername(ctx context.Context, username string) (loginUser, error)
 }
 
 // postgresUserStore keeps the accounts in the auth database.
@@ -57,6 +69,25 @@ func (store *postgresUserStore) CreateUser(ctx context.Context, username string,
 	user := createdUser{
 		id:       row.ID.String(),
 		username: row.Username,
+	}
+	return user, nil
+}
+
+// FindUserByUsername returns the account with this username, or
+// errUserNotFound.
+func (store *postgresUserStore) FindUserByUsername(ctx context.Context, username string) (loginUser, error) {
+	row, err := store.queries.FindUserByUsername(ctx, username)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return loginUser{}, errUserNotFound
+	}
+	if err != nil {
+		return loginUser{}, fmt.Errorf("find the user: %w", err)
+	}
+
+	user := loginUser{
+		id:           row.ID.String(),
+		username:     row.Username,
+		passwordHash: row.PasswordHash,
 	}
 	return user, nil
 }

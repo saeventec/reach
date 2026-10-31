@@ -17,12 +17,15 @@ import (
 )
 
 // fakeUserStore stands in for the database in tests. It remembers what it
-// was asked to save, and returns the error the test gives it.
+// was asked to save, and returns the user and the error the test gives it.
 type fakeUserStore struct {
 	err error
 
 	savedUsername     string
 	savedPasswordHash string
+
+	// foundUser is what FindUserByUsername returns when err is nil.
+	foundUser loginUser
 }
 
 func (store *fakeUserStore) CreateUser(ctx context.Context, username string, passwordHash string) (createdUser, error) {
@@ -34,6 +37,13 @@ func (store *fakeUserStore) CreateUser(ctx context.Context, username string, pas
 
 	user := createdUser{id: testUserID, username: username}
 	return user, nil
+}
+
+func (store *fakeUserStore) FindUserByUsername(ctx context.Context, username string) (loginUser, error) {
+	if store.err != nil {
+		return loginUser{}, store.err
+	}
+	return store.foundUser, nil
 }
 
 // testUserID is the id the fake store gives every new account.
@@ -128,7 +138,7 @@ func TestSignUpHidesDatabaseErrors(t *testing.T) {
 // browser will: a POST with a JSON body to the call's path.
 func TestSignUpOverHTTP(t *testing.T) {
 	store := &fakeUserStore{}
-	router := newRouter(store)
+	router := newRouter(store, &fakeSessionStore{}, true)
 
 	requestBody := strings.NewReader(`{"username": "sadra", "password": "purple tram winter"}`)
 	request := httptest.NewRequest(http.MethodPost, "/auth.v1.AccountService/SignUp", requestBody)

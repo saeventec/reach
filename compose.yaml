@@ -110,6 +110,8 @@ services:
     build: ./services/auth
     environment:
       DATABASE_URL: postgres://auth:${AUTH_DATABASE_PASSWORD}@postgres:5432/auth?sslmode=disable
+      # ":-true" means: use true if .env doesn't set it.
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
     # Like hello: no "ports", and a health check on /healthz.
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/healthz"]
