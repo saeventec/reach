@@ -8,7 +8,7 @@ Reach is built from scratch as a learning project, to practice professional soft
 
 ## Status
 
-Milestone 1 done: a React page shows a greeting read from Postgres, through the Caddy gateway, all started with `task dev`. See [docs/milestones/](docs/milestones/).
+Milestone 2 done: accounts. You can sign up, log in, stay logged in, see the devices you are logged in on, and log out (also another device). Passwords are hashed with argon2id, sessions live in HttpOnly cookies, and logins are rate limited. See [docs/milestones/](docs/milestones/).
 
 ## Set up
 

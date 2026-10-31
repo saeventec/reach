@@ -65,7 +65,7 @@ func (store *fakeGreetingStore) NewestGreeting(ctx context.Context) (string, err
 store := &fakeGreetingStore{err: errors.New("connection refused")}
 ```
 
-With fakes, we can test cases that are hard to create for real, like a database outage. The real database code is tested later with **integration tests** against a real Postgres (Testcontainers, milestone 2).
+With fakes, we can test cases that are hard to create for real, like a database outage. The real database code is tested with **integration tests** against a real Postgres (see [Integration tests](#integration-tests) below).
 
 `t.Context()` gives each test a context that is cancelled when the test ends. `t.Fatalf` stops the test at once, which is useful when the next checks make no sense after a failure.
 

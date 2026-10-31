@@ -8,7 +8,7 @@ Compose also creates a private network, so containers can reach each other by th
 
 ## Why we use it
 
-Reach is made of several services (now: Postgres, postgres-setup, hello-migrate, hello, auth, the web app and the Caddy gateway). Compose starts all of them with `task dev`. Each Compose service maps to one Kubernetes deployment later.
+Reach is made of several services (now: Postgres, postgres-setup, hello-migrate, hello, auth-migrate, auth, the web app and the Caddy gateway). Compose starts all of them with `task dev`. Each Compose service maps to one Kubernetes deployment later.
 
 ## Tiny example
 

@@ -156,10 +156,13 @@ These are the current choices. When an agent introduces any of them for the firs
 | Linting/formatting | golangci-lint (with gofmt), Oxlint, Prettier, buf | Automatic code style and mistake checks | Defaults, no debates about style; Oxlint is Vite's default (ADR 0019) | ESLint, Biome |
 | Commit checks | Lefthook | Runs the lint checks before each commit | One small config, works on Mac, WSL2 and Linux (ADR 0014) | pre-commit, Husky |
 | Go HTTP and logging | Go standard library (`net/http`, `log/slog`) | Built-in HTTP routing and structured logging | Fewer dependencies, fully standard | chi, zap |
-| Database access | pgx (sqlc from milestone 2) | The standard Postgres driver for Go | Fast, maintained, works with sqlc (ADR 0012) | database/sql, GORM, Ent |
+| Database access | pgx + sqlc | The standard Postgres driver for Go; sqlc generates Go functions from SQL queries | Fast, maintained; you write and read real SQL (ADR 0012) | database/sql, GORM, Ent |
 | Protobuf tooling | buf | Lint, breaking-change checks and code generation | Catches API-breaking changes; generators run locally (ADR 0017) | protoc |
 | Styling | Tailwind CSS | Small utility classes written in the markup | Owner's choice: popular, styles next to the markup (ADR 0013) | CSS Modules, plain CSS |
 | Frontend tests | Vitest + Testing Library | Frontend unit and component tests | Vite's own test runner, fast, standard | Jest |
+| Integration tests | Testcontainers | Starts a real Postgres in Docker for tests | Tests the real SQL and migrations (ADR 0023) | A test database in Compose |
+| Password hashing | argon2id (`golang.org/x/crypto`) | A slow, memory-hungry one-way hash for passwords | OWASP's first choice (ADR 0025) | bcrypt, scrypt |
+| Rate limiting | `golang.org/x/time/rate`, in memory | Caps login and sign-up tries | Simplest; counts are short-lived (ADR 0027) | Valkey, Postgres, a Caddy plugin |
 | Web routing | React Router (declarative mode) | One address per page: `/login`, `/account` | Owner's choice: real addresses, Back button works (ADR 0026) | Plain React state, TanStack Router |
 
 **Planned for later** (explained in full when we get there)
@@ -404,10 +407,8 @@ These are ideas only, not part of any milestone yet. An agent must not build the
 
 | Tool | What it is | Why it could fit | When | Alternatives |
 | --- | --- | --- | --- | --- |
-| sqlc | Generates type-safe Go code from plain SQL queries | You write and read real SQL, no hidden ORM magic | Milestone 2 (ADR 0012) | pgx by hand, GORM, Ent |
 | TanStack Query | Fetches, caches and refreshes server data in React | Removes lots of hand-written loading and caching code | Later (not needed in milestone 2) | SWR, plain fetch |
 | Playwright | End-to-end tests in a real browser | Tests full user flows across Chrome, Firefox and Safari engines | Milestone 3 | Cypress |
-| Testcontainers | Starts real Postgres and NATS in tests | Integration tests against real services | Milestone 2 | Compose-based test setup |
 | Mailpit | A fake email server with a web inbox, for development | Test invite and password-reset emails locally | Milestone 2 | MailHog |
 | Valkey | In-memory key-value store (open-source Redis fork) | Rate limiting, caching, presence, if NATS KV is not enough | Milestone 3+ | Redis, NATS KV |
 | Renovate | Opens pull requests to update dependencies | Keeps everything up to date automatically | Later (not wanted yet) | Dependabot |

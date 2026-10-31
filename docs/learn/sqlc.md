@@ -45,14 +45,14 @@ type CreateUserRow struct {
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 ```
 
-And this is how the service will call it (step 4):
+And this is how the service calls it, from [services/auth/user_store.go](../../services/auth/user_store.go):
 
 ```go
-userQueries := queries.New(pool)
-newUser, err := userQueries.CreateUser(ctx, queries.CreateUserParams{
-	Username:     "sadra",
+parameters := queries.CreateUserParams{
+	Username:     username,
 	PasswordHash: passwordHash,
-})
+}
+row, err := store.queries.CreateUser(ctx, parameters)
 ```
 
 Things to know:

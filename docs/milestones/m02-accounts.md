@@ -1,6 +1,6 @@
 # Milestone 2: Accounts
 
-- **Status:** In progress (started 2026-10-31, on the branch `milestone-2-accounts`)
+- **Status:** Done (2026-10-31), built on the branch `milestone-2-accounts` and merged through a pull request once CI passes. Session: [2026-10-31-milestone-2-accounts.md](../sessions/2026-10-31-milestone-2-accounts.md). Review: [2026-10-31-review-milestone-2.md](../reviews/2026-10-31-review-milestone-2.md). Not yet checked on the Mac.
 
 ## Goal
 
