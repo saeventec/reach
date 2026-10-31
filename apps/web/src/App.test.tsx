@@ -140,3 +140,20 @@ test("still shows the greeting", async () => {
 
   await screen.findByText("Hello, test!");
 });
+
+test("shows the message when there were too many tries", async () => {
+  const logIn = async () => {
+    throw new ConnectError(
+      "too many attempts, please try again later",
+      Code.ResourceExhausted,
+    );
+  };
+  renderApp(fakeAuthApi({ logIn }), "/login");
+  await screen.findByRole("heading", { name: "Log in" });
+
+  typeInto("Username", "sadra");
+  typeInto("Password", "purple tram winter");
+  fireEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+  await screen.findByText("Too many attempts, please try again later");
+});

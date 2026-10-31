@@ -122,6 +122,7 @@ const codesWithReadableMessages = [
   Code.AlreadyExists,
   Code.Unauthenticated,
   Code.NotFound,
+  Code.ResourceExhausted,
 ];
 
 // errorMessage turns an error from an API call into a sentence to show.

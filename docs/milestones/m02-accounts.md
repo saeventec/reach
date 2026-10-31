@@ -34,6 +34,7 @@ The steps can change as we learn. Any change is written here.
 - [0024](../decisions/0024-create-databases-with-a-setup-container.md): create each service's database and user with a setup container
 - [0025](../decisions/0025-password-rules-and-argon2id.md): password rules (8 to 128 characters, the owner's choice), and argon2id with OWASP's settings
 - [0026](../decisions/0026-use-react-router.md): React Router for the web app's pages (the owner's choice)
+- [0027](../decisions/0027-rate-limit-logins-in-memory.md): rate limit logins and sign-ups in memory, by IP address and by username (the owner's choices)
 - Shared Go code is copied into `auth` for now. It moves to a shared package (`packages/go/`) when a third service arrives.
 - TanStack Query: not yet. Plain Connect calls are enough for a few pages ([brief](../PROJECT_BRIEF.md#future-considerations)).
 
@@ -45,6 +46,7 @@ The steps can change as we learn. Any change is written here.
 - Security: [sessions, tokens, cookies, CSRF and SameSite, safe logins](../learn/sessions.md), [devices and logging out](../learn/sessions.md#logging-out)
 - API: [lists, Timestamps and default values in Protobuf](../learn/protobuf.md#lists-dates-and-default-values)
 - Database: [indexes](../learn/sessions.md#devices)
+- Security: [rate limiting with token buckets, mutexes, the client's address](../learn/rate-limiting.md), [a limit on message size](../learn/connect-rpc.md#a-limit-on-message-size)
 - Frontend: [React Router](../learn/react-router.md), [forms](../learn/react.md#forms), [lists and keys](../learn/react.md#lists-and-keys)
 - Configuration: [settings with a safe default](../learn/environment-variables.md#settings-with-a-safe-default)
 - Testing: [table-driven tests](../learn/testing.md#table-driven-tests)

@@ -15,14 +15,28 @@ import (
 
 // accountServer implements the generated AccountServiceHandler interface.
 type accountServer struct {
-	users userStore
+	users    userStore
+	limiters *loginLimiters
 }
 
 // SignUp checks the username and the password, hashes the password, and
 // saves the new account.
 func (server *accountServer) SignUp(ctx context.Context, request *authv1.SignUpRequest) (*authv1.SignUpResponse, error) {
+	callInfo, err := serverCallInfo(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Sign-ups count toward the same per-address limit as logins, so one
+	// computer can't create accounts in bulk.
+	ip := clientIP(callInfo)
+	if !server.limiters.byIP.take(ip) {
+		slog.Warn("too many sign-ups from one address", "ip", ip)
+		return nil, connect.NewError(connect.CodeResourceExhausted, tooManyAttemptsMessage)
+	}
+
 	username := normalizeUsername(request.GetUsername())
-	err := validateUsername(username)
+	err = validateUsername(username)
 	if err != nil {
 		// The rule errors are written for people, so the client may see them.
 		return nil, connect.NewError(connect.CodeInvalidArgument, err.Error())

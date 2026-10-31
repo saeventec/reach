@@ -34,6 +34,7 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [sqlc: Go code from SQL queries](sqlc.md)
 - [Password hashing (argon2id)](password-hashing.md)
 - [Sessions and tokens](sessions.md)
+- [Rate limiting](rate-limiting.md)
 - [React](react.md)
 - [React Router](react-router.md)
 - [Vite](vite.md)

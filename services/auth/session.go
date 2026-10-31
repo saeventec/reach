@@ -34,6 +34,7 @@ var dummyPasswordHash = hashPassword("a password that belongs to nobody")
 type sessionServer struct {
 	users    userStore
 	sessions sessionStore
+	limiters *loginLimiters
 	// secureCookies sets the cookie's Secure flag (from COOKIE_SECURE).
 	secureCookies bool
 }
@@ -49,7 +50,24 @@ func (server *sessionServer) LogIn(ctx context.Context, request *authv1.LogInReq
 	username := normalizeUsername(request.GetUsername())
 	password := normalizePassword(request.GetPassword())
 
+	// Rate limits: first per IP address (every try counts), then per
+	// username (only failed tries count). Learn more: docs/learn/rate-limiting.md
+	ip := clientIP(callInfo)
+	if !server.limiters.byIP.take(ip) {
+		slog.Warn("too many login tries from one address", "ip", ip)
+		return nil, connect.NewError(connect.CodeResourceExhausted, tooManyAttemptsMessage)
+	}
+	if server.limiters.byUsername.isEmpty(username) {
+		slog.Warn("too many failed logins for one username", "ip", ip)
+		return nil, connect.NewError(connect.CodeResourceExhausted, tooManyAttemptsMessage)
+	}
+
 	user, err := server.checkLogin(ctx, username, password)
+	if connect.CodeOf(err) == connect.CodeUnauthenticated {
+		// A wrong username or password: count it against this username.
+		server.limiters.byUsername.take(username)
+		return nil, err
+	}
 	if err != nil {
 		return nil, err
 	}

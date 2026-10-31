@@ -120,7 +120,7 @@ const (
 func TestLogInSetsTheSessionCookie(t *testing.T) {
 	users := &fakeUserStore{foundUser: testLoginUser}
 	sessions := &fakeSessionStore{}
-	router := newRouter(users, sessions, true)
+	router := newRouter(users, sessions, newLoginLimiters(), true)
 
 	recorder := callAPI(router, logInPath, `{"username": "Sadra", "password": "purple tram winter"}`, "")
 
@@ -162,9 +162,9 @@ func TestLogInFailsTheSameWayForAWrongPasswordAndAnUnknownUser(t *testing.T) {
 	wrongPasswordUsers := &fakeUserStore{foundUser: testLoginUser}
 	unknownUsers := &fakeUserStore{err: errUserNotFound}
 
-	wrongPassword := callAPI(newRouter(wrongPasswordUsers, &fakeSessionStore{}, true), logInPath,
+	wrongPassword := callAPI(newRouter(wrongPasswordUsers, &fakeSessionStore{}, newLoginLimiters(), true), logInPath,
 		`{"username": "sadra", "password": "purple tram summer"}`, "")
-	unknownUser := callAPI(newRouter(unknownUsers, &fakeSessionStore{}, true), logInPath,
+	unknownUser := callAPI(newRouter(unknownUsers, &fakeSessionStore{}, newLoginLimiters(), true), logInPath,
 		`{"username": "nobody", "password": "purple tram winter"}`, "")
 
 	if wrongPassword.Code != http.StatusUnauthorized {
@@ -183,7 +183,7 @@ func TestLogInFailsTheSameWayForAWrongPasswordAndAnUnknownUser(t *testing.T) {
 
 func TestLogInHidesDatabaseErrors(t *testing.T) {
 	users := &fakeUserStore{err: errors.New("connection refused")}
-	router := newRouter(users, &fakeSessionStore{}, true)
+	router := newRouter(users, &fakeSessionStore{}, newLoginLimiters(), true)
 
 	recorder := callAPI(router, logInPath, `{"username": "sadra", "password": "purple tram winter"}`, "")
 
@@ -197,7 +197,7 @@ func TestLogInHidesDatabaseErrors(t *testing.T) {
 
 func TestGetCurrentUserReturnsTheUserAndRenewsTheCookie(t *testing.T) {
 	sessions := &fakeSessionStore{session: testSession}
-	router := newRouter(&fakeUserStore{}, sessions, true)
+	router := newRouter(&fakeUserStore{}, sessions, newLoginLimiters(), true)
 
 	recorder := callAPI(router, getCurrentUserPath, `{}`, "theme=dark; reach_session=the-token")
 
@@ -218,7 +218,7 @@ func TestGetCurrentUserReturnsTheUserAndRenewsTheCookie(t *testing.T) {
 }
 
 func TestGetCurrentUserWithoutACookie(t *testing.T) {
-	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, true)
+	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, newLoginLimiters(), true)
 
 	recorder := callAPI(router, getCurrentUserPath, `{}`, "")
 
@@ -230,7 +230,7 @@ func TestGetCurrentUserWithoutACookie(t *testing.T) {
 // An expired or unknown token: the store finds no valid session.
 func TestGetCurrentUserWithAnInvalidSession(t *testing.T) {
 	sessions := &fakeSessionStore{err: errNoSession}
-	router := newRouter(&fakeUserStore{}, sessions, true)
+	router := newRouter(&fakeUserStore{}, sessions, newLoginLimiters(), true)
 
 	recorder := callAPI(router, getCurrentUserPath, `{}`, "reach_session=an-old-token")
 
@@ -260,7 +260,7 @@ func TestListDevicesMarksThisDevice(t *testing.T) {
 			{id: otherDeviceID, userAgent: "curl/8.5.0", createdAt: loginTime, lastUsedAt: loginTime},
 		},
 	}
-	router := newRouter(&fakeUserStore{}, sessions, true)
+	router := newRouter(&fakeUserStore{}, sessions, newLoginLimiters(), true)
 
 	recorder := callAPI(router, listDevicesPath, `{}`, "reach_session=the-token")
 
@@ -298,7 +298,7 @@ func TestListDevicesMarksThisDevice(t *testing.T) {
 }
 
 func TestListDevicesNeedsALogin(t *testing.T) {
-	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, true)
+	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, newLoginLimiters(), true)
 
 	recorder := callAPI(router, listDevicesPath, `{}`, "")
 
@@ -309,7 +309,7 @@ func TestListDevicesNeedsALogin(t *testing.T) {
 
 func TestLogOutDeletesTheSessionAndRemovesTheCookie(t *testing.T) {
 	sessions := &fakeSessionStore{session: testSession}
-	router := newRouter(&fakeUserStore{}, sessions, true)
+	router := newRouter(&fakeUserStore{}, sessions, newLoginLimiters(), true)
 
 	recorder := callAPI(router, logOutPath, `{}`, "reach_session=the-token")
 
@@ -326,7 +326,7 @@ func TestLogOutDeletesTheSessionAndRemovesTheCookie(t *testing.T) {
 // device is logged out either way.
 func TestLogOutWithoutAValidSessionStillSucceeds(t *testing.T) {
 	sessions := &fakeSessionStore{err: errNoSession}
-	router := newRouter(&fakeUserStore{}, sessions, true)
+	router := newRouter(&fakeUserStore{}, sessions, newLoginLimiters(), true)
 
 	recorder := callAPI(router, logOutPath, `{}`, "reach_session=an-old-token")
 
@@ -355,7 +355,7 @@ func assertSessionCookieRemoved(t *testing.T, recorder *httptest.ResponseRecorde
 
 func TestLogOutDeviceDeletesThatSession(t *testing.T) {
 	sessions := &fakeSessionStore{session: testSession}
-	router := newRouter(&fakeUserStore{}, sessions, true)
+	router := newRouter(&fakeUserStore{}, sessions, newLoginLimiters(), true)
 
 	recorder := callAPI(router, logOutDevicePath, `{"deviceId": "`+otherDeviceID+`"}`, "reach_session=the-token")
 
@@ -374,7 +374,7 @@ func TestLogOutDeviceDeletesThatSession(t *testing.T) {
 
 func TestLogOutDeviceReportsAnUnknownDevice(t *testing.T) {
 	sessions := &fakeSessionStore{session: testSession, deleteErr: errNoSession}
-	router := newRouter(&fakeUserStore{}, sessions, true)
+	router := newRouter(&fakeUserStore{}, sessions, newLoginLimiters(), true)
 
 	recorder := callAPI(router, logOutDevicePath, `{"deviceId": "not-a-device"}`, "reach_session=the-token")
 

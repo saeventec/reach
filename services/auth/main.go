@@ -76,12 +76,17 @@ func run() error {
 	users := &postgresUserStore{queries: databaseQueries}
 	sessions := &postgresSessionStore{queries: databaseQueries}
 
+	// The rate limits keep their counts in memory. A goroutine forgets old
+	// counts every minute, until the stop signal arrives.
+	limiters := newLoginLimiters()
+	go limiters.removeFullBucketsRegularly(stopSignal)
+
 	port := readPort()
 	address := ":" + port
 
 	server := &http.Server{
 		Addr:    address,
-		Handler: newRouter(users, sessions, secureCookies),
+		Handler: newRouter(users, sessions, limiters, secureCookies),
 		// Close connections that are too slow to send their request headers.
 		// Without a limit, a slow client could keep connections open forever.
 		ReadHeaderTimeout: 5 * time.Second,
@@ -126,17 +131,17 @@ func shutDown(server *http.Server) error {
 }
 
 // newRouter connects each URL path to the code that handles it.
-func newRouter(users userStore, sessions sessionStore, secureCookies bool) *http.ServeMux {
+func newRouter(users userStore, sessions sessionStore, limiters *loginLimiters, secureCookies bool) *http.ServeMux {
 	router := http.NewServeMux()
 	router.HandleFunc("GET /healthz", handleHealth)
 
 	// The Connect server answers the API calls defined in proto/. Mount adds
 	// one path per call to our router, like /auth.v1.AccountService/SignUp.
-	accountService := &accountServer{users: users}
+	accountService := &accountServer{users: users, limiters: limiters}
 	connectServer := connect.NewServer()
 	authv1connect.RegisterAccountServiceHandler(connectServer, accountService)
 
-	sessionService := &sessionServer{users: users, sessions: sessions, secureCookies: secureCookies}
+	sessionService := &sessionServer{users: users, sessions: sessions, limiters: limiters, secureCookies: secureCookies}
 	authv1connect.RegisterSessionServiceHandler(connectServer, sessionService)
 	connecthttp.Mount(router, connectServer, connecthttp.WithReadMaxBytes(maximumRequestBytes))
 

@@ -10,10 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"connectrpc.com/connect/v2"
 	"github.com/jackc/pgx/v5/pgconn"
-
-	authv1 "github.com/saeventec/reach/services/auth/gen/proto/auth/v1"
 )
 
 // fakeUserStore stands in for the database in tests. It remembers what it
@@ -49,25 +46,45 @@ func (store *fakeUserStore) FindUserByUsername(ctx context.Context, username str
 // testUserID is the id the fake store gives every new account.
 const testUserID = "019a3f2c-7b1e-7c4d-9a2b-3c4d5e6f7a8b"
 
+// signUpPath is the address of the SignUp call.
+const signUpPath = "/auth.v1.AccountService/SignUp"
+
+// credentialsBody is the JSON body of a sign-up or a login with this
+// username and password.
+func credentialsBody(username string, password string) string {
+	body, err := json.Marshal(map[string]string{"username": username, "password": password})
+	if err != nil {
+		panic(err) // a map of strings can always be turned into JSON
+	}
+	return string(body)
+}
+
+// errorCode reads the Connect error code from a JSON error response, like
+// "invalid_argument".
+func errorCode(t *testing.T, recorder *httptest.ResponseRecorder) string {
+	t.Helper()
+	var responseBody struct {
+		Code string `json:"code"`
+	}
+	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
+	if err != nil {
+		t.Fatalf("the response is not valid JSON: %v (body: %s)", err, recorder.Body.String())
+	}
+	return responseBody.Code
+}
+
 func TestSignUpCreatesTheAccount(t *testing.T) {
 	store := &fakeUserStore{}
-	server := &accountServer{users: store}
-	request := &authv1.SignUpRequest{Username: " Sadra ", Password: "purple tram winter"}
+	router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(), true)
 
-	response, err := server.SignUp(t.Context(), request)
+	recorder := callAPI(router, signUpPath, credentialsBody(" Sadra ", "purple tram winter"), "")
 
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status code: got %d, want %d (body: %s)", recorder.Code, http.StatusOK, recorder.Body.String())
 	}
-	if response.GetUserId() != testUserID {
-		t.Errorf("user id: got %q, want %q", response.GetUserId(), testUserID)
-	}
-	// The username is stored and returned in its normalized form.
+	// The username is stored in its normalized form.
 	if store.savedUsername != "sadra" {
 		t.Errorf("saved username: got %q, want %q", store.savedUsername, "sadra")
-	}
-	if response.GetUsername() != "sadra" {
-		t.Errorf("username: got %q, want %q", response.GetUsername(), "sadra")
 	}
 	// The store gets a hash, never the password.
 	if !strings.HasPrefix(store.savedPasswordHash, "$argon2id$") {
@@ -90,14 +107,13 @@ func TestSignUpRejectsBadInput(t *testing.T) {
 
 	for _, testCase := range testCases {
 		store := &fakeUserStore{}
-		server := &accountServer{users: store}
-		request := &authv1.SignUpRequest{Username: testCase.username, Password: testCase.password}
+		router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(), true)
 
-		_, err := server.SignUp(t.Context(), request)
+		recorder := callAPI(router, signUpPath, credentialsBody(testCase.username, testCase.password), "")
 
-		code := connect.CodeOf(err)
-		if code != connect.CodeInvalidArgument {
-			t.Errorf("SignUp(%q, %q): code: got %v, want %v", testCase.username, testCase.password, code, connect.CodeInvalidArgument)
+		code := errorCode(t, recorder)
+		if code != "invalid_argument" {
+			t.Errorf("SignUp(%q, %q): code: got %q, want %q", testCase.username, testCase.password, code, "invalid_argument")
 		}
 		if store.savedUsername != "" {
 			t.Errorf("SignUp(%q, %q): the account was saved anyway", testCase.username, testCase.password)
@@ -107,30 +123,28 @@ func TestSignUpRejectsBadInput(t *testing.T) {
 
 func TestSignUpReportsATakenUsername(t *testing.T) {
 	store := &fakeUserStore{err: errUsernameTaken}
-	server := &accountServer{users: store}
-	request := &authv1.SignUpRequest{Username: "sadra", Password: "purple tram winter"}
+	router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(), true)
 
-	_, err := server.SignUp(t.Context(), request)
+	recorder := callAPI(router, signUpPath, credentialsBody("sadra", "purple tram winter"), "")
 
-	code := connect.CodeOf(err)
-	if code != connect.CodeAlreadyExists {
-		t.Errorf("code: got %v, want %v", code, connect.CodeAlreadyExists)
+	code := errorCode(t, recorder)
+	if code != "already_exists" {
+		t.Errorf("code: got %q, want %q", code, "already_exists")
 	}
 }
 
 func TestSignUpHidesDatabaseErrors(t *testing.T) {
 	store := &fakeUserStore{err: errors.New("connection refused")}
-	server := &accountServer{users: store}
-	request := &authv1.SignUpRequest{Username: "sadra", Password: "purple tram winter"}
+	router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(), true)
 
-	_, err := server.SignUp(t.Context(), request)
+	recorder := callAPI(router, signUpPath, credentialsBody("sadra", "purple tram winter"), "")
 
-	code := connect.CodeOf(err)
-	if code != connect.CodeInternal {
-		t.Errorf("code: got %v, want %v", code, connect.CodeInternal)
+	code := errorCode(t, recorder)
+	if code != "internal" {
+		t.Errorf("code: got %q, want %q", code, "internal")
 	}
-	if strings.Contains(err.Error(), "connection refused") {
-		t.Errorf("the error sent to the client shows internal details: %q", err.Error())
+	if strings.Contains(recorder.Body.String(), "connection refused") {
+		t.Errorf("the error sent to the client shows internal details: %s", recorder.Body.String())
 	}
 }
 
@@ -138,7 +152,7 @@ func TestSignUpHidesDatabaseErrors(t *testing.T) {
 // browser will: a POST with a JSON body to the call's path.
 func TestSignUpOverHTTP(t *testing.T) {
 	store := &fakeUserStore{}
-	router := newRouter(store, &fakeSessionStore{}, true)
+	router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(), true)
 
 	requestBody := strings.NewReader(`{"username": "sadra", "password": "purple tram winter"}`)
 	request := httptest.NewRequest(http.MethodPost, "/auth.v1.AccountService/SignUp", requestBody)
@@ -188,7 +202,7 @@ func TestIsUniqueViolation(t *testing.T) {
 
 func TestSignUpRefusesHugeRequests(t *testing.T) {
 	store := &fakeUserStore{}
-	router := newRouter(store, &fakeSessionStore{}, true)
+	router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(), true)
 	hugePassword := strings.Repeat("a", 20*1024) // 20 KiB, over the 16 KiB limit
 	body := `{"username": "sadra", "password": "` + hugePassword + `"}`
 
