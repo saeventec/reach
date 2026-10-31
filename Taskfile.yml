@@ -10,9 +10,19 @@ tasks:
       - task --list
 
   setup:
-    desc: Install the tool versions from .mise.toml
+    desc: Install the tool versions and create your local .env file
     cmds:
       - mise install
+      - task: create-env # run the task below
+
+  create-env:
+    internal: true # a helper: hidden from "task --list"
+    # "status" decides if the task is already done: if every command here
+    # succeeds, Task skips it. So an existing .env is never overwritten.
+    status:
+      - test -f .env
+    cmds:
+      - cp .env.example .env
 
   dev:
     desc: Build and start the whole system (Ctrl+C stops it)

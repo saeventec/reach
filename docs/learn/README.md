@@ -26,3 +26,5 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [Docker](docker.md)
 - [Docker Compose](docker-compose.md)
 - [Graceful shutdown](graceful-shutdown.md)
+- [PostgreSQL](postgresql.md)
+- [Database migrations (goose)](database-migrations.md)

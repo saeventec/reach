@@ -37,6 +37,25 @@ task          # lists tasks
 task setup    # runs "mise install"
 ```
 
+## More features we use
+
+```yaml
+  setup:
+    cmds:
+      - mise install
+      - task: create-env     # run another task from this file
+
+  create-env:
+    internal: true           # a helper: hidden from "task --list", can't be run directly
+    status:                  # if every command here succeeds, the task is "up to date"
+      - test -f .env         # "does the file .env exist?"
+    cmds:
+      - cp .env.example .env # only runs when .env is missing
+```
+
+- `dir`: run the commands inside a folder, for example `dir: services/hello`.
+- `status`: makes a task safe to run many times. Here, an existing `.env` is never overwritten.
+
 ## Alternatives
 
 - **Make:** available everywhere, but its syntax is tricky (tabs matter) and it works differently on Windows.

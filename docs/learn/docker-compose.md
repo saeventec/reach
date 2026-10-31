@@ -27,13 +27,59 @@ services:
 - **ports:** without this line, the service is only reachable inside the Compose network. `127.0.0.1` keeps it private to your computer.
 - **healthcheck:** we keep Docker's default timing. It checks every 30 seconds, so a new container shows `(health: starting)` for up to 30 seconds before `(healthy)`. `wget --spider` asks for the page without saving it.
 
+## Start order: depends_on
+
+`depends_on` makes a service wait for another one. The `condition` says what to wait for:
+
+```yaml
+hello-migrate:
+  depends_on:
+    postgres:
+      condition: service_healthy                 # wait until its health check passes
+
+hello:
+  depends_on:
+    hello-migrate:
+      condition: service_completed_successfully  # wait until it exited with code 0
+```
+
+So `task dev` starts: postgres (healthy) → hello-migrate (finished) → hello.
+
+`start_period` and `start_interval` in a health check mean: while the container is starting, check often (every second), not every 30 seconds. Postgres uses them, so the next containers don't wait long.
+
+## Settings from .env
+
+Compose reads the `.env` file next to `compose.yaml` and fills in `${NAME}`:
+
+```yaml
+POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (run "task setup")}
+```
+
+The `:?` part stops Compose with that message if the setting is missing or empty, instead of starting with a blank password.
+
+## Volumes
+
+A container's own files disappear when the container is removed. A **named volume** is storage that Docker keeps separately, so data survives:
+
+```yaml
+services:
+  postgres:
+    volumes:
+      - postgres-data:/var/lib/postgresql   # volume name : folder inside the container
+
+volumes:
+  postgres-data:                            # declare the volume
+```
+
 ## Useful commands
 
 ```sh
 task dev                  # = docker compose up --build: build and start everything
-docker compose ps         # list the services and their health
+docker compose ps         # list the running services and their health
+docker compose ps -a      # also list services that have exited, like hello-migrate
 docker compose logs hello # show one service's logs
-docker compose down       # remove the stopped containers and the network
+docker compose down       # remove the stopped containers and the network (volumes are kept)
+docker compose down -v    # also delete the volumes: all database data is lost!
 ```
 
 Ctrl+C in the `task dev` terminal stops the containers. They still exist, stopped, until `docker compose down`.

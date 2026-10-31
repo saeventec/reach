@@ -1,8 +1,43 @@
 # Starts the whole Reach system with Docker Compose. Run it with "task dev".
 # Each entry under "services" becomes one container.
+# Start order: postgres (healthy) → hello-migrate (finished) → hello.
 # Learn more: docs/learn/docker-compose.md
 
 services:
+  # The database. Learn more: docs/learn/postgresql.md
+  postgres:
+    image: postgres:18.6
+    environment:
+      # ${...} is filled in from the .env file. ":?" stops with this
+      # message if the setting is missing.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (run "task setup")}
+      # Create the hello service's own database on the first start.
+      POSTGRES_DB: hello
+    volumes:
+      # Keep the data in a named volume, so it survives when the container
+      # is removed. Postgres 18 images keep their data in this folder.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      # pg_isready comes with Postgres. It succeeds once the database
+      # accepts connections.
+      test: ["CMD", "pg_isready", "--username=postgres", "--dbname=hello"]
+      # While starting (the first 30 seconds), check every second instead
+      # of every 30 seconds, so the next containers don't wait long.
+      start_period: 30s
+      start_interval: 1s
+
+  # Applies the hello database migrations once, then exits.
+  hello-migrate:
+    build: ./services/hello/migrations
+    environment:
+      GOOSE_DRIVER: postgres
+      # The database address. "postgres" (after the @) is the service name
+      # above: inside Compose, containers find each other by name.
+      GOOSE_DBSTRING: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/hello?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   hello:
     # Build the image from services/hello/Dockerfile.
     build: ./services/hello
@@ -15,3 +50,11 @@ services:
     # "docker compose ps" as healthy or unhealthy. wget comes with Alpine.
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/healthz"]
+    depends_on:
+      # Start only after the migrations finished without an error.
+      hello-migrate:
+        condition: service_completed_successfully
+
+# Named volumes: storage that Docker manages, kept between restarts.
+volumes:
+  postgres-data:
