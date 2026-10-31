@@ -95,6 +95,27 @@ for _, testCase := range testCases {
 - `errors.Is(got, want)` checks that the error is the expected one. `errors.Is(nil, nil)` is true, so "no error" cases work too.
 - The message names the input, so a failure says exactly which case broke.
 
+## Integration tests
+
+A **unit test** checks one piece on its own, with fakes for everything around it. It is fast, but a fake store never runs our SQL. An **integration test** checks pieces working together for real: here, the Postgres stores against a real Postgres.
+
+[services/auth/store_integration_test.go](../../services/auth/store_integration_test.go) uses **Testcontainers** ([ADR 0023](../decisions/0023-use-testcontainers-for-integration-tests.md)): the test itself starts a new, empty Postgres in Docker, applies our migrations with goose (the same tool and version as `auth-migrate`), runs the cases, and removes the container at the end.
+
+```go
+container, err := postgres.Run(t.Context(), "postgres:18.6",
+	postgres.WithDatabase("auth"),
+	postgres.BasicWaitStrategies(),          // wait until Postgres accepts connections
+)
+testcontainers.CleanupContainer(t, container) // remove it when the test ends
+```
+
+- **One container, many cases:** starting Postgres takes a few seconds, so `TestPostgresStores` starts it once, and each case is a **subtest** (`t.Run("refuses an expired session", ...)`). Each case uses its own usernames, so they don't get in each other's way.
+- **They need Docker running.** `go test -short ./...` skips them (`testing.Short()`), for a quick run without Docker. `task test` and CI run them.
+- **They test what fakes can't:** the SQL (an expired session is refused, a user can't delete another user's session), the migrations, and the database's own rules (`UNIQUE`, `CHECK`).
+- **Break it on purpose:** a test is only useful if it can fail. Removing `AND user_id = ...` from `DeleteSession` makes "a user can't delete another user's session" fail with "frank's session was deleted by another user". Try it yourself, then put the line back.
+
+**The cost:** Testcontainers brings Docker's Go client and many other modules into `go.mod` (about 130 more). They are only used by the tests, never compiled into the service.
+
 ## Web app tests (Vitest)
 
 The web app uses:

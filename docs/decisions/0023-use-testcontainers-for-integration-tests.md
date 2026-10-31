@@ -28,3 +28,5 @@ Add **integration tests** that run our queries against a real Postgres. The test
 - Integration tests are slower (a few seconds to start Postgres) and need Docker running.
 - Fast unit tests with fakes stay, for the logic that doesn't need a database.
 - One new test-only library. We explain it when we add it (step 8).
+
+**Update (2026-10-31), built in milestone 2, step 8:** `testcontainers-go` v0.44.0 with its Postgres module, and goose v3.29.0 as a library to apply the migrations (the same version as `auth-migrate`). One container per test run, with subtests. It brought about 130 indirect modules into `go.mod`, test-only. The auth image's `go mod download` step now also downloads them, which makes the first image build slower.
