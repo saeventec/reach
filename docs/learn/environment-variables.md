@@ -27,9 +27,13 @@ In the terminal:
 PORT=9000 some-program   # sets PORT for this one command only
 ```
 
-The hello service reads two: `PORT` (default `8080`) and `DATABASE_URL` (no default, because it contains a password: the service stops with a clear message if it is missing).
+The hello service reads two: `PORT` (default `8080`) and `DATABASE_URL` (no default, because it contains a password: the service stops with a clear message if it is missing). The auth service reads the same two, plus `COOKIE_SECURE` (see below).
 
 In Docker Compose, they are set in `compose.yaml`, with secrets filled in from the git-ignored `.env` file.
+
+## Settings with a safe default
+
+Most settings have a default that is good for your computer (`PORT=8080`). Settings that protect security work the other way round: their default is the **safe** choice, and your computer turns them off on purpose. `COOKIE_SECURE` is `true` unless `.env` says `false` ([services/auth/config.go](../../services/auth/config.go)). So a real server is never unsafe just because someone forgot a line.
 
 ## Alternatives
 

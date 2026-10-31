@@ -36,7 +36,7 @@ if errors.Is(err, pgx.ErrNoRows) {
 ## Alternatives
 
 - **`database/sql` + a driver:** Go's general database interface, one extra layer.
-- **sqlc:** generates this kind of code from `.sql` files. We add it in milestone 2.
+- **sqlc:** generates this kind of code from `.sql` files. The auth service uses it (see [sqlc.md](sqlc.md)); `hello` keeps plain pgx as an example.
 - **GORM, Ent (ORMs):** you work with Go objects, and they write the SQL for you. Less to type, but you see less.
 
 ## Learn more

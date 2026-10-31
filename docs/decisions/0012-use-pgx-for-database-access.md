@@ -26,3 +26,5 @@ Use pgx, the standard Postgres driver for Go, directly. Add sqlc (which generate
 ## Consequences
 
 Milestone 2 adds sqlc and moves the queries into `.sql` files.
+
+**Update (2026-10-31):** sqlc was added to the `auth` service (milestone 2, step 3). `hello` keeps its one hand-written pgx query, as a small example of plain pgx.

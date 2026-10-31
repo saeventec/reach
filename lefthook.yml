@@ -6,7 +6,10 @@
 
 # Load .lefthookrc first, so the project's tools are found, also when git is
 # run by your editor instead of your terminal.
-rc: .lefthookrc
+# The "./" matters: the hook runs in "sh", and on Linux and WSL2 that is
+# often dash, which only looks for a bare file name in the PATH folders,
+# not in the current folder.
+rc: ./.lefthookrc
 
 pre-commit:
   jobs:

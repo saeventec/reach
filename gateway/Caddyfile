@@ -11,6 +11,11 @@
 		reverse_proxy hello:8080
 	}
 
+	# The auth service's API, like /auth.v1.AccountService/SignUp.
+	handle /auth.v1.* {
+		reverse_proxy auth:8080
+	}
+
 	# Everything else goes to the web app. A "handle" without a path is the
 	# fallback: it is used only when no other handle matches.
 	handle {

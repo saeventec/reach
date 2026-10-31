@@ -82,11 +82,54 @@ useEffect(() => {
 - `LoadState` is a **union type**: the state is either loading, loaded (with a greeting), or failed. TypeScript only lets you use `state.greeting` after checking that `state.status === "loaded"`.
 - Functions whose names start with `use` are called **hooks**. Call them only at the top of a component, never inside an `if`.
 
-Later (milestone 2), TanStack Query can do this loading for us, with caching and retries. Writing it by hand once shows what such a library saves.
+Later, TanStack Query can do this loading for us, with caching and retries. Writing it by hand first shows what such a library saves (the owner chose "later" in milestone 2).
+
+## Forms
+
+From [apps/web/src/auth/LogInPage.tsx](../../apps/web/src/auth/LogInPage.tsx):
+
+```tsx
+const [username, setUsername] = useState("");
+
+async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault();          // don't let the browser reload the page
+  const user = await authApi.logIn(username, password);
+  onLoggedIn(user);
+}
+
+<form onSubmit={handleSubmit}>
+  <TextField label="Username" value={username} onChange={setUsername} autoComplete="username" />
+  <button type="submit">Log in</button>
+</form>
+```
+
+- **Controlled inputs:** the input shows `value` from state, and `onChange` puts every keystroke back into state. So the state always holds what is on the screen.
+- **`<form onSubmit>`** runs on a click on the submit button and on Enter in a field. `preventDefault()` stops the browser's old behavior of sending the form and loading a new page.
+- **`autoComplete`** tells the browser and password managers what a field is: `username`, `current-password` (login) or `new-password` (sign-up, so they can suggest a strong one).
+- **`<label>` around the input** connects the two: clicking the label focuses the input, and screen readers read the label. Tests find inputs the same way: `screen.getByLabelText("Username")`.
+- While the call runs, the button is `disabled`, so a second click can't send the form twice.
+- **Errors:** `errorMessage` in [authClient.ts](../../apps/web/src/auth/authClient.ts) shows the service's message for errors written for people ("the username is already taken"), and a general message for everything else, because an `internal` error's text is not meant for users.
+
+## Lists and keys
+
+From [apps/web/src/auth/DeviceList.tsx](../../apps/web/src/auth/DeviceList.tsx):
+
+```tsx
+<ul>
+  {state.devices.map((device) => (
+    <DeviceItem key={device.id} device={device} ... />
+  ))}
+</ul>
+```
+
+- **`map`** turns each device into a `<DeviceItem>`: a list of data becomes a list of components.
+- **`key`** gives each item a stable name. When the list changes (a device is logged out), React uses the keys to know which item went away, instead of redrawing them all. Use an id from the data, never the position in the list.
+- After logging out a device, `setState((current) => removeDevice(current, deviceId))` changes the list on the screen without loading it again. Passing a **function** to `setState` gets the newest state, even if it changed while the call was running.
+- **`aria-label`** gives a button a name for screen readers and tests: every device's button shows "Log out", but its name is "Log out Safari on iPhone".
 
 ## Folders by feature
 
-Code is grouped by what it does: `src/greeting/` holds the component, its API client and its test. `src/gen/` holds generated code (never edit it).
+Code is grouped by what it does: `src/greeting/` holds the component, its API client and its test, and `src/auth/` holds the login, sign-up and account pages with their API client. `src/gen/` holds generated code (never edit it).
 
 ## Alternatives
 

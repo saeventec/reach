@@ -15,7 +15,7 @@ Format and lint mistakes are found on your computer in a few seconds, before the
 `lefthook.yml`, shortened:
 
 ```yaml
-rc: .lefthookrc              # load this file first (see below)
+rc: ./.lefthookrc            # load this file first (see below)
 
 pre-commit:
   jobs:
@@ -35,6 +35,7 @@ pre-commit:
 - **glob:** a job runs only if the commit contains matching files. A docs-only commit skips all three.
 - **Careful with `**`:** in Lefthook it means "one or more folders", so `apps/web/**/*` does not match `apps/web/package.json`. That's why the web job has two patterns.
 - **rc file:** editors like VS Code can run git without your shell's setup, so tools like `task` and `npm` would not be found. `.lefthookrc` adds mise's **shims** folder to the `PATH`. A shim is a small stand-in for a tool that runs the version from `.mise.toml`.
+- **Why `./` in `./.lefthookrc`:** the hook is a `sh` script. On Linux and WSL2, `sh` is usually **dash**, a small, strict shell. Its `.` command ("run this file in the current shell") only searches the `PATH` folders for a bare name like `.lefthookrc`, not the current folder. `./` says "the file right here", which works in every shell. After changing `rc`, run `lefthook install` to rewrite the hook.
 - The jobs check the whole folder as it is on disk, not only the staged part. Simple, and good enough for a small project.
 
 What a blocked commit looks like:

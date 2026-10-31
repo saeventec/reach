@@ -54,7 +54,11 @@ return nil, connect.NewError(connect.CodeNotFound, "there is no greeting yet")
 {"code":"not_found","message":"there is no greeting yet"}
 ```
 
-Common codes: `not_found`, `invalid_argument` (bad input), `unauthenticated` (not logged in), `internal` (a bug or outage on our side). For `internal` errors we log the details and send only a general message, because details can reveal how the system works inside.
+Common codes: `not_found`, `invalid_argument` (bad input), `already_exists` (for example, a taken username), `unauthenticated` (not logged in), `internal` (a bug or outage on our side). For `internal` errors we log the details and send only a general message, because details can reveal how the system works inside.
+
+### A limit on message size
+
+The auth service reads at most 16 KiB per message (`connecthttp.WithReadMaxBytes` in [services/auth/main.go](../../services/auth/main.go)). Without a limit, a client could send a message of many megabytes, and the service would read it all into memory before our own rules (like "at most 128 characters") ever run. A bigger message gets the code `resource_exhausted`. The real messages are far smaller: a sign-up is under 1 KiB.
 
 ## The TypeScript client
 

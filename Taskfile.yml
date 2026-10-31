@@ -33,15 +33,24 @@ tasks:
     desc: Build and start the whole system (Ctrl+C stops it)
     cmds:
       # --build rebuilds the images, so your latest code changes are used.
-      # --watch keeps the web app and the hello service up to date while you
+      # --watch keeps the web app and the Go services up to date while you
       # edit (Compose Watch).
       - docker compose up --build --watch
 
+  stop:
+    desc: Stop the whole system and remove its containers (your data is kept)
+    cmds:
+      # "down" stops and removes the containers and Compose's network. The
+      # next "task dev" creates them again. Named volumes (the database's
+      # data) are kept: only "down --volumes" would delete them.
+      - docker compose down
+
   generate:
-    desc: Check the .proto files and generate code from them
+    desc: Generate code from the .proto files (buf) and the SQL queries (sqlc)
     cmds:
       - buf lint
       - buf generate
+      - cd services/auth && sqlc generate
 
   lint:
     desc: Check all code for likely bugs and formatting (changes nothing)
@@ -52,9 +61,12 @@ tasks:
 
   lint:go:
     desc: Check the Go code
-    dir: services/hello
     cmds:
-      - golangci-lint run ./...
+      # Each service is its own Go module, so it is checked from its own
+      # folder. Each command runs on its own, so a "cd" doesn't carry over
+      # to the next line.
+      - cd services/hello && golangci-lint run ./...
+      - cd services/auth && golangci-lint run ./...
 
   lint:web:
     desc: Check the web app's code (Oxlint) and formatting (Prettier)
@@ -79,9 +91,9 @@ tasks:
 
   format:go:
     desc: Format the Go code
-    dir: services/hello
     cmds:
-      - golangci-lint fmt ./...
+      - cd services/hello && golangci-lint fmt ./...
+      - cd services/auth && golangci-lint fmt ./...
 
   format:web:
     desc: Format the web app's code (Prettier)
@@ -102,8 +114,11 @@ tasks:
       - docker compose build
 
   test:
-    desc: Run all tests (the hello service and the web app)
+    desc: Run all tests (the Go services and the web app). Needs Docker running.
     cmds:
+      # The auth service's integration tests start a Postgres in Docker
+      # (docs/learn/testing.md#integration-tests).
       # -C and --prefix run each command inside the given folder.
       - go -C services/hello test ./...
+      - go -C services/auth test ./...
       - npm test --prefix apps/web

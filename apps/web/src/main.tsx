@@ -2,11 +2,18 @@
 // Learn more: docs/learn/react.md
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router";
 import "./index.css";
 import App from "./App.tsx";
+import { authApi } from "./auth/authClient.ts";
+import { fetchNewestGreeting } from "./greeting/greetingClient.ts";
 
+// BrowserRouter connects React Router to the browser's address bar and its
+// Back and Forward buttons. Learn more: docs/learn/react-router.md
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>
+      <App authApi={authApi} loadGreeting={fetchNewestGreeting} />
+    </BrowserRouter>
   </StrictMode>,
 );

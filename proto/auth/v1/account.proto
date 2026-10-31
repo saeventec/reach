@@ -1,0 +1,30 @@
+// The account API of the auth service: creating accounts. Login and
+// sessions come in a later step. Code for the service and the web app is
+// generated from this file. Learn more: docs/learn/protobuf.md
+syntax = "proto3";
+
+package auth.v1;
+
+// AccountService manages user accounts.
+service AccountService {
+  // SignUp creates a new account. It fails with ALREADY_EXISTS if the
+  // username is taken, and with INVALID_ARGUMENT if the username or the
+  // password breaks the rules (the message says which rule).
+  rpc SignUp(SignUpRequest) returns (SignUpResponse) {}
+}
+
+// SignUpRequest is what the person typed in the sign-up form.
+message SignUpRequest {
+  // As typed. The service removes spaces around it and makes it lowercase.
+  string username = 1;
+  // As typed. It is only hashed, never stored or logged.
+  string password = 2;
+}
+
+// SignUpResponse describes the new account.
+message SignUpResponse {
+  // The account's id: a UUIDv7, as text.
+  string user_id = 1;
+  // The username as it was stored: lowercase, without spaces around it.
+  string username = 2;
+}

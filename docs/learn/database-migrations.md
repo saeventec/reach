@@ -35,7 +35,7 @@ Golden rule: **never edit a migration that has already run.** goose won't run it
 
 ## In our setup
 
-The `hello-migrate` container runs `goose up` and exits:
+Each service has its own migrations and its own migrate container: `hello-migrate` for `services/hello/migrations/`, and `auth-migrate` for `services/auth/migrations/`. Each one runs `goose up` and exits:
 
 ```
 OK   00001_create_greetings_table.sql (1.66ms)

@@ -67,14 +67,51 @@ Field "1" with name "id" on message "GetGreetingResponse" changed type from "str
 
 The fix: keep `message = 1`, and give the new field the next free number, `id = 2`. The order of the fields in the file doesn't matter, only the numbers. CI runs this check on every change (see [ci.md](ci.md)).
 
+## Lists, dates and default values
+
+From [proto/auth/v1/session.proto](../../proto/auth/v1/session.proto):
+
+```protobuf
+import "google/protobuf/timestamp.proto";
+
+message ListDevicesResponse {
+  repeated Device devices = 1;                  // a list of zero or more devices
+}
+
+message Device {
+  google.protobuf.Timestamp last_used_at = 4;   // a moment in time
+  bool is_current_device = 5;
+}
+```
+
+- **`repeated`** makes a field a list. In Go it is a slice (`[]*Device`), in TypeScript an array.
+- **Well-known types** are standard messages that come with Protobuf, like `google.protobuf.Timestamp`. Each language maps them to its own type: `timestamppb.Timestamp` in Go (`timestamppb.New(time)` makes one), and `Timestamp` from `@bufbuild/protobuf/wkt` in TypeScript. In JSON, a Timestamp is text in the RFC 3339 format, always in UTC: `"2026-10-31T09:00:00Z"`.
+- **Default values are left out of JSON.** A `bool` that is `false`, a number that is `0` or an empty text is not sent at all. So a device that isn't the current one has no `isCurrentDevice` in the JSON. The generated code fills in the default again, so your code always sees `false`.
+
 ## Our config files
 
 - `buf.yaml`: where the `.proto` files are (`proto/`) and which lint rules to use.
 - `buf.gen.yaml`: which generators to run and where their output goes. "Managed mode" sets the Go import path there, so the `.proto` files contain no Go-specific settings.
 
+### One API per service
+
+Each service is its own Go module, so each one gets only its own API's Go code:
+
+```yaml
+- local: protoc-gen-go
+  out: services/auth/gen/proto
+  types: [auth.v1]   # only the auth.v1 package
+```
+
+- **`types`** keeps only the listed Protobuf packages for that generator. (buf can't limit a generator by file, only by package or type.)
+- **`path: auth`** in the managed-mode `override` gives each folder of `proto/` its own Go import path.
+- `auth`'s Protobuf code goes into `gen/proto/`, not straight into `gen/`, because sqlc writes into `gen/queries/`. `clean: true` empties each generator's `out` folder first, and would otherwise delete sqlc's code.
+- The web app talks to every service, so its generator has no `types`: it gets all APIs.
+- Side effect: with `types`, buf rebuilds the API description that is embedded in the generated Go code, and leaves out empty `{}` options. That is why `hello`'s `greeting.pb.go` changed a little in milestone 2, with no real change.
+
 ## TypeScript
 
-A third generator, `protoc-gen-es`, writes TypeScript for the web app: `apps/web/src/gen/hello/v1/greeting_pb.ts`. It contains the message types (`GetGreetingResponse`) and the service (`GreetingService`). `int64` fields become `bigint`, JavaScript's type for big whole numbers.
+A third generator, `protoc-gen-es`, writes TypeScript for the web app: `apps/web/src/gen/hello/v1/greeting_pb.ts` (and `auth/v1/account_pb.ts`). It contains the message types (`GetGreetingResponse`) and the service (`GreetingService`). `int64` fields become `bigint`, JavaScript's type for big whole numbers.
 
 This generator is an npm package of the web app, not a mise tool. That way its version always matches the `@bufbuild/protobuf` library the generated code needs. So `task setup` (which runs `npm ci`) must run before `task generate`.
 

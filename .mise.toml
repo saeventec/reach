@@ -11,6 +11,9 @@ buf = "1.75.0"                  # checks .proto files and runs the code generato
 protoc-gen-go = "1.36.12"       # generator: Go types for Protobuf messages
 protoc-gen-connect-go = "2.0.2" # generator: Go code for Connect services
 
+# Database code. Learn more: docs/learn/sqlc.md
+sqlc = "1.31.1" # generates Go functions from SQL queries
+
 # Linting. Learn more: docs/learn/linting.md
 golangci-lint = "2.15.0" # many Go linters in one tool
 lefthook = "2.2.2"        # runs the checks before each git commit

@@ -8,7 +8,7 @@ Reach is built from scratch as a learning project, to practice professional soft
 
 ## Status
 
-Milestone 1 done: a React page shows a greeting read from Postgres, through the Caddy gateway, all started with `task dev`. See [docs/milestones/](docs/milestones/).
+Milestone 2 done: accounts. You can sign up, log in, stay logged in, see the devices you are logged in on, and log out (also another device). Passwords are hashed with argon2id, sessions live in HttpOnly cookies, and logins are rate limited. See [docs/milestones/](docs/milestones/).
 
 ## Set up
 
@@ -21,6 +21,7 @@ mise trust     # allows mise to read this project's .mise.toml
 mise install   # installs Go, Node.js, Task and the other tools, in the versions from .mise.toml
 task setup     # installs the libraries, creates .env, turns on the commit checks
 task dev       # builds and starts the whole system (Ctrl+C stops it)
+task stop      # stops it and removes its containers; your data is kept
 ```
 
 Then open http://localhost:8080.
