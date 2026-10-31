@@ -36,13 +36,43 @@ Postgres runs in Docker Compose (the `postgres` service), from the official imag
 
 - `POSTGRES_PASSWORD` sets the password of the main user, `postgres`. It comes from your `.env` file.
 - The data is kept in the named volume `postgres-data`, so it survives restarts.
-- The port is not published to your computer: only containers in Compose can reach it. That is safer, and you can still look inside:
+- The port is published to your own computer only (`127.0.0.1:5432`), so database tools outside Docker can connect. See "Connect from your computer" below.
+
+You can also look inside with `psql`, Postgres's command-line client, running in the container:
 
 ```sh
 docker compose exec postgres psql --username=postgres --dbname=hello
 ```
 
-`psql` is Postgres's command-line client. Type SQL ending with `;`, `\dt` lists tables, `\q` quits.
+Type SQL ending with `;`, `\dt` lists tables, `\q` quits.
+
+## Connect from your computer
+
+`compose.yaml` publishes the database port like this:
+
+```yaml
+ports:
+  - "127.0.0.1:5432:5432"   # your computer's port 5432 → the container's port 5432
+```
+
+The `127.0.0.1` matters. Without it (`"5432:5432"`), Docker would open the database to every device on your Wi-Fi or office network. With it, only programs on your own computer can connect. On Windows, Docker Desktop also forwards it from WSL2 to Windows, so `localhost:5432` works on both sides.
+
+Connect with any Postgres tool. The recommended one is the **PostgreSQL** extension for VS Code, by Microsoft (`ms-ossdata.vscode-pgsql`, in `.vscode/extensions.json`). Use these settings:
+
+| Setting | Value |
+| --- | --- |
+| Host | `localhost` |
+| Port | `5432` |
+| Database | `auth` or `hello` |
+| User and password | see below; the passwords are in your `.env` |
+| SSL | off (disable): fine on your own computer, not on a real server |
+
+Which user:
+
+- **`auth` or `hello`** (`AUTH_DATABASE_PASSWORD`, `HELLO_DATABASE_PASSWORD`): you see exactly what that service sees, and nothing else. A good habit for everyday browsing.
+- **`postgres`** (`POSTGRES_PASSWORD`): the superuser. It sees and can change everything, in every database. Use it carefully.
+
+If port 5432 is already taken (for example, by another Postgres installed on your computer), `task dev` fails with "port is already allocated". Stop the other Postgres, or change the first number, for example `"127.0.0.1:5433:5432"`, and connect to port 5433.
 
 ## One user per service
 

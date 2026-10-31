@@ -5,6 +5,7 @@
     "esbenp.prettier-vscode",
     "ms-azuretools.vscode-containers",
     "EditorConfig.EditorConfig",
-    "bradlc.vscode-tailwindcss"
+    "bradlc.vscode-tailwindcss",
+    "ms-ossdata.vscode-pgsql"
   ]
 }

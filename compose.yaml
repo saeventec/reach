@@ -13,6 +13,12 @@ services:
       # ${...} is filled in from the .env file. ":?" stops with this
       # message if the setting is missing.
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (run "task setup")}
+    ports:
+      # Let database tools on your computer (like the VS Code PostgreSQL
+      # extension) connect at localhost:5432. 127.0.0.1 means only your own
+      # computer can reach it, not other devices on your network.
+      # Learn more: docs/learn/postgresql.md#connect-from-your-computer
+      - "127.0.0.1:5432:5432"
     volumes:
       # Keep the data in a named volume, so it survives when the container
       # is removed. Postgres 18 images keep their data in this folder.
