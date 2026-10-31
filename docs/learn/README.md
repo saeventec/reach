@@ -36,3 +36,4 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [TypeScript](typescript.md)
 - [npm and package.json](npm.md)
 - [Tailwind CSS](tailwind.md)
+- [Caddy and the gateway](caddy.md)

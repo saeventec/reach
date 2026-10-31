@@ -27,19 +27,17 @@ The `z` at the end is an old Google convention, so the name doesn't clash with a
 
 ## Tiny example
 
+The health check is only reachable inside Compose: the gateway doesn't forward `/healthz`. So we run `wget` inside the hello container, while `task dev` runs:
+
 ```sh
-curl -i http://localhost:8080/healthz
+docker compose exec hello wget --quiet --output-document=- http://localhost:8080/healthz
 ```
 
 ```
-HTTP/1.1 200 OK
-Content-Type: text/plain; charset=utf-8
-Content-Length: 2
-
 ok
 ```
 
-`curl` is a command-line tool that sends HTTP requests. `-i` also shows the status and headers.
+`wget` and `curl` are command-line tools that send HTTP requests. `curl -i` also shows the status code and headers. See [connect-rpc.md](connect-rpc.md) for a `curl` call through the gateway.
 
 ## Alternatives
 

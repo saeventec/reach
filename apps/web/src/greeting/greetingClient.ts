@@ -10,8 +10,8 @@ export type Greeting = {
   message: string
 }
 
-// API calls go to the same address as the page itself. The development
-// server forwards them to the hello service (see vite.config.ts).
+// API calls go to the same address as the page itself: the gateway, which
+// forwards them to the hello service (see gateway/Caddyfile).
 const transport = createConnectTransport({ baseUrl: window.location.origin })
 const client = createClient(GreetingService, transport)
 

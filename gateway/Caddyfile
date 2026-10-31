@@ -1,0 +1,19 @@
+# The gateway: the only address the browser talks to. It forwards each
+# request to the right service. Learn more: docs/learn/caddy.md
+#
+# ":80" means: any hostname, on port 80, plain HTTP. With no hostname,
+# Caddy does not turn on automatic HTTPS. HTTPS comes with a real server
+# (milestone 10).
+:80 {
+	# API calls: their paths start with the API package name, like
+	# /hello.v1.GreetingService/GetGreeting. The * at the end means "starts with".
+	handle /hello.v1.* {
+		reverse_proxy hello:8080
+	}
+
+	# Everything else goes to the web app. A "handle" without a path is the
+	# fallback: it is used only when no other handle matches.
+	handle {
+		reverse_proxy web:5173
+	}
+}

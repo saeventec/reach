@@ -21,6 +21,8 @@ task setup     # prepares the project
 task dev       # builds and starts the whole system (Ctrl+C stops it)
 ```
 
+Then open http://localhost:8080.
+
 Run `task` to see all available commands.
 
 ## Documentation

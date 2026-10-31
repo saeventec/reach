@@ -12,19 +12,22 @@ Reach is made of several services (soon: hello, Postgres, the web app, Caddy). C
 
 ## Tiny example
 
-Our `compose.yaml`:
+Parts of our `compose.yaml`:
 
 ```yaml
 services:
   hello:                          # the service name
     build: ./services/hello       # build the image from this folder's Dockerfile
-    ports:
-      - "127.0.0.1:8080:8080"     # your computer's port 8080 → the container's port 8080
     healthcheck:                  # how Docker checks that it is alive
       test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/healthz"]
+
+  gateway:
+    image: caddy:2.11.7-alpine    # use a ready-made image, no build
+    ports:
+      - "127.0.0.1:8080:80"       # your computer's port 8080 → the container's port 80
 ```
 
-- **ports:** without this line, the service is only reachable inside the Compose network. `127.0.0.1` keeps it private to your computer.
+- **ports:** publishes a container's port on your computer. Without it, a service is only reachable inside the Compose network, by its name (`hello:8080`). Only the gateway has `ports`: everything else is reached through it. `127.0.0.1` keeps it private to your computer.
 - **healthcheck:** Docker runs the `test` command regularly. `wget --spider` asks for the page without saving it. The timing is explained in "Start order" below.
 
 ## Start order: depends_on

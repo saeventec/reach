@@ -29,7 +29,7 @@ hellov1connect.RegisterGreetingServiceHandler(connectServer, greetingService)
 connecthttp.Mount(router, connectServer)
 ```
 
-Calling it with curl:
+Calling it with curl, through the gateway:
 
 ```sh
 curl --header "Content-Type: application/json" --data '{}' \
@@ -69,7 +69,7 @@ const client = createClient(GreetingService, transport)
 const response = await client.getGreeting({})   // typed: response.message is a string, response.id a bigint
 ```
 
-`baseUrl: window.location.origin` means "the same address as the page". The browser then only talks to one address. In development, Vite forwards API calls to the hello service (`server.proxy` in `vite.config.ts`). In step 6, the Caddy gateway takes over that job.
+`baseUrl: window.location.origin` means "the same address as the page". The browser only talks to one address, the gateway (http://localhost:8080), and the gateway forwards API calls to the hello service. See [caddy.md](caddy.md).
 
 ## Alternatives
 

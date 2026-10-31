@@ -44,11 +44,8 @@ services:
     environment:
       # The same database address as hello-migrate uses.
       DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/hello?sslmode=disable
-    ports:
-      # "host:container". Port 8080 on your computer forwards to port 8080
-      # in the container. 127.0.0.1 means only your own computer can reach
-      # it, not other devices on your network.
-      - "127.0.0.1:8080:8080"
+    # No "ports": the browser reaches the hello service only through the
+    # gateway. Inside Compose, the gateway finds it as hello:8080.
     # Docker calls /healthz regularly and shows the result in
     # "docker compose ps" as healthy or unhealthy. wget comes with Alpine.
     healthcheck:
@@ -69,11 +66,9 @@ services:
       hello-migrate:
         condition: service_completed_successfully
 
-  # The web app's development server (Vite). Open http://localhost:5173
+  # The web app's development server (Vite). Reached through the gateway.
   web:
     build: ./apps/web
-    ports:
-      - "127.0.0.1:5173:5173"
     # Compose Watch (started by "task dev"): keep the container up to date
     # while you edit. Learn more: docs/learn/docker-compose.md#compose-watch
     develop:
@@ -87,6 +82,21 @@ services:
         # New libraries need a new image (npm ci runs in the Dockerfile).
         - action: rebuild
           path: ./apps/web/package-lock.json
+
+  # The gateway (Caddy): the only service your browser talks to.
+  # Open http://localhost:8080. Learn more: docs/learn/caddy.md
+  gateway:
+    image: caddy:2.11.7-alpine
+    ports:
+      # "host:container". Port 8080 on your computer forwards to port 80 in
+      # the container. 127.0.0.1 means only your own computer can reach it,
+      # not other devices on your network.
+      - "127.0.0.1:8080:80"
+    volumes:
+      # Share the gateway/ folder (with the Caddyfile) with the container,
+      # read-only (":ro"). Caddy's docs say to share the folder, not the
+      # file alone, so edits to the file are always seen.
+      - ./gateway:/etc/caddy:ro
 
 # Named volumes: storage that Docker manages, kept between restarts.
 volumes:

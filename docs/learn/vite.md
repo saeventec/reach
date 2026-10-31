@@ -4,7 +4,7 @@
 
 Vite is the build tool for the web app. It has two jobs:
 
-- **Development server** (`npm run dev`): serves the app at http://localhost:5173. When you save a file, the page updates within a moment, without a full reload. This is called **hot module replacement (HMR)**.
+- **Development server** (`npm run dev`): serves the app on port 5173. With `task dev`, you open it through the gateway at http://localhost:8080. When you save a file, the page updates within a moment, without a full reload. This is called **hot module replacement (HMR)**.
 - **Build** (`npm run build`): bundles all files into a few small, optimized files in `dist/`, ready for a real web server.
 
 ## Why we use it
