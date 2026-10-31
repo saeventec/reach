@@ -15,5 +15,11 @@ export default defineConfig({
     // container, "localhost" is the container itself, so without this
     // Docker could not forward your browser's requests to Vite.
     host: true,
+    // Forward API calls to the hello service, so the browser only talks to
+    // one address. Temporary: in step 6, the Caddy gateway takes over.
+    // "hello" is the service's name in compose.yaml.
+    proxy: {
+      '/hello.v1.GreetingService': 'http://hello:8080',
+    },
   },
 })

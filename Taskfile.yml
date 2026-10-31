@@ -41,7 +41,8 @@ tasks:
       - buf generate
 
   test:
-    desc: Run the tests of the hello service
-    dir: services/hello # run the commands inside this folder
+    desc: Run all tests (the hello service and the web app)
     cmds:
-      - go test ./...
+      # -C and --prefix run each command inside the given folder.
+      - go -C services/hello test ./...
+      - npm test --prefix apps/web

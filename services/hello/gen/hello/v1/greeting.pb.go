@@ -66,10 +66,12 @@ func (*GetGreetingRequest) Descriptor() ([]byte, []int) {
 	return file_hello_v1_greeting_proto_rawDescGZIP(), []int{0}
 }
 
+// GetGreetingResponse carries one greeting.
+// Each field's number is its ID in the binary format. Never reuse or change
+// a number: new fields get the next free one.
 type GetGreetingResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The number is the field's ID in the binary format. Never reuse or change
-	// it: new fields get the next free number.
+	// The greeting's text.
 	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
 	// The greeting's id in the database.
 	Id            int64 `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`

@@ -56,6 +56,21 @@ return nil, connect.NewError(connect.CodeNotFound, "there is no greeting yet")
 
 Common codes: `not_found`, `invalid_argument` (bad input), `unauthenticated` (not logged in), `internal` (a bug or outage on our side). For `internal` errors we log the details and send only a general message, because details can reveal how the system works inside.
 
+## The TypeScript client
+
+The web app calls the same API with generated TypeScript code (`apps/web/src/gen/`) and two libraries: `@connectrpc/connect` and `@connectrpc/connect-web` (which sends the calls with the browser's `fetch`).
+
+From `apps/web/src/greeting/greetingClient.ts`:
+
+```ts
+const transport = createConnectTransport({ baseUrl: window.location.origin })
+const client = createClient(GreetingService, transport)
+
+const response = await client.getGreeting({})   // typed: response.message is a string, response.id a bigint
+```
+
+`baseUrl: window.location.origin` means "the same address as the page". The browser then only talks to one address. In development, Vite forwards API calls to the hello service (`server.proxy` in `vite.config.ts`). In step 6, the Caddy gateway takes over that job.
+
 ## Alternatives
 
 - **REST + JSON by hand:** you design URLs and JSON yourself, and must keep both sides in sync by hand.

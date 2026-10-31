@@ -72,6 +72,12 @@ The fix: keep `message = 1`, and give the new field the next free number, `id = 
 - `buf.yaml`: where the `.proto` files are (`proto/`) and which lint rules to use.
 - `buf.gen.yaml`: which generators to run and where their output goes. "Managed mode" sets the Go import path there, so the `.proto` files contain no Go-specific settings.
 
+## TypeScript
+
+A third generator, `protoc-gen-es`, writes TypeScript for the web app: `apps/web/src/gen/hello/v1/greeting_pb.ts`. It contains the message types (`GetGreetingResponse`) and the service (`GreetingService`). `int64` fields become `bigint`, JavaScript's type for big whole numbers.
+
+This generator is an npm package of the web app, not a mise tool. That way its version always matches the `@bufbuild/protobuf` library the generated code needs. So `task setup` (which runs `npm ci`) must run before `task generate`.
+
 ## Alternatives
 
 - **REST + OpenAPI:** describe HTTP endpoints in YAML. Very common, but the contract drifts from the code more easily.

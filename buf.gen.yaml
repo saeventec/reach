@@ -23,3 +23,9 @@ plugins:
   - local: protoc-gen-connect-go # Go code for the Connect service
     out: services/hello/gen
     opt: paths=source_relative
+  # TypeScript for the web app: messages and services in one file. This
+  # generator is an npm package of the web app (installed by "task setup"),
+  # so its version always matches the @bufbuild/protobuf library it needs.
+  - local: apps/web/node_modules/.bin/protoc-gen-es
+    out: apps/web/src/gen
+    opt: target=ts # generate .ts files (the default is .js plus type files)

@@ -41,6 +41,53 @@ createRoot(document.getElementById('root')!).render(
 - `StrictMode` runs extra checks while developing, to warn about common mistakes. It does nothing in the final build.
 - Files with JSX end in `.tsx` (TypeScript + JSX).
 
+## Props
+
+Props are a component's inputs, like a function's parameters. TypeScript describes them:
+
+```tsx
+type NewestGreetingProps = {
+  loadGreeting: () => Promise<Greeting>   // a function that returns a greeting, later
+}
+
+export function NewestGreeting({ loadGreeting }: NewestGreetingProps) { ... }
+
+<NewestGreeting loadGreeting={fetchNewestGreeting} />   // using it
+```
+
+## State and effects
+
+- **State** (`useState`) is data a component remembers. When it changes, React draws the component again.
+- **Effect** (`useEffect`) is code that runs after the component appears on the screen, for work outside React, like loading data from the network.
+
+From `apps/web/src/greeting/NewestGreeting.tsx`:
+
+```tsx
+const [state, setState] = useState<LoadState>({ status: 'loading' })
+
+useEffect(() => {
+  let ignore = false
+  async function load() {
+    const greeting = await loadGreeting()
+    if (!ignore) {
+      setState({ status: 'loaded', greeting })
+    }
+  }
+  load()
+  return () => { ignore = true }     // "cleanup": runs when the effect is no longer needed
+}, [loadGreeting])                   // run again only if loadGreeting changes
+```
+
+- The `ignore` flag: in development, `StrictMode` runs every effect twice to find bugs, and a component can disappear before loading ends. The flag makes sure an old result never changes the state.
+- `LoadState` is a **union type**: the state is either loading, loaded (with a greeting), or failed. TypeScript only lets you use `state.greeting` after checking that `state.status === 'loaded'`.
+- Functions whose names start with `use` are called **hooks**. Call them only at the top of a component, never inside an `if`.
+
+Later (milestone 2), TanStack Query can do this loading for us, with caching and retries. Writing it by hand once shows what such a library saves.
+
+## Folders by feature
+
+Code is grouped by what it does: `src/greeting/` holds the component, its API client and its test. `src/gen/` holds generated code (never edit it).
+
 ## Alternatives
 
 - **Vue:** templates closer to plain HTML, popular, a gentler start.

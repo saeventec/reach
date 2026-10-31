@@ -17,9 +17,11 @@ service GreetingService {
 // be added later without changing the method.
 message GetGreetingRequest {}
 
+// GetGreetingResponse carries one greeting.
+// Each field's number is its ID in the binary format. Never reuse or change
+// a number: new fields get the next free one.
 message GetGreetingResponse {
-  // The number is the field's ID in the binary format. Never reuse or change
-  // it: new fields get the next free number.
+  // The greeting's text.
   string message = 1;
   // The greeting's id in the database.
   int64 id = 2;
