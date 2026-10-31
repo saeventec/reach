@@ -37,6 +37,14 @@ tasks:
       # edit (Compose Watch).
       - docker compose up --build --watch
 
+  stop:
+    desc: Stop the whole system and remove its containers (your data is kept)
+    cmds:
+      # "down" stops and removes the containers and Compose's network. The
+      # next "task dev" creates them again. Named volumes (the database's
+      # data) are kept: only "down --volumes" would delete them.
+      - docker compose down
+
   generate:
     desc: Generate code from the .proto files (buf) and the SQL queries (sqlc)
     cmds:

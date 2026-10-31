@@ -111,11 +111,11 @@ task dev                  # = docker compose up --build --watch: build and start
 docker compose ps         # list the running services and their health
 docker compose ps -a      # also list services that have exited, like hello-migrate
 docker compose logs hello # show one service's logs
-docker compose down       # remove the stopped containers and the network (volumes are kept)
+task stop                 # = docker compose down: stop and remove the containers and the network (volumes are kept)
 docker compose down -v    # also delete the volumes: all database data is lost!
 ```
 
-Ctrl+C in the `task dev` terminal stops the containers. They still exist, stopped, until `docker compose down`.
+Ctrl+C in the `task dev` terminal stops the containers. They still exist, stopped, until `task stop`. You can also run `task stop` from another terminal while `task dev` is running.
 
 ## Alternatives
 

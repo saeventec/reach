@@ -21,6 +21,7 @@ mise trust     # allows mise to read this project's .mise.toml
 mise install   # installs Go, Node.js, Task and the other tools, in the versions from .mise.toml
 task setup     # installs the libraries, creates .env, turns on the commit checks
 task dev       # builds and starts the whole system (Ctrl+C stops it)
+task stop      # stops it and removes its containers; your data is kept
 ```
 
 Then open http://localhost:8080.
