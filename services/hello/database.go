@@ -15,9 +15,9 @@ import (
 // connectTimeout is how long the service waits for the database at startup.
 const connectTimeout = 5 * time.Second
 
-// newestGreetingQuery reads the message of the row with the highest id:
-// the greeting that was added last.
-const newestGreetingQuery = `SELECT message FROM greetings ORDER BY id DESC LIMIT 1`
+// newestGreetingQuery reads the row with the highest id: the greeting that
+// was added last.
+const newestGreetingQuery = `SELECT id, message FROM greetings ORDER BY id DESC LIMIT 1`
 
 // errNoGreeting means the greetings table is empty.
 var errNoGreeting = errors.New("no greeting found")
@@ -50,16 +50,17 @@ type postgresGreetingStore struct {
 }
 
 // NewestGreeting returns the greeting that was added last.
-func (store *postgresGreetingStore) NewestGreeting(ctx context.Context) (string, error) {
+func (store *postgresGreetingStore) NewestGreeting(ctx context.Context) (greeting, error) {
 	row := store.pool.QueryRow(ctx, newestGreetingQuery)
 
-	var message string
-	err := row.Scan(&message)
+	// Scan copies the columns, in the order of the SELECT, into the fields.
+	var newest greeting
+	err := row.Scan(&newest.id, &newest.message)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return "", errNoGreeting
+		return greeting{}, errNoGreeting
 	}
 	if err != nil {
-		return "", fmt.Errorf("read the newest greeting: %w", err)
+		return greeting{}, fmt.Errorf("read the newest greeting: %w", err)
 	}
-	return message, nil
+	return newest, nil
 }

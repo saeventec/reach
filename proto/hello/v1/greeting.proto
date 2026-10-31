@@ -18,6 +18,9 @@ service GreetingService {
 message GetGreetingRequest {}
 
 message GetGreetingResponse {
-  // The number is the field's ID in the binary format. Never reuse or change it.
+  // The number is the field's ID in the binary format. Never reuse or change
+  // it: new fields get the next free number.
   string message = 1;
+  // The greeting's id in the database.
+  int64 id = 2;
 }

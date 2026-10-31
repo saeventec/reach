@@ -52,7 +52,20 @@ Never edit generated files by hand (they say `DO NOT EDIT`). Change the `.proto`
 - **Adding** a field is safe. **Removing or renaming** one can break clients.
 - A change that must break things goes into a new version: `hello.v2`.
 
-buf can check these rules automatically (`buf breaking`). We'll use that in CI later.
+buf checks these rules for you. This compares your files with the last commit on `main`:
+
+```sh
+buf breaking --against '.git#branch=main'
+```
+
+For example, moving `message` from field 1 to field 2, and giving number 1 to a new `id` field, gives:
+
+```
+Field "1" on message "GetGreetingResponse" changed name from "message" to "id".
+Field "1" with name "id" on message "GetGreetingResponse" changed type from "string" to "int64".
+```
+
+The fix: keep `message = 1`, and give the new field the next free number, `id = 2`. The order of the fields in the file doesn't matter, only the numbers. CI will run this check on every change (step 8).
 
 ## Our config files
 

@@ -15,18 +15,21 @@ import (
 )
 
 // fakeGreetingStore stands in for the database in tests. It returns
-// whatever message and error the test gives it.
+// whatever greeting and error the test gives it.
 type fakeGreetingStore struct {
-	message string
-	err     error
+	greeting greeting
+	err      error
 }
 
-func (store *fakeGreetingStore) NewestGreeting(ctx context.Context) (string, error) {
-	return store.message, store.err
+func (store *fakeGreetingStore) NewestGreeting(ctx context.Context) (greeting, error) {
+	return store.greeting, store.err
 }
+
+// testGreeting is the greeting the fake store returns in these tests.
+var testGreeting = greeting{id: 1, message: "Hello, test!"}
 
 func TestGetGreetingReturnsTheNewestGreeting(t *testing.T) {
-	store := &fakeGreetingStore{message: "Hello, test!"}
+	store := &fakeGreetingStore{greeting: testGreeting}
 	server := &greetingServer{greetings: store}
 
 	response, err := server.GetGreeting(t.Context(), &hellov1.GetGreetingRequest{})
@@ -34,8 +37,11 @@ func TestGetGreetingReturnsTheNewestGreeting(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if response.GetMessage() != "Hello, test!" {
-		t.Errorf("message: got %q, want %q", response.GetMessage(), "Hello, test!")
+	if response.GetMessage() != testGreeting.message {
+		t.Errorf("message: got %q, want %q", response.GetMessage(), testGreeting.message)
+	}
+	if response.GetId() != testGreeting.id {
+		t.Errorf("id: got %d, want %d", response.GetId(), testGreeting.id)
 	}
 }
 
@@ -69,7 +75,7 @@ func TestGetGreetingHidesDatabaseErrors(t *testing.T) {
 // This test sends a real HTTP request through the router, the way a
 // browser would: a POST with a JSON body to the call's path.
 func TestGetGreetingOverHTTP(t *testing.T) {
-	store := &fakeGreetingStore{message: "Hello, test!"}
+	store := &fakeGreetingStore{greeting: testGreeting}
 	router := newRouter(store)
 
 	requestBody := strings.NewReader("{}")
@@ -83,14 +89,20 @@ func TestGetGreetingOverHTTP(t *testing.T) {
 		t.Fatalf("status code: got %d, want %d", recorder.Code, http.StatusOK)
 	}
 
+	// In JSON, Protobuf sends int64 numbers as strings ("id":"1"), because
+	// JavaScript can't hold such big numbers exactly. ",string" reads them.
 	var responseBody struct {
 		Message string `json:"message"`
+		ID      int64  `json:"id,string"`
 	}
 	err := json.Unmarshal(recorder.Body.Bytes(), &responseBody)
 	if err != nil {
 		t.Fatalf("the response is not valid JSON: %v", err)
 	}
-	if responseBody.Message != "Hello, test!" {
-		t.Errorf("message: got %q, want %q", responseBody.Message, "Hello, test!")
+	if responseBody.Message != testGreeting.message {
+		t.Errorf("message: got %q, want %q", responseBody.Message, testGreeting.message)
+	}
+	if responseBody.ID != testGreeting.id {
+		t.Errorf("id: got %d, want %d", responseBody.ID, testGreeting.id)
 	}
 }

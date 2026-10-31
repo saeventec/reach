@@ -68,8 +68,11 @@ func (*GetGreetingRequest) Descriptor() ([]byte, []int) {
 
 type GetGreetingResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The number is the field's ID in the binary format. Never reuse or change it.
-	Message       string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	// The number is the field's ID in the binary format. Never reuse or change
+	// it: new fields get the next free number.
+	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	// The greeting's id in the database.
+	Id            int64 `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -111,14 +114,22 @@ func (x *GetGreetingResponse) GetMessage() string {
 	return ""
 }
 
+func (x *GetGreetingResponse) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
 var File_hello_v1_greeting_proto protoreflect.FileDescriptor
 
 const file_hello_v1_greeting_proto_rawDesc = "" +
 	"\n" +
 	"\x17hello/v1/greeting.proto\x12\bhello.v1\"\x14\n" +
-	"\x12GetGreetingRequest\"/\n" +
+	"\x12GetGreetingRequest\"?\n" +
 	"\x13GetGreetingResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage2_\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\x03R\x02id2_\n" +
 	"\x0fGreetingService\x12L\n" +
 	"\vGetGreeting\x12\x1c.hello.v1.GetGreetingRequest\x1a\x1d.hello.v1.GetGreetingResponse\"\x00B\x9e\x01\n" +
 	"\fcom.hello.v1B\rGreetingProtoP\x01Z>github.com/saeventec/reach/services/hello/gen/hello/v1;hellov1\xa2\x02\x03HXX\xaa\x02\bHello.V1\xca\x02\bHello\\V1\xe2\x02\x14Hello\\V1\\GPBMetadata\xea\x02\tHello::V1b\x06proto3"

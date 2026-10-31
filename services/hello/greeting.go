@@ -13,11 +13,17 @@ import (
 	hellov1 "github.com/saeventec/reach/services/hello/gen/hello/v1"
 )
 
+// greeting is one row of the greetings table.
+type greeting struct {
+	id      int64
+	message string
+}
+
 // greetingStore is what the greeting server needs from the database.
 // It is an interface, so tests can use a fake store instead of a real
 // database. Learn more: docs/learn/testing.md#fakes
 type greetingStore interface {
-	NewestGreeting(ctx context.Context) (string, error)
+	NewestGreeting(ctx context.Context) (greeting, error)
 }
 
 // greetingServer implements the generated GreetingServiceHandler interface.
@@ -27,7 +33,7 @@ type greetingServer struct {
 
 // GetGreeting answers the GetGreeting call with the newest greeting.
 func (server *greetingServer) GetGreeting(ctx context.Context, request *hellov1.GetGreetingRequest) (*hellov1.GetGreetingResponse, error) {
-	message, err := server.greetings.NewestGreeting(ctx)
+	newest, err := server.greetings.NewestGreeting(ctx)
 	if errors.Is(err, errNoGreeting) {
 		return nil, connect.NewError(connect.CodeNotFound, "there is no greeting yet")
 	}
@@ -38,6 +44,9 @@ func (server *greetingServer) GetGreeting(ctx context.Context, request *hellov1.
 		return nil, connect.NewError(connect.CodeInternal, "could not read the greeting")
 	}
 
-	response := &hellov1.GetGreetingResponse{Message: message}
+	response := &hellov1.GetGreetingResponse{
+		Message: newest.message,
+		Id:      newest.id,
+	}
 	return response, nil
 }
