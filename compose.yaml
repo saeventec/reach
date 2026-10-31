@@ -56,6 +56,14 @@ services:
       # Check every second while starting, like postgres above.
       start_period: 30s
       start_interval: 1s
+    # Compose Watch: Go code must be compiled, so a change rebuilds the
+    # image and replaces the container. Learn more: docs/learn/docker-compose.md#compose-watch
+    develop:
+      watch:
+        - action: rebuild
+          path: ./services/hello
+          ignore:
+            - migrations/ # applied by hello-migrate, not part of this image's program
     depends_on:
       # Start only after the migrations finished without an error.
       hello-migrate:

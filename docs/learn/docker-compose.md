@@ -90,6 +90,10 @@ web:
 - `rebuild`: new libraries mean a new `npm ci`, so Compose rebuilds the image.
 - `task dev` turns it on with `docker compose up --watch`.
 
+The hello service uses `rebuild` for all its files, because Go code must be compiled. Saving a `.go` file rebuilds the image and replaces the container within about 15 seconds. The `migrations/` folder is ignored: migrations are applied by `hello-migrate`, not by the service.
+
+Known glitch: once, in testing, a rebuild of `hello` also recreated `postgres` and left it stopped. `hello` then logged `lookup postgres ... no such host`. Your data is safe (it lives in the volume). To fix it, press Ctrl+C and run `task dev` again.
+
 Why not a **bind mount** (sharing the folder with the container)? It is the older way, but `node_modules` would then be shared too. Its Mac or Windows versions of some libraries don't run in the Linux container.
 
 ## Useful commands

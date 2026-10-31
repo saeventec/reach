@@ -40,7 +40,7 @@ No other config file is needed. The plugin scans our code for class names and cr
 | `rounded-lg`, `shadow` | Rounded corners, a soft shadow |
 | `md:text-xl` | Only on screens at least "medium" wide |
 
-The VS Code extension "Tailwind CSS IntelliSense" autocompletes class names and shows the CSS behind each one.
+The VS Code extension "Tailwind CSS IntelliSense" (recommended in `.vscode/extensions.json`) autocompletes class names and shows the CSS behind each one.
 
 ## Alternatives
 
