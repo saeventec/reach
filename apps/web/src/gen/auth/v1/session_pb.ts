@@ -1,5 +1,5 @@
-// The session API of the auth service: logging in, and asking who is
-// logged in. The session token travels in a cookie, never in these
+// The session API of the auth service: logging in and out, asking who is
+// logged in, and the user's devices. The session token travels in a cookie, never in these
 // messages, so the page's JavaScript never sees it.
 // Learn more: docs/learn/sessions.md
 
@@ -9,13 +9,15 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file auth/v1/session.proto.
  */
 export const file_auth_v1_session: GenFile = /*@__PURE__*/
-  fileDesc("ChVhdXRoL3YxL3Nlc3Npb24ucHJvdG8SB2F1dGgudjEiMgoMTG9nSW5SZXF1ZXN0EhAKCHVzZXJuYW1lGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIjIKDUxvZ0luUmVzcG9uc2USDwoHdXNlcl9pZBgBIAEoCRIQCgh1c2VybmFtZRgCIAEoCSIXChVHZXRDdXJyZW50VXNlclJlcXVlc3QiOwoWR2V0Q3VycmVudFVzZXJSZXNwb25zZRIPCgd1c2VyX2lkGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJMp8BCg5TZXNzaW9uU2VydmljZRI4CgVMb2dJbhIVLmF1dGgudjEuTG9nSW5SZXF1ZXN0GhYuYXV0aC52MS5Mb2dJblJlc3BvbnNlIgASUwoOR2V0Q3VycmVudFVzZXISHi5hdXRoLnYxLkdldEN1cnJlbnRVc2VyUmVxdWVzdBofLmF1dGgudjEuR2V0Q3VycmVudFVzZXJSZXNwb25zZSIAQpsBCgtjb20uYXV0aC52MUIMU2Vzc2lvblByb3RvUAFaQWdpdGh1Yi5jb20vc2FldmVudGVjL3JlYWNoL3NlcnZpY2VzL2F1dGgvZ2VuL3Byb3RvL2F1dGgvdjE7YXV0aHYxogIDQVhYqgIHQXV0aC5WMcoCB0F1dGhcVjHiAhNBdXRoXFYxXEdQQk1ldGFkYXRh6gIIQXV0aDo6VjFiBnByb3RvMw");
+  fileDesc("ChVhdXRoL3YxL3Nlc3Npb24ucHJvdG8SB2F1dGgudjEiMgoMTG9nSW5SZXF1ZXN0EhAKCHVzZXJuYW1lGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIjIKDUxvZ0luUmVzcG9uc2USDwoHdXNlcl9pZBgBIAEoCRIQCgh1c2VybmFtZRgCIAEoCSIXChVHZXRDdXJyZW50VXNlclJlcXVlc3QiOwoWR2V0Q3VycmVudFVzZXJSZXNwb25zZRIPCgd1c2VyX2lkGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJIhQKEkxpc3REZXZpY2VzUmVxdWVzdCI3ChNMaXN0RGV2aWNlc1Jlc3BvbnNlEiAKB2RldmljZXMYASADKAsyDy5hdXRoLnYxLkRldmljZSKhAQoGRGV2aWNlEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSMAoMbG9nZ2VkX2luX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIwCgxsYXN0X3VzZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhkKEWlzX2N1cnJlbnRfZGV2aWNlGAUgASgIIg8KDUxvZ091dFJlcXVlc3QiEAoOTG9nT3V0UmVzcG9uc2UiKAoTTG9nT3V0RGV2aWNlUmVxdWVzdBIRCglkZXZpY2VfaWQYASABKAkiFgoUTG9nT3V0RGV2aWNlUmVzcG9uc2Uy9wIKDlNlc3Npb25TZXJ2aWNlEjgKBUxvZ0luEhUuYXV0aC52MS5Mb2dJblJlcXVlc3QaFi5hdXRoLnYxLkxvZ0luUmVzcG9uc2UiABJTCg5HZXRDdXJyZW50VXNlchIeLmF1dGgudjEuR2V0Q3VycmVudFVzZXJSZXF1ZXN0Gh8uYXV0aC52MS5HZXRDdXJyZW50VXNlclJlc3BvbnNlIgASSgoLTGlzdERldmljZXMSGy5hdXRoLnYxLkxpc3REZXZpY2VzUmVxdWVzdBocLmF1dGgudjEuTGlzdERldmljZXNSZXNwb25zZSIAEjsKBkxvZ091dBIWLmF1dGgudjEuTG9nT3V0UmVxdWVzdBoXLmF1dGgudjEuTG9nT3V0UmVzcG9uc2UiABJNCgxMb2dPdXREZXZpY2USHC5hdXRoLnYxLkxvZ091dERldmljZVJlcXVlc3QaHS5hdXRoLnYxLkxvZ091dERldmljZVJlc3BvbnNlIgBCmwEKC2NvbS5hdXRoLnYxQgxTZXNzaW9uUHJvdG9QAVpBZ2l0aHViLmNvbS9zYWV2ZW50ZWMvcmVhY2gvc2VydmljZXMvYXV0aC9nZW4vcHJvdG8vYXV0aC92MTthdXRodjGiAgNBWFiqAgdBdXRoLlYxygIHQXV0aFxWMeICE0F1dGhcVjFcR1BCTWV0YWRhdGHqAghBdXRoOjpWMWIGcHJvdG8z", [file_google_protobuf_timestamp]);
 
 /**
  * LogInRequest is what the person typed in the login form.
@@ -117,6 +119,157 @@ export const GetCurrentUserResponseSchema: GenMessage<GetCurrentUserResponse> = 
   messageDesc(file_auth_v1_session, 3);
 
 /**
+ * ListDevicesRequest is empty: the session cookie says who is asking.
+ *
+ * @generated from message auth.v1.ListDevicesRequest
+ */
+export type ListDevicesRequest = Message<"auth.v1.ListDevicesRequest"> & {
+};
+
+/**
+ * Describes the message auth.v1.ListDevicesRequest.
+ * Use `create(ListDevicesRequestSchema)` to create a new message.
+ */
+export const ListDevicesRequestSchema: GenMessage<ListDevicesRequest> = /*@__PURE__*/
+  messageDesc(file_auth_v1_session, 4);
+
+/**
+ * ListDevicesResponse lists the user's devices.
+ *
+ * @generated from message auth.v1.ListDevicesResponse
+ */
+export type ListDevicesResponse = Message<"auth.v1.ListDevicesResponse"> & {
+  /**
+   * "repeated" means a list: zero or more devices.
+   *
+   * @generated from field: repeated auth.v1.Device devices = 1;
+   */
+  devices: Device[];
+};
+
+/**
+ * Describes the message auth.v1.ListDevicesResponse.
+ * Use `create(ListDevicesResponseSchema)` to create a new message.
+ */
+export const ListDevicesResponseSchema: GenMessage<ListDevicesResponse> = /*@__PURE__*/
+  messageDesc(file_auth_v1_session, 5);
+
+/**
+ * Device is one place where the user is logged in: one session.
+ *
+ * @generated from message auth.v1.Device
+ */
+export type Device = Message<"auth.v1.Device"> & {
+  /**
+   * The device's id, to log it out with LogOutDevice.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * A readable guess from the browser, like "Chrome on Windows".
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * When the user logged in on this device.
+   *
+   * @generated from field: google.protobuf.Timestamp logged_in_at = 3;
+   */
+  loggedInAt?: Timestamp | undefined;
+
+  /**
+   * When this device was last used.
+   *
+   * @generated from field: google.protobuf.Timestamp last_used_at = 4;
+   */
+  lastUsedAt?: Timestamp | undefined;
+
+  /**
+   * True for the device that sent this request.
+   *
+   * @generated from field: bool is_current_device = 5;
+   */
+  isCurrentDevice: boolean;
+};
+
+/**
+ * Describes the message auth.v1.Device.
+ * Use `create(DeviceSchema)` to create a new message.
+ */
+export const DeviceSchema: GenMessage<Device> = /*@__PURE__*/
+  messageDesc(file_auth_v1_session, 6);
+
+/**
+ * LogOutRequest is empty: the session cookie says which session to end.
+ *
+ * @generated from message auth.v1.LogOutRequest
+ */
+export type LogOutRequest = Message<"auth.v1.LogOutRequest"> & {
+};
+
+/**
+ * Describes the message auth.v1.LogOutRequest.
+ * Use `create(LogOutRequestSchema)` to create a new message.
+ */
+export const LogOutRequestSchema: GenMessage<LogOutRequest> = /*@__PURE__*/
+  messageDesc(file_auth_v1_session, 7);
+
+/**
+ * LogOutResponse is empty.
+ *
+ * @generated from message auth.v1.LogOutResponse
+ */
+export type LogOutResponse = Message<"auth.v1.LogOutResponse"> & {
+};
+
+/**
+ * Describes the message auth.v1.LogOutResponse.
+ * Use `create(LogOutResponseSchema)` to create a new message.
+ */
+export const LogOutResponseSchema: GenMessage<LogOutResponse> = /*@__PURE__*/
+  messageDesc(file_auth_v1_session, 8);
+
+/**
+ * LogOutDeviceRequest says which device to log out.
+ *
+ * @generated from message auth.v1.LogOutDeviceRequest
+ */
+export type LogOutDeviceRequest = Message<"auth.v1.LogOutDeviceRequest"> & {
+  /**
+   * The id from Device.id.
+   *
+   * @generated from field: string device_id = 1;
+   */
+  deviceId: string;
+};
+
+/**
+ * Describes the message auth.v1.LogOutDeviceRequest.
+ * Use `create(LogOutDeviceRequestSchema)` to create a new message.
+ */
+export const LogOutDeviceRequestSchema: GenMessage<LogOutDeviceRequest> = /*@__PURE__*/
+  messageDesc(file_auth_v1_session, 9);
+
+/**
+ * LogOutDeviceResponse is empty.
+ *
+ * @generated from message auth.v1.LogOutDeviceResponse
+ */
+export type LogOutDeviceResponse = Message<"auth.v1.LogOutDeviceResponse"> & {
+};
+
+/**
+ * Describes the message auth.v1.LogOutDeviceResponse.
+ * Use `create(LogOutDeviceResponseSchema)` to create a new message.
+ */
+export const LogOutDeviceResponseSchema: GenMessage<LogOutDeviceResponse> = /*@__PURE__*/
+  messageDesc(file_auth_v1_session, 10);
+
+/**
  * SessionService manages logins.
  *
  * @generated from service auth.v1.SessionService
@@ -146,6 +299,40 @@ export const SessionService: GenService<{
     methodKind: "unary";
     input: typeof GetCurrentUserRequestSchema;
     output: typeof GetCurrentUserResponseSchema;
+  },
+  /**
+   * ListDevices returns the devices (sessions) the user is logged in on,
+   * the most recently used first.
+   *
+   * @generated from rpc auth.v1.SessionService.ListDevices
+   */
+  listDevices: {
+    methodKind: "unary";
+    input: typeof ListDevicesRequestSchema;
+    output: typeof ListDevicesResponseSchema;
+  },
+  /**
+   * LogOut ends the session of this device and removes its cookie. It
+   * succeeds even if there was no valid session, because then the device is
+   * logged out already.
+   *
+   * @generated from rpc auth.v1.SessionService.LogOut
+   */
+  logOut: {
+    methodKind: "unary";
+    input: typeof LogOutRequestSchema;
+    output: typeof LogOutResponseSchema;
+  },
+  /**
+   * LogOutDevice ends the session of one of the user's devices, for example
+   * a lost phone. It fails with NOT_FOUND if the user has no such device.
+   *
+   * @generated from rpc auth.v1.SessionService.LogOutDevice
+   */
+  logOutDevice: {
+    methodKind: "unary";
+    input: typeof LogOutDeviceRequestSchema;
+    output: typeof LogOutDeviceResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_auth_v1_session, 0);

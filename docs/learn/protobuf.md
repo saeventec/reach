@@ -67,6 +67,27 @@ Field "1" with name "id" on message "GetGreetingResponse" changed type from "str
 
 The fix: keep `message = 1`, and give the new field the next free number, `id = 2`. The order of the fields in the file doesn't matter, only the numbers. CI runs this check on every change (see [ci.md](ci.md)).
 
+## Lists, dates and default values
+
+From [proto/auth/v1/session.proto](../../proto/auth/v1/session.proto):
+
+```protobuf
+import "google/protobuf/timestamp.proto";
+
+message ListDevicesResponse {
+  repeated Device devices = 1;                  // a list of zero or more devices
+}
+
+message Device {
+  google.protobuf.Timestamp last_used_at = 4;   // a moment in time
+  bool is_current_device = 5;
+}
+```
+
+- **`repeated`** makes a field a list. In Go it is a slice (`[]*Device`), in TypeScript an array.
+- **Well-known types** are standard messages that come with Protobuf, like `google.protobuf.Timestamp`. Each language maps them to its own type: `timestamppb.Timestamp` in Go (`timestamppb.New(time)` makes one), and `Timestamp` from `@bufbuild/protobuf/wkt` in TypeScript. In JSON, a Timestamp is text in the RFC 3339 format, always in UTC: `"2026-10-31T09:00:00Z"`.
+- **Default values are left out of JSON.** A `bool` that is `false`, a number that is `0` or an empty text is not sent at all. So a device that isn't the current one has no `isCurrentDevice` in the JSON. The generated code fills in the default again, so your code always sees `false`.
+
 ## Our config files
 
 - `buf.yaml`: where the `.proto` files are (`proto/`) and which lint rules to use.

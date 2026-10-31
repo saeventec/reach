@@ -37,6 +37,17 @@ func newSessionCookie(token string, secure bool) *http.Cookie {
 	return cookie
 }
 
+// newRemovedSessionCookie builds a cookie that tells the browser to delete
+// the session cookie. The browser finds the cookie to replace by its name,
+// domain and path, so those must match newSessionCookie. The other settings
+// are kept the same too, to keep it simple.
+func newRemovedSessionCookie(secure bool) *http.Cookie {
+	cookie := newSessionCookie("", secure)
+	// A negative MaxAge sends "Max-Age=0": delete the cookie now.
+	cookie.MaxAge = -1
+	return cookie
+}
+
 // readSessionToken finds the session token in a request's Cookie header.
 // It returns false if there is no session cookie.
 func readSessionToken(cookieHeader string) (string, bool) {

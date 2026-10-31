@@ -25,10 +25,20 @@ type currentSession struct {
 	username string
 }
 
+// storedSession is one of a user's sessions, for the list of devices.
+type storedSession struct {
+	id         string
+	userAgent  string
+	createdAt  time.Time
+	lastUsedAt time.Time
+}
+
 // sessionStore is what the session server needs from the database.
 type sessionStore interface {
 	CreateSession(ctx context.Context, userID string, tokenHash []byte, userAgent string, expiresAt time.Time) error
 	RenewSession(ctx context.Context, tokenHash []byte, newExpiresAt time.Time) (currentSession, error)
+	ListSessions(ctx context.Context, userID string) ([]storedSession, error)
+	DeleteSession(ctx context.Context, sessionID string, userID string) error
 }
 
 // postgresSessionStore keeps the sessions in the auth database.
@@ -79,6 +89,62 @@ func (store *postgresSessionStore) RenewSession(ctx context.Context, tokenHash [
 		username: row.Username,
 	}
 	return session, nil
+}
+
+// ListSessions returns all valid sessions of a user, the most recently
+// used first.
+func (store *postgresSessionStore) ListSessions(ctx context.Context, userID string) ([]storedSession, error) {
+	databaseUserID, err := parseUUID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := store.queries.ListSessions(ctx, databaseUserID)
+	if err != nil {
+		return nil, fmt.Errorf("list the sessions: %w", err)
+	}
+
+	// make with a length of 0 and room for all rows: append then never has
+	// to grow the list.
+	sessions := make([]storedSession, 0, len(rows))
+	for _, row := range rows {
+		session := storedSession{
+			id:         row.ID.String(),
+			userAgent:  row.UserAgent,
+			createdAt:  row.CreatedAt,
+			lastUsedAt: row.LastUsedAt,
+		}
+		sessions = append(sessions, session)
+	}
+	return sessions, nil
+}
+
+// DeleteSession ends one of a user's sessions. It returns errNoSession if
+// the user has no session with this id.
+func (store *postgresSessionStore) DeleteSession(ctx context.Context, sessionID string, userID string) error {
+	databaseSessionID, err := parseUUID(sessionID)
+	if err != nil {
+		// The id came from the client. Text that is not even a UUID can't
+		// be one of the user's sessions.
+		return errNoSession
+	}
+	databaseUserID, err := parseUUID(userID)
+	if err != nil {
+		return err
+	}
+
+	parameters := queries.DeleteSessionParams{
+		SessionID: databaseSessionID,
+		UserID:    databaseUserID,
+	}
+	deletedRows, err := store.queries.DeleteSession(ctx, parameters)
+	if err != nil {
+		return fmt.Errorf("delete the session: %w", err)
+	}
+	if deletedRows == 0 {
+		return errNoSession
+	}
+	return nil
 }
 
 // parseUUID turns a UUID in text form into the type the queries use.

@@ -1,5 +1,5 @@
-// The session API of the auth service: logging in, and asking who is
-// logged in. The session token travels in a cookie, never in these
+// The session API of the auth service: logging in and out, asking who is
+// logged in, and the user's devices. The session token travels in a cookie, never in these
 // messages, so the page's JavaScript never sees it.
 // Learn more: docs/learn/sessions.md
 
@@ -34,6 +34,13 @@ const (
 	// SessionServiceGetCurrentUserProcedure is the procedure name of the SessionService's
 	// GetCurrentUser RPC.
 	SessionServiceGetCurrentUserProcedure = "/auth.v1.SessionService/GetCurrentUser"
+	// SessionServiceListDevicesProcedure is the procedure name of the SessionService's ListDevices RPC.
+	SessionServiceListDevicesProcedure = "/auth.v1.SessionService/ListDevices"
+	// SessionServiceLogOutProcedure is the procedure name of the SessionService's LogOut RPC.
+	SessionServiceLogOutProcedure = "/auth.v1.SessionService/LogOut"
+	// SessionServiceLogOutDeviceProcedure is the procedure name of the SessionService's LogOutDevice
+	// RPC.
+	SessionServiceLogOutDeviceProcedure = "/auth.v1.SessionService/LogOutDevice"
 )
 
 var (
@@ -51,6 +58,27 @@ var (
 			Procedure:  SessionServiceGetCurrentUserProcedure,
 		}
 	})
+	sessionServiceListDevicesSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_auth_v1_session_proto.Services().ByName("SessionService").Methods().ByName("ListDevices"),
+			Procedure:  SessionServiceListDevicesProcedure,
+		}
+	})
+	sessionServiceLogOutSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_auth_v1_session_proto.Services().ByName("SessionService").Methods().ByName("LogOut"),
+			Procedure:  SessionServiceLogOutProcedure,
+		}
+	})
+	sessionServiceLogOutDeviceSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_auth_v1_session_proto.Services().ByName("SessionService").Methods().ByName("LogOutDevice"),
+			Procedure:  SessionServiceLogOutDeviceProcedure,
+		}
+	})
 )
 
 // SessionServiceClient is a client for the auth.v1.SessionService service.
@@ -64,6 +92,16 @@ type SessionServiceClient interface {
 	// session for another 30 days. It fails with UNAUTHENTICATED if there is no
 	// valid session.
 	GetCurrentUser(context.Context, *v1.GetCurrentUserRequest) (*v1.GetCurrentUserResponse, error)
+	// ListDevices returns the devices (sessions) the user is logged in on,
+	// the most recently used first.
+	ListDevices(context.Context, *v1.ListDevicesRequest) (*v1.ListDevicesResponse, error)
+	// LogOut ends the session of this device and removes its cookie. It
+	// succeeds even if there was no valid session, because then the device is
+	// logged out already.
+	LogOut(context.Context, *v1.LogOutRequest) (*v1.LogOutResponse, error)
+	// LogOutDevice ends the session of one of the user's devices, for example
+	// a lost phone. It fails with NOT_FOUND if the user has no such device.
+	LogOutDevice(context.Context, *v1.LogOutDeviceRequest) (*v1.LogOutDeviceResponse, error)
 }
 
 // NewSessionServiceClient constructs a client for the auth.v1.SessionService service. Multiple
@@ -83,6 +121,16 @@ type SessionServiceHandler interface {
 	// session for another 30 days. It fails with UNAUTHENTICATED if there is no
 	// valid session.
 	GetCurrentUser(context.Context, *v1.GetCurrentUserRequest) (*v1.GetCurrentUserResponse, error)
+	// ListDevices returns the devices (sessions) the user is logged in on,
+	// the most recently used first.
+	ListDevices(context.Context, *v1.ListDevicesRequest) (*v1.ListDevicesResponse, error)
+	// LogOut ends the session of this device and removes its cookie. It
+	// succeeds even if there was no valid session, because then the device is
+	// logged out already.
+	LogOut(context.Context, *v1.LogOutRequest) (*v1.LogOutResponse, error)
+	// LogOutDevice ends the session of one of the user's devices, for example
+	// a lost phone. It fails with NOT_FOUND if the user has no such device.
+	LogOutDevice(context.Context, *v1.LogOutDeviceRequest) (*v1.LogOutDeviceResponse, error)
 }
 
 // RegisterSessionServiceHandler registers svc as the auth.v1.SessionService implementation on
@@ -92,6 +140,9 @@ func RegisterSessionServiceHandler(server *connect.Server, svc SessionServiceHan
 	server.Register(
 		connect.Method{Spec: sessionServiceLogInSpec(), Handler: adapter.logIn},
 		connect.Method{Spec: sessionServiceGetCurrentUserSpec(), Handler: adapter.getCurrentUser},
+		connect.Method{Spec: sessionServiceListDevicesSpec(), Handler: adapter.listDevices},
+		connect.Method{Spec: sessionServiceLogOutSpec(), Handler: adapter.logOut},
+		connect.Method{Spec: sessionServiceLogOutDeviceSpec(), Handler: adapter.logOutDevice},
 	)
 }
 
@@ -104,6 +155,18 @@ func (UnimplementedSessionServiceHandler) LogIn(context.Context, *v1.LogInReques
 
 func (UnimplementedSessionServiceHandler) GetCurrentUser(context.Context, *v1.GetCurrentUserRequest) (*v1.GetCurrentUserResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "auth.v1.SessionService.GetCurrentUser is not implemented")
+}
+
+func (UnimplementedSessionServiceHandler) ListDevices(context.Context, *v1.ListDevicesRequest) (*v1.ListDevicesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "auth.v1.SessionService.ListDevices is not implemented")
+}
+
+func (UnimplementedSessionServiceHandler) LogOut(context.Context, *v1.LogOutRequest) (*v1.LogOutResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "auth.v1.SessionService.LogOut is not implemented")
+}
+
+func (UnimplementedSessionServiceHandler) LogOutDevice(context.Context, *v1.LogOutDeviceRequest) (*v1.LogOutDeviceResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "auth.v1.SessionService.LogOutDevice is not implemented")
 }
 
 type sessionServiceClient struct {
@@ -121,6 +184,30 @@ func (c *sessionServiceClient) LogIn(ctx context.Context, req *v1.LogInRequest) 
 func (c *sessionServiceClient) GetCurrentUser(ctx context.Context, req *v1.GetCurrentUserRequest) (*v1.GetCurrentUserResponse, error) {
 	var res v1.GetCurrentUserResponse
 	if err := c.client.CallUnary(ctx, sessionServiceGetCurrentUserSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *sessionServiceClient) ListDevices(ctx context.Context, req *v1.ListDevicesRequest) (*v1.ListDevicesResponse, error) {
+	var res v1.ListDevicesResponse
+	if err := c.client.CallUnary(ctx, sessionServiceListDevicesSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *sessionServiceClient) LogOut(ctx context.Context, req *v1.LogOutRequest) (*v1.LogOutResponse, error) {
+	var res v1.LogOutResponse
+	if err := c.client.CallUnary(ctx, sessionServiceLogOutSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *sessionServiceClient) LogOutDevice(ctx context.Context, req *v1.LogOutDeviceRequest) (*v1.LogOutDeviceResponse, error) {
+	var res v1.LogOutDeviceResponse
+	if err := c.client.CallUnary(ctx, sessionServiceLogOutDeviceSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -146,6 +233,42 @@ func (h sessionServiceHandler) getCurrentUser(ctx context.Context, _ connect.Spe
 		return err
 	}
 	res, err := h.svc.GetCurrentUser(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h sessionServiceHandler) listDevices(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListDevicesRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListDevices(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h sessionServiceHandler) logOut(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.LogOutRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.LogOut(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h sessionServiceHandler) logOutDevice(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.LogOutDeviceRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.LogOutDevice(ctx, &req)
 	if err != nil {
 		return err
 	}

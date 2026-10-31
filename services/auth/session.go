@@ -1,6 +1,7 @@
 package main
 
-// The SessionService API, defined in proto/auth/v1/session.proto.
+// The SessionService API, defined in proto/auth/v1/session.proto: logging
+// in and out, and the user's devices.
 // Learn more: docs/learn/sessions.md
 
 import (
@@ -11,6 +12,7 @@ import (
 	"unicode/utf8"
 
 	"connectrpc.com/connect/v2"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	authv1 "github.com/saeventec/reach/services/auth/gen/proto/auth/v1"
 )
@@ -121,25 +123,14 @@ func (server *sessionServer) GetCurrentUser(ctx context.Context, request *authv1
 		return nil, err
 	}
 
-	cookieHeader := callInfo.RequestHeader().Get("Cookie")
-	token, found := readSessionToken(cookieHeader)
-	if !found {
-		return nil, connect.NewError(connect.CodeUnauthenticated, notLoggedInMessage)
-	}
-
-	tokenHash := hashSessionToken(token)
-	newExpiresAt := time.Now().Add(sessionLifetime)
-
-	session, err := server.sessions.RenewSession(ctx, tokenHash, newExpiresAt)
-	if errors.Is(err, errNoSession) {
-		return nil, connect.NewError(connect.CodeUnauthenticated, notLoggedInMessage)
-	}
+	session, token, err := server.authenticate(ctx, callInfo)
 	if err != nil {
-		slog.Error("could not renew the session", "error", err)
-		return nil, connect.NewError(connect.CodeInternal, "could not check the session")
+		return nil, err
 	}
 
-	// Send the cookie again, so the browser also keeps it 30 more days.
+	// Send the cookie again, so the browser also keeps it 30 more days. The
+	// web app calls GetCurrentUser when it starts, so this happens on every
+	// visit.
 	cookie := newSessionCookie(token, server.secureCookies)
 	callInfo.ResponseHeader().Add("Set-Cookie", cookie.String())
 
@@ -148,6 +139,128 @@ func (server *sessionServer) GetCurrentUser(ctx context.Context, request *authv1
 		Username: session.username,
 	}
 	return response, nil
+}
+
+// ListDevices returns the user's devices: one per valid session.
+func (server *sessionServer) ListDevices(ctx context.Context, request *authv1.ListDevicesRequest) (*authv1.ListDevicesResponse, error) {
+	callInfo, err := serverCallInfo(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	current, _, err := server.authenticate(ctx, callInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	sessions, err := server.sessions.ListSessions(ctx, current.userID)
+	if err != nil {
+		slog.Error("could not list the sessions", "error", err)
+		return nil, connect.NewError(connect.CodeInternal, "could not list the devices")
+	}
+
+	devices := make([]*authv1.Device, 0, len(sessions))
+	for _, session := range sessions {
+		device := newDevice(session, current.id)
+		devices = append(devices, device)
+	}
+
+	response := &authv1.ListDevicesResponse{Devices: devices}
+	return response, nil
+}
+
+// newDevice turns a stored session into a Device for the API.
+func newDevice(session storedSession, currentSessionID string) *authv1.Device {
+	device := &authv1.Device{
+		Id:   session.id,
+		Name: describeUserAgent(session.userAgent),
+		// timestamppb.New turns a Go time.Time into a Protobuf Timestamp.
+		LoggedInAt:      timestamppb.New(session.createdAt),
+		LastUsedAt:      timestamppb.New(session.lastUsedAt),
+		IsCurrentDevice: session.id == currentSessionID,
+	}
+	return device
+}
+
+// LogOut ends this device's session and removes the cookie.
+func (server *sessionServer) LogOut(ctx context.Context, request *authv1.LogOutRequest) (*authv1.LogOutResponse, error) {
+	callInfo, err := serverCallInfo(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Always remove the cookie, also if the session is already gone.
+	removedCookie := newRemovedSessionCookie(server.secureCookies)
+	callInfo.ResponseHeader().Add("Set-Cookie", removedCookie.String())
+
+	session, _, err := server.authenticate(ctx, callInfo)
+	if connect.CodeOf(err) == connect.CodeUnauthenticated {
+		// No valid session: this device is logged out already.
+		return &authv1.LogOutResponse{}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	err = server.sessions.DeleteSession(ctx, session.id, session.userID)
+	if err != nil && !errors.Is(err, errNoSession) {
+		slog.Error("could not delete the session", "error", err)
+		return nil, connect.NewError(connect.CodeInternal, "could not log out")
+	}
+
+	slog.Info("a user logged out", "user_id", session.userID)
+	return &authv1.LogOutResponse{}, nil
+}
+
+// LogOutDevice ends the session of one of the user's devices.
+func (server *sessionServer) LogOutDevice(ctx context.Context, request *authv1.LogOutDeviceRequest) (*authv1.LogOutDeviceResponse, error) {
+	callInfo, err := serverCallInfo(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	session, _, err := server.authenticate(ctx, callInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	// DeleteSession checks that the device belongs to this user, so nobody
+	// can log out someone else's device.
+	err = server.sessions.DeleteSession(ctx, request.GetDeviceId(), session.userID)
+	if errors.Is(err, errNoSession) {
+		return nil, connect.NewError(connect.CodeNotFound, "you have no device with this id")
+	}
+	if err != nil {
+		slog.Error("could not delete the session", "error", err)
+		return nil, connect.NewError(connect.CodeInternal, "could not log out the device")
+	}
+
+	slog.Info("a user logged out a device", "user_id", session.userID, "device_id", request.GetDeviceId())
+	return &authv1.LogOutDeviceResponse{}, nil
+}
+
+// authenticate finds the valid session of the request's cookie, and renews
+// it for another 30 days. It returns the session and its token, or an
+// UNAUTHENTICATED error.
+func (server *sessionServer) authenticate(ctx context.Context, callInfo *connect.CallInfo) (currentSession, string, error) {
+	cookieHeader := callInfo.RequestHeader().Get("Cookie")
+	token, found := readSessionToken(cookieHeader)
+	if !found {
+		return currentSession{}, "", connect.NewError(connect.CodeUnauthenticated, notLoggedInMessage)
+	}
+
+	tokenHash := hashSessionToken(token)
+	newExpiresAt := time.Now().Add(sessionLifetime)
+
+	session, err := server.sessions.RenewSession(ctx, tokenHash, newExpiresAt)
+	if errors.Is(err, errNoSession) {
+		return currentSession{}, "", connect.NewError(connect.CodeUnauthenticated, notLoggedInMessage)
+	}
+	if err != nil {
+		slog.Error("could not renew the session", "error", err)
+		return currentSession{}, "", connect.NewError(connect.CodeInternal, "could not check the session")
+	}
+	return session, token, nil
 }
 
 // serverCallInfo returns the details of the current call: its request and

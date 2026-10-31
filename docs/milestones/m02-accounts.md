@@ -19,7 +19,7 @@ Each step is one small commit that runs. The agent commits each finished step ri
 - [x] 3. sqlc and the first migration: the `users` table, with the username rules as database constraints
 - [x] 4. Sign up: the `auth.v1` API in Protobuf, with passwords stored as argon2id hashes. Caddy routes `/auth.v1.*` to the auth service (moved here from step 2, so there is no route to nothing).
 - [x] 5. Log in: create a session, send its token in an HttpOnly cookie, store only the token's hash
-- [ ] 6. Devices: each login is a device. List your devices, log out, log out another device.
+- [x] 6. Devices: each login is a device. List your devices, log out, log out another device.
 - [ ] 7. The web app: sign-up, login and "logged in as …" pages
 - [ ] 8. Security basics and tests: rate limiting on login, integration tests with Testcontainers
 
@@ -41,7 +41,9 @@ The steps can change as we learn. Any change is written here.
 - Database: [one user per service, idempotent setup](../learn/postgresql.md#one-user-per-service)
 - Database: [UUIDv7 ids, constraints and the username pattern](../learn/postgresql.md#ids-and-constraints), [sqlc](../learn/sqlc.md)
 - Security: [password hashing with argon2id, salts, Unicode normalization](../learn/password-hashing.md)
-- Security: [sessions, tokens, cookies, CSRF and SameSite, safe logins](../learn/sessions.md)
+- Security: [sessions, tokens, cookies, CSRF and SameSite, safe logins](../learn/sessions.md), [devices and logging out](../learn/sessions.md#logging-out)
+- API: [lists, Timestamps and default values in Protobuf](../learn/protobuf.md#lists-dates-and-default-values)
+- Database: [indexes](../learn/sessions.md#devices)
 - Configuration: [settings with a safe default](../learn/environment-variables.md#settings-with-a-safe-default)
 - Testing: [table-driven tests](../learn/testing.md#table-driven-tests)
 - Tooling: [why the Lefthook rc path needs `./`](../learn/lefthook.md)

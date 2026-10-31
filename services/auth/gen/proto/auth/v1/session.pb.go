@@ -1,5 +1,5 @@
-// The session API of the auth service: logging in, and asking who is
-// logged in. The session token travels in a cookie, never in these
+// The session API of the auth service: logging in and out, asking who is
+// logged in, and the user's devices. The session token travels in a cookie, never in these
 // messages, so the page's JavaScript never sees it.
 // Learn more: docs/learn/sessions.md
 
@@ -14,6 +14,7 @@ package authv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -228,11 +229,333 @@ func (x *GetCurrentUserResponse) GetUsername() string {
 	return ""
 }
 
+// ListDevicesRequest is empty: the session cookie says who is asking.
+type ListDevicesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDevicesRequest) Reset() {
+	*x = ListDevicesRequest{}
+	mi := &file_auth_v1_session_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDevicesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDevicesRequest) ProtoMessage() {}
+
+func (x *ListDevicesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_session_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDevicesRequest.ProtoReflect.Descriptor instead.
+func (*ListDevicesRequest) Descriptor() ([]byte, []int) {
+	return file_auth_v1_session_proto_rawDescGZIP(), []int{4}
+}
+
+// ListDevicesResponse lists the user's devices.
+type ListDevicesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "repeated" means a list: zero or more devices.
+	Devices       []*Device `protobuf:"bytes,1,rep,name=devices,proto3" json:"devices,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDevicesResponse) Reset() {
+	*x = ListDevicesResponse{}
+	mi := &file_auth_v1_session_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDevicesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDevicesResponse) ProtoMessage() {}
+
+func (x *ListDevicesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_session_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDevicesResponse.ProtoReflect.Descriptor instead.
+func (*ListDevicesResponse) Descriptor() ([]byte, []int) {
+	return file_auth_v1_session_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ListDevicesResponse) GetDevices() []*Device {
+	if x != nil {
+		return x.Devices
+	}
+	return nil
+}
+
+// Device is one place where the user is logged in: one session.
+type Device struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The device's id, to log it out with LogOutDevice.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// A readable guess from the browser, like "Chrome on Windows".
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// When the user logged in on this device.
+	LoggedInAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=logged_in_at,json=loggedInAt,proto3" json:"logged_in_at,omitempty"`
+	// When this device was last used.
+	LastUsedAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=last_used_at,json=lastUsedAt,proto3" json:"last_used_at,omitempty"`
+	// True for the device that sent this request.
+	IsCurrentDevice bool `protobuf:"varint,5,opt,name=is_current_device,json=isCurrentDevice,proto3" json:"is_current_device,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *Device) Reset() {
+	*x = Device{}
+	mi := &file_auth_v1_session_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Device) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Device) ProtoMessage() {}
+
+func (x *Device) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_session_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Device.ProtoReflect.Descriptor instead.
+func (*Device) Descriptor() ([]byte, []int) {
+	return file_auth_v1_session_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *Device) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Device) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Device) GetLoggedInAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LoggedInAt
+	}
+	return nil
+}
+
+func (x *Device) GetLastUsedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastUsedAt
+	}
+	return nil
+}
+
+func (x *Device) GetIsCurrentDevice() bool {
+	if x != nil {
+		return x.IsCurrentDevice
+	}
+	return false
+}
+
+// LogOutRequest is empty: the session cookie says which session to end.
+type LogOutRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LogOutRequest) Reset() {
+	*x = LogOutRequest{}
+	mi := &file_auth_v1_session_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LogOutRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogOutRequest) ProtoMessage() {}
+
+func (x *LogOutRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_session_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LogOutRequest.ProtoReflect.Descriptor instead.
+func (*LogOutRequest) Descriptor() ([]byte, []int) {
+	return file_auth_v1_session_proto_rawDescGZIP(), []int{7}
+}
+
+// LogOutResponse is empty.
+type LogOutResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LogOutResponse) Reset() {
+	*x = LogOutResponse{}
+	mi := &file_auth_v1_session_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LogOutResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogOutResponse) ProtoMessage() {}
+
+func (x *LogOutResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_session_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LogOutResponse.ProtoReflect.Descriptor instead.
+func (*LogOutResponse) Descriptor() ([]byte, []int) {
+	return file_auth_v1_session_proto_rawDescGZIP(), []int{8}
+}
+
+// LogOutDeviceRequest says which device to log out.
+type LogOutDeviceRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The id from Device.id.
+	DeviceId      string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LogOutDeviceRequest) Reset() {
+	*x = LogOutDeviceRequest{}
+	mi := &file_auth_v1_session_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LogOutDeviceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogOutDeviceRequest) ProtoMessage() {}
+
+func (x *LogOutDeviceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_session_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LogOutDeviceRequest.ProtoReflect.Descriptor instead.
+func (*LogOutDeviceRequest) Descriptor() ([]byte, []int) {
+	return file_auth_v1_session_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *LogOutDeviceRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+// LogOutDeviceResponse is empty.
+type LogOutDeviceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LogOutDeviceResponse) Reset() {
+	*x = LogOutDeviceResponse{}
+	mi := &file_auth_v1_session_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LogOutDeviceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogOutDeviceResponse) ProtoMessage() {}
+
+func (x *LogOutDeviceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_v1_session_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LogOutDeviceResponse.ProtoReflect.Descriptor instead.
+func (*LogOutDeviceResponse) Descriptor() ([]byte, []int) {
+	return file_auth_v1_session_proto_rawDescGZIP(), []int{10}
+}
+
 var File_auth_v1_session_proto protoreflect.FileDescriptor
 
 const file_auth_v1_session_proto_rawDesc = "" +
 	"\n" +
-	"\x15auth/v1/session.proto\x12\aauth.v1\"F\n" +
+	"\x15auth/v1/session.proto\x12\aauth.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"F\n" +
 	"\fLogInRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"D\n" +
@@ -242,10 +565,29 @@ const file_auth_v1_session_proto_rawDesc = "" +
 	"\x15GetCurrentUserRequest\"M\n" +
 	"\x16GetCurrentUserResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername2\x9b\x01\n" +
+	"\busername\x18\x02 \x01(\tR\busername\"\x14\n" +
+	"\x12ListDevicesRequest\"@\n" +
+	"\x13ListDevicesResponse\x12)\n" +
+	"\adevices\x18\x01 \x03(\v2\x0f.auth.v1.DeviceR\adevices\"\xd4\x01\n" +
+	"\x06Device\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12<\n" +
+	"\flogged_in_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"loggedInAt\x12<\n" +
+	"\flast_used_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"lastUsedAt\x12*\n" +
+	"\x11is_current_device\x18\x05 \x01(\bR\x0fisCurrentDevice\"\x0f\n" +
+	"\rLogOutRequest\"\x10\n" +
+	"\x0eLogOutResponse\"2\n" +
+	"\x13LogOutDeviceRequest\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x16\n" +
+	"\x14LogOutDeviceResponse2\xed\x02\n" +
 	"\x0eSessionService\x126\n" +
 	"\x05LogIn\x12\x15.auth.v1.LogInRequest\x1a\x16.auth.v1.LogInResponse\x12Q\n" +
-	"\x0eGetCurrentUser\x12\x1e.auth.v1.GetCurrentUserRequest\x1a\x1f.auth.v1.GetCurrentUserResponseB\x9b\x01\n" +
+	"\x0eGetCurrentUser\x12\x1e.auth.v1.GetCurrentUserRequest\x1a\x1f.auth.v1.GetCurrentUserResponse\x12H\n" +
+	"\vListDevices\x12\x1b.auth.v1.ListDevicesRequest\x1a\x1c.auth.v1.ListDevicesResponse\x129\n" +
+	"\x06LogOut\x12\x16.auth.v1.LogOutRequest\x1a\x17.auth.v1.LogOutResponse\x12K\n" +
+	"\fLogOutDevice\x12\x1c.auth.v1.LogOutDeviceRequest\x1a\x1d.auth.v1.LogOutDeviceResponseB\x9b\x01\n" +
 	"\vcom.auth.v1B\fSessionProtoP\x01ZAgithub.com/saeventec/reach/services/auth/gen/proto/auth/v1;authv1\xa2\x02\x03AXX\xaa\x02\aAuth.V1\xca\x02\aAuth\\V1\xe2\x02\x13Auth\\V1\\GPBMetadata\xea\x02\bAuth::V1b\x06proto3"
 
 var (
@@ -260,23 +602,40 @@ func file_auth_v1_session_proto_rawDescGZIP() []byte {
 	return file_auth_v1_session_proto_rawDescData
 }
 
-var file_auth_v1_session_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_auth_v1_session_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_auth_v1_session_proto_goTypes = []any{
 	(*LogInRequest)(nil),           // 0: auth.v1.LogInRequest
 	(*LogInResponse)(nil),          // 1: auth.v1.LogInResponse
 	(*GetCurrentUserRequest)(nil),  // 2: auth.v1.GetCurrentUserRequest
 	(*GetCurrentUserResponse)(nil), // 3: auth.v1.GetCurrentUserResponse
+	(*ListDevicesRequest)(nil),     // 4: auth.v1.ListDevicesRequest
+	(*ListDevicesResponse)(nil),    // 5: auth.v1.ListDevicesResponse
+	(*Device)(nil),                 // 6: auth.v1.Device
+	(*LogOutRequest)(nil),          // 7: auth.v1.LogOutRequest
+	(*LogOutResponse)(nil),         // 8: auth.v1.LogOutResponse
+	(*LogOutDeviceRequest)(nil),    // 9: auth.v1.LogOutDeviceRequest
+	(*LogOutDeviceResponse)(nil),   // 10: auth.v1.LogOutDeviceResponse
+	(*timestamppb.Timestamp)(nil),  // 11: google.protobuf.Timestamp
 }
 var file_auth_v1_session_proto_depIdxs = []int32{
-	0, // 0: auth.v1.SessionService.LogIn:input_type -> auth.v1.LogInRequest
-	2, // 1: auth.v1.SessionService.GetCurrentUser:input_type -> auth.v1.GetCurrentUserRequest
-	1, // 2: auth.v1.SessionService.LogIn:output_type -> auth.v1.LogInResponse
-	3, // 3: auth.v1.SessionService.GetCurrentUser:output_type -> auth.v1.GetCurrentUserResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	6,  // 0: auth.v1.ListDevicesResponse.devices:type_name -> auth.v1.Device
+	11, // 1: auth.v1.Device.logged_in_at:type_name -> google.protobuf.Timestamp
+	11, // 2: auth.v1.Device.last_used_at:type_name -> google.protobuf.Timestamp
+	0,  // 3: auth.v1.SessionService.LogIn:input_type -> auth.v1.LogInRequest
+	2,  // 4: auth.v1.SessionService.GetCurrentUser:input_type -> auth.v1.GetCurrentUserRequest
+	4,  // 5: auth.v1.SessionService.ListDevices:input_type -> auth.v1.ListDevicesRequest
+	7,  // 6: auth.v1.SessionService.LogOut:input_type -> auth.v1.LogOutRequest
+	9,  // 7: auth.v1.SessionService.LogOutDevice:input_type -> auth.v1.LogOutDeviceRequest
+	1,  // 8: auth.v1.SessionService.LogIn:output_type -> auth.v1.LogInResponse
+	3,  // 9: auth.v1.SessionService.GetCurrentUser:output_type -> auth.v1.GetCurrentUserResponse
+	5,  // 10: auth.v1.SessionService.ListDevices:output_type -> auth.v1.ListDevicesResponse
+	8,  // 11: auth.v1.SessionService.LogOut:output_type -> auth.v1.LogOutResponse
+	10, // 12: auth.v1.SessionService.LogOutDevice:output_type -> auth.v1.LogOutDeviceResponse
+	8,  // [8:13] is the sub-list for method output_type
+	3,  // [3:8] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_auth_v1_session_proto_init() }
@@ -290,7 +649,7 @@ func file_auth_v1_session_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_v1_session_proto_rawDesc), len(file_auth_v1_session_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

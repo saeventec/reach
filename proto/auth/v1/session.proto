@@ -1,10 +1,14 @@
-// The session API of the auth service: logging in, and asking who is
-// logged in. The session token travels in a cookie, never in these
+// The session API of the auth service: logging in and out, asking who is
+// logged in, and the user's devices. The session token travels in a cookie, never in these
 // messages, so the page's JavaScript never sees it.
 // Learn more: docs/learn/sessions.md
 syntax = "proto3";
 
 package auth.v1;
+
+// Timestamp is one of Protobuf's "well-known types": a standard message for
+// a moment in time, that every language turns into its own date type.
+import "google/protobuf/timestamp.proto";
 
 // SessionService manages logins.
 service SessionService {
@@ -18,6 +22,19 @@ service SessionService {
   // session for another 30 days. It fails with UNAUTHENTICATED if there is no
   // valid session.
   rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse) {}
+
+  // ListDevices returns the devices (sessions) the user is logged in on,
+  // the most recently used first.
+  rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse) {}
+
+  // LogOut ends the session of this device and removes its cookie. It
+  // succeeds even if there was no valid session, because then the device is
+  // logged out already.
+  rpc LogOut(LogOutRequest) returns (LogOutResponse) {}
+
+  // LogOutDevice ends the session of one of the user's devices, for example
+  // a lost phone. It fails with NOT_FOUND if the user has no such device.
+  rpc LogOutDevice(LogOutDeviceRequest) returns (LogOutDeviceResponse) {}
 }
 
 // LogInRequest is what the person typed in the login form.
@@ -46,3 +63,41 @@ message GetCurrentUserResponse {
   // The stored username.
   string username = 2;
 }
+
+// ListDevicesRequest is empty: the session cookie says who is asking.
+message ListDevicesRequest {}
+
+// ListDevicesResponse lists the user's devices.
+message ListDevicesResponse {
+  // "repeated" means a list: zero or more devices.
+  repeated Device devices = 1;
+}
+
+// Device is one place where the user is logged in: one session.
+message Device {
+  // The device's id, to log it out with LogOutDevice.
+  string id = 1;
+  // A readable guess from the browser, like "Chrome on Windows".
+  string name = 2;
+  // When the user logged in on this device.
+  google.protobuf.Timestamp logged_in_at = 3;
+  // When this device was last used.
+  google.protobuf.Timestamp last_used_at = 4;
+  // True for the device that sent this request.
+  bool is_current_device = 5;
+}
+
+// LogOutRequest is empty: the session cookie says which session to end.
+message LogOutRequest {}
+
+// LogOutResponse is empty.
+message LogOutResponse {}
+
+// LogOutDeviceRequest says which device to log out.
+message LogOutDeviceRequest {
+  // The id from Device.id.
+  string device_id = 1;
+}
+
+// LogOutDeviceResponse is empty.
+message LogOutDeviceResponse {}

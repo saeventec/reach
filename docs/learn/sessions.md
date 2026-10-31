@@ -86,6 +86,14 @@ The name is worked out when the list is shown, not stored. So when the guessing 
 
 **An index** (`sessions_user_id_index`) makes "all sessions of this user" fast. Without it, Postgres would read every row of the table to find them. Indexes cost a little space and a little time on each insert, so we add one only when a query needs it.
 
+## Logging out
+
+- **`LogOut`** deletes this device's session and sends a cookie that tells the browser to delete it: `Set-Cookie: reach_session=; Path=/; Max-Age=0; ...`. `Max-Age=0` means "throw this cookie away now". It succeeds even without a valid session: the device is logged out either way, so logging out twice is not an error.
+- **`LogOutDevice`** deletes one of your other sessions, for example a lost phone. The phone's token is then worthless at once. That is the main reason for storing sessions instead of using JWTs ([ADR 0022](../decisions/0022-keep-sessions-in-httponly-cookies.md)).
+- **You can only log out your own devices.** The `DeleteSession` query deletes `WHERE id = $1 AND user_id = $2`, with the user from your own session. Another user's device id deletes nothing, and the answer is "not found", the same as for an id that doesn't exist. So nobody can even learn whether someone else's device id exists.
+
+All calls that need a login share one function, `authenticate` in [services/auth/session.go](../../services/auth/session.go): read the cookie, hash the token, renew the session. So every use of a session renews it.
+
 ## Not done yet
 
 - **Old sessions stay in the table** after they expire. They are harmless (`RenewSession` ignores them), but the table grows. Deleting them regularly is a "background job", a later topic.
