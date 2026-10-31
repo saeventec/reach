@@ -185,3 +185,22 @@ func TestIsUniqueViolation(t *testing.T) {
 		t.Errorf("a non-Postgres error was taken for a unique violation")
 	}
 }
+
+func TestSignUpRefusesHugeRequests(t *testing.T) {
+	store := &fakeUserStore{}
+	router := newRouter(store, &fakeSessionStore{}, true)
+	hugePassword := strings.Repeat("a", 20*1024) // 20 KiB, over the 16 KiB limit
+	body := `{"username": "sadra", "password": "` + hugePassword + `"}`
+
+	recorder := callAPI(router, "/auth.v1.AccountService/SignUp", body, "")
+
+	if recorder.Code == http.StatusOK {
+		t.Fatalf("a huge request was accepted")
+	}
+	if !strings.Contains(recorder.Body.String(), "resource_exhausted") {
+		t.Errorf("body: got %s, want the code resource_exhausted", recorder.Body.String())
+	}
+	if store.savedUsername != "" {
+		t.Errorf("the account was saved anyway")
+	}
+}

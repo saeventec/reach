@@ -25,6 +25,12 @@ import (
 // it kills a container.
 const shutdownTimeout = 5 * time.Second
 
+// maximumRequestBytes is the largest API message the service reads. The
+// biggest real one, a sign-up, is under 1 KiB. Without a limit, a client
+// could send huge messages that use up memory and time. Bigger messages
+// get a RESOURCE_EXHAUSTED error.
+const maximumRequestBytes = 16 * 1024
+
 // main is where every Go program starts. It only sets up logging and
 // reports the error from run, so the real work stays easy to test.
 func main() {
@@ -132,7 +138,7 @@ func newRouter(users userStore, sessions sessionStore, secureCookies bool) *http
 
 	sessionService := &sessionServer{users: users, sessions: sessions, secureCookies: secureCookies}
 	authv1connect.RegisterSessionServiceHandler(connectServer, sessionService)
-	connecthttp.Mount(router, connectServer)
+	connecthttp.Mount(router, connectServer, connecthttp.WithReadMaxBytes(maximumRequestBytes))
 
 	return router
 }
