@@ -61,6 +61,25 @@ services:
       hello-migrate:
         condition: service_completed_successfully
 
+  # The web app's development server (Vite). Open http://localhost:5173
+  web:
+    build: ./apps/web
+    ports:
+      - "127.0.0.1:5173:5173"
+    # Compose Watch (started by "task dev"): keep the container up to date
+    # while you edit. Learn more: docs/learn/docker-compose.md#compose-watch
+    develop:
+      watch:
+        # Copy changed files into the running container. Vite notices and
+        # updates the page in the browser. .dockerignore applies, so
+        # node_modules is never copied.
+        - action: sync
+          path: ./apps/web
+          target: /app
+        # New libraries need a new image (npm ci runs in the Dockerfile).
+        - action: rebuild
+          path: ./apps/web/package-lock.json
+
 # Named volumes: storage that Docker manages, kept between restarts.
 volumes:
   postgres-data:

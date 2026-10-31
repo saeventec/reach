@@ -10,10 +10,13 @@ tasks:
       - task --list
 
   setup:
-    desc: Install the tool versions and create your local .env file
+    desc: Install the tools and libraries, and create your local .env file
     cmds:
       - mise install
       - task: create-env # run the task below
+      # Install the web app's libraries on your computer too, so your editor
+      # can check the code. (The container installs its own copy.)
+      - npm ci --prefix apps/web
 
   create-env:
     internal: true # a helper: hidden from "task --list"
@@ -28,7 +31,8 @@ tasks:
     desc: Build and start the whole system (Ctrl+C stops it)
     cmds:
       # --build rebuilds the images, so your latest code changes are used.
-      - docker compose up --build
+      # --watch keeps the web app up to date while you edit (Compose Watch).
+      - docker compose up --build --watch
 
   generate:
     desc: Check the .proto files and generate code from them

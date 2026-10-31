@@ -1,0 +1,5 @@
+# Files Docker must not copy into the image.
+# node_modules on your computer holds Mac or Windows versions of some
+# libraries; the image installs its own Linux versions with "npm ci".
+node_modules
+dist

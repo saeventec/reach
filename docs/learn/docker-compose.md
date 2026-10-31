@@ -71,10 +71,31 @@ volumes:
   postgres-data:                            # declare the volume
 ```
 
+## Compose Watch
+
+An image holds a copy of the code from when it was built. While you edit the web app, Compose Watch keeps the running container up to date:
+
+```yaml
+web:
+  develop:
+    watch:
+      - action: sync                       # copy changed files into the container
+        path: ./apps/web
+        target: /app
+      - action: rebuild                    # build a new image and replace the container
+        path: ./apps/web/package-lock.json
+```
+
+- `sync`: when you save `src/App.tsx`, Compose copies it into the container, and Vite updates the page in your browser. Files listed in `.dockerignore` (like `node_modules`) are never copied.
+- `rebuild`: new libraries mean a new `npm ci`, so Compose rebuilds the image.
+- `task dev` turns it on with `docker compose up --watch`.
+
+Why not a **bind mount** (sharing the folder with the container)? It is the older way, but `node_modules` would then be shared too. Its Mac or Windows versions of some libraries don't run in the Linux container.
+
 ## Useful commands
 
 ```sh
-task dev                  # = docker compose up --build: build and start everything
+task dev                  # = docker compose up --build --watch: build and start everything
 docker compose ps         # list the running services and their health
 docker compose ps -a      # also list services that have exited, like hello-migrate
 docker compose logs hello # show one service's logs

@@ -31,3 +31,7 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [Protobuf, buf and code generation](protobuf.md)
 - [APIs and Connect RPC](connect-rpc.md)
 - [pgx: talking to Postgres from Go](pgx.md)
+- [React](react.md)
+- [Vite](vite.md)
+- [TypeScript](typescript.md)
+- [npm and package.json](npm.md)
