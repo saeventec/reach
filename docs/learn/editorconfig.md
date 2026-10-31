@@ -34,7 +34,7 @@ indent_size = 2
 
 Comments in this file must be on their own line, starting with `#`.
 
-Later, we add a `[*.go]` section with `indent_style = tab`, because Go's formatter uses tabs.
+Two sections change the indent to tabs, because those files' own formatters use tabs: `[*.go]` (gofmt) and `[Caddyfile]` (caddy fmt).
 
 ## Alternatives
 

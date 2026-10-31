@@ -49,7 +49,7 @@ Fix it with `task format`, then `git add` and commit again.
 
 ## Skipping the hook
 
-`git commit --no-verify` skips the hooks. Use it only in an emergency: CI runs the same checks anyway (step 8).
+`git commit --no-verify` skips the hooks. Use it only in an emergency: CI runs the same checks anyway (see [ci.md](ci.md)).
 
 ## Alternatives
 

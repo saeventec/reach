@@ -13,7 +13,7 @@ It needs almost no configuration and is very fast. See [ADR 0004](../decisions/0
 
 ## How we set it up
 
-We started from Vite's official starter (`npm create vite@latest -- --template react-ts`) and kept its files. We removed the demo page, its images and CSS, and its linter (we choose one in step 7).
+We started from Vite's official starter (`npm create vite@latest -- --template react-ts`) and kept its files. We removed the demo page, its images and CSS, and its linter (added back later, see [linting.md](linting.md)).
 
 `apps/web/vite.config.ts`:
 

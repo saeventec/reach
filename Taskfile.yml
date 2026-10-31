@@ -33,7 +33,8 @@ tasks:
     desc: Build and start the whole system (Ctrl+C stops it)
     cmds:
       # --build rebuilds the images, so your latest code changes are used.
-      # --watch keeps the web app up to date while you edit (Compose Watch).
+      # --watch keeps the web app and the hello service up to date while you
+      # edit (Compose Watch).
       - docker compose up --build --watch
 
   generate:

@@ -1,5 +1,7 @@
 # Reach
 
+[![CI](https://github.com/saeventec/reach/actions/workflows/ci.yml/badge.svg)](https://github.com/saeventec/reach/actions/workflows/ci.yml)
+
 Reach is a communication app: chat (1:1 and groups), voice and video calls, and file sharing. It starts as a web app that runs fully on your own computer, and grows into native apps that also work offline.
 
 Reach is built from scratch as a learning project, to practice professional software engineering end to end: backend, frontend, databases, security, messaging, containers, CI/CD and more. The full plan is in the [project brief](docs/PROJECT_BRIEF.md).
@@ -16,7 +18,7 @@ You need three tools: [Git](https://git-scm.com/downloads), [Docker Desktop](htt
 git clone https://github.com/saeventec/reach.git
 cd reach
 mise trust     # allows mise to read this project's .mise.toml
-mise install   # installs Go, Node.js and Task, in the versions from .mise.toml
+mise install   # installs Go, Node.js, Task and the other tools, in the versions from .mise.toml
 task setup     # installs the libraries, creates .env, turns on the commit checks
 task dev       # builds and starts the whole system (Ctrl+C stops it)
 ```

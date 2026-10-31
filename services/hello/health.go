@@ -7,7 +7,7 @@ import (
 )
 
 // handleHealth answers "ok" so other tools can check that the service is
-// running. Docker Compose (step 2) and later Kubernetes call it regularly.
+// running. Docker Compose (and later Kubernetes) calls it regularly.
 // Learn more: docs/learn/http.md#health-checks
 func handleHealth(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("Content-Type", "text/plain; charset=utf-8")

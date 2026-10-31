@@ -25,3 +25,5 @@ Create a new, small service called `hello` (in `services/hello/`) just for miles
 ## Consequences
 
 When `auth` starts (milestone 2), we copy the useful parts and then delete `hello` or keep it as a small example. That choice is made then.
+
+**Update (2026-10-31):** at the end of milestone 1, the owner decided to keep `hello` as a small, complete example of a service.

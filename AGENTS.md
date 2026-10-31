@@ -36,7 +36,7 @@ The owner is a junior engineer who is learning. The goal of Reach is learning pr
 - **Comments explain why**, and explain concepts new to the owner. Link to `docs/learn/`.
 - **Explicit error handling.** Clear messages. Never ignore an error silently.
 - **Few dependencies.** Prefer the standard library. Explain every library added.
-- **Automatic formatting and linting** with default settings (`gofmt`, golangci-lint, Prettier, ESLint).
+- **Automatic formatting and linting** with default settings (`gofmt`, golangci-lint, Oxlint, Prettier, buf).
 - **Tests from day one**, next to the code, readable like examples.
 
 ```go

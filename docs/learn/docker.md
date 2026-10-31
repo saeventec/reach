@@ -33,7 +33,7 @@ ENTRYPOINT ["/hello"]                    # start the program
 
 The final image is about 28 MB. With the compiler inside, it would be several hundred MB.
 
-Image tags like `alpine:3.24.3` pin an exact version, so a build gives the same result next month. We update them on purpose (later automatically, with Renovate).
+Image tags like `alpine:3.24.3` pin an exact version, so a build gives the same result next month. We update them on purpose, by hand. (A bot like Renovate could do it later.)
 
 ## Useful commands
 

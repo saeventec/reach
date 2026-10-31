@@ -45,7 +45,7 @@ docker compose exec postgres psql --username=postgres --dbname=hello
 
 `psql` is Postgres's command-line client. Type SQL ending with `;`, `\dt` lists tables, `\q` quits.
 
-For now the hello service will connect as the main user `postgres`. Milestone 2 gives each service its own user with only the rights it needs.
+For now, the hello service connects as the main user `postgres`. Milestone 2 gives each service its own user with only the rights it needs.
 
 ## Alternatives
 

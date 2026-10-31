@@ -44,8 +44,13 @@ ADRs 0011 to 0020:
 
 - Compose Watch once recreated `postgres` and left it stopped when rebuilding `hello` (1 of 3 tries, cause unknown). Workaround in [docker-compose.md](../learn/docker-compose.md#compose-watch).
 - GitHub notes that `ubuntu-latest` moves to Ubuntu 26 from October 19, 2026. Our workflow follows it automatically.
-- Still open from milestone 0: the Windows (WSL2) check.
-- Ideas, not built: Renovate for dependency and action updates; a CI badge in the README; Compose Watch for `hello-migrate`.
+- Ideas, not built: Compose Watch for `hello-migrate`.
+
+## Wrap-up
+
+- The owner tested everything on Windows (WSL2): it works. Milestone 0 is now fully done.
+- `hello` stays as a small example (ADR 0011 updated). No Renovate for now. A CI badge was added to the README.
+- A final review made the docs match the code: the brief and AGENTS.md now list Oxlint instead of ESLint, the brief's tech table has the milestone 1 choices, stale "step N" and "later" notes were fixed, and `.editorconfig` got the promised `[*.go]` tab section.
 
 ## Next step
 

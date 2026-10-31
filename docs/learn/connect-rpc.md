@@ -40,7 +40,7 @@ curl --header "Content-Type: application/json" --data '{}' \
 {"message":"Hello, World!", "id":"2"}
 ```
 
-The `id` is an `int64`, and Protobuf sends 64-bit numbers as **strings** in JSON. JavaScript numbers can't hold such big numbers exactly, so a string keeps them safe. The generated TypeScript code (step 5) turns it back into a number type (`bigint`).
+The `id` is an `int64`, and Protobuf sends 64-bit numbers as **strings** in JSON. JavaScript numbers can't hold such big numbers exactly, so a string keeps them safe. The generated TypeScript code turns it back into a number type (`bigint`).
 
 ## Errors
 

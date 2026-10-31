@@ -24,11 +24,12 @@ if port == "" {
 In the terminal:
 
 ```sh
-go run .              # listens on the default port, 8080
-PORT=9000 go run .    # sets PORT for this one command: listens on 9000
+PORT=9000 some-program   # sets PORT for this one command only
 ```
 
-Later, Docker Compose sets them from `compose.yaml` and the git-ignored `.env` file.
+The hello service reads two: `PORT` (default `8080`) and `DATABASE_URL` (no default, because it contains a password: the service stops with a clear message if it is missing).
+
+In Docker Compose, they are set in `compose.yaml`, with secrets filled in from the git-ignored `.env` file.
 
 ## Alternatives
 

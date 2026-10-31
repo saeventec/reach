@@ -1,6 +1,6 @@
 # Milestone 0: Initialization
 
-- **Status:** Done on Mac. Windows (WSL2) check still open.
+- **Status:** Done (Mac, and Windows WSL2 checked by the owner on 2026-10-31).
 
 ## Goal
 
@@ -22,7 +22,7 @@ An empty, well-organized repository skeleton: rules, docs structure and tooling.
 - [x] First commit: `chore: initialize repository`
 - [x] Owner reviews every file ([review](../reviews/2026-10-31-review-initialization.md))
 - [x] GitHub repo created and pushed: https://github.com/saeventec/reach
-- [ ] Check on Windows (WSL2): clone, `mise install`, `task setup`
+- [x] Check on Windows (WSL2): clone, `mise install`, `task setup` (checked at the end of milestone 1: everything worked)
 
 ## Concepts learned
 

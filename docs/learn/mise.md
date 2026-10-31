@@ -2,7 +2,7 @@
 
 ## What it is
 
-mise is a tool version manager. It reads `.mise.toml` and installs the exact versions of Go, Node.js and Task the project needs. When you are inside the project folder, those versions are the ones you use.
+mise is a tool version manager. It reads `.mise.toml` and installs the exact versions of the tools the project needs (Go, Node.js, Task, buf, golangci-lint, Lefthook, ...). When you are inside the project folder, those versions are the ones you use.
 
 Analogy: a recipe that lists exact ingredients, so the dish tastes the same in every kitchen (your Mac, your Windows PC, and CI).
 

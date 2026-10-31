@@ -59,7 +59,7 @@ Every line of code is written so a beginner can read it top to bottom and unders
 - **Comments explain why, not what.** The code shows what it does. Comments explain the reason, and explain any concept that is new to the owner.
 - **Explicit error handling.** Handle errors where they happen, with clear messages. Never ignore an error silently.
 - **Few dependencies.** Prefer the standard library. Add a library only when it clearly saves complexity, and explain why it was added.
-- **Automatic formatting and linting.** Use the standard tools (`gofmt`, Prettier, ESLint) with default settings, run in CI.
+- **Automatic formatting and linting.** Use the standard tools (`gofmt`, golangci-lint, Oxlint, Prettier, buf) with default settings, run before each commit and in CI.
 - **Tests from day one.** Simple tests next to the code they test, readable like examples.
 
 Example of the style we want:
@@ -153,7 +153,13 @@ These are the current choices. When an agent introduces any of them for the firs
 | Tool versions | mise | Installs the exact tool versions the project needs | Same versions on Mac, Windows and CI | asdf, nvm |
 | Task runner | Task (Taskfile) | Runs common commands from one file | Works the same on Mac and Windows | Make, just |
 | CI/CD | GitHub Actions | Robots that test and build on every push | Built into GitHub, free for public repos | GitLab CI, Woodpecker |
-| Linting/formatting | gofmt, golangci-lint, Prettier, ESLint | Automatic code style and mistake checks | Defaults, no debates about style | Biome |
+| Linting/formatting | golangci-lint (with gofmt), Oxlint, Prettier, buf | Automatic code style and mistake checks | Defaults, no debates about style; Oxlint is Vite's default (ADR 0019) | ESLint, Biome |
+| Commit checks | Lefthook | Runs the lint checks before each commit | One small config, works on Mac, WSL2 and Linux (ADR 0014) | pre-commit, Husky |
+| Go HTTP and logging | Go standard library (`net/http`, `log/slog`) | Built-in HTTP routing and structured logging | Fewer dependencies, fully standard | chi, zap |
+| Database access | pgx (sqlc from milestone 2) | The standard Postgres driver for Go | Fast, maintained, works with sqlc (ADR 0012) | database/sql, GORM, Ent |
+| Protobuf tooling | buf | Lint, breaking-change checks and code generation | Catches API-breaking changes; generators run locally (ADR 0017) | protoc |
+| Styling | Tailwind CSS | Small utility classes written in the markup | Owner's choice: popular, styles next to the markup (ADR 0013) | CSS Modules, plain CSS |
+| Frontend tests | Vitest + Testing Library | Frontend unit and component tests | Vite's own test runner, fast, standard | Jest |
 
 **Planned for later** (explained in full when we get there)
 
@@ -225,6 +231,7 @@ reach/
 ├── apps/
 │   └── web/               # React + TypeScript + Vite web app
 ├── services/
+│   ├── hello/             # Go service: small example from milestone 1 (ADR 0011)
 │   ├── auth/              # Go service: accounts, login, sessions
 │   ├── chat/              # Go service: conversations, messages, events
 │   └── realtime/          # Go service: WebSocket connections, pushes events
@@ -394,19 +401,13 @@ These are ideas only, not part of any milestone yet. An agent must not build the
 
 | Tool | What it is | Why it could fit | When | Alternatives |
 | --- | --- | --- | --- | --- |
-| Go standard library (`net/http`, `log/slog`) | Built-in HTTP routing and structured logging | Fewer dependencies, fully standard | From milestone 1 | chi, zap |
-| sqlc | Generates type-safe Go code from plain SQL queries | You write and read real SQL, no hidden ORM magic | Milestone 1 | pgx by hand, GORM, Ent |
-| pgx | The standard Postgres driver for Go | Fast, maintained, works with sqlc | Milestone 1 | database/sql + lib/pq |
-| buf | Tooling for Protobuf: lint, breaking-change checks, code generation | Catches API-breaking changes automatically | Milestone 1 | protoc |
+| sqlc | Generates type-safe Go code from plain SQL queries | You write and read real SQL, no hidden ORM magic | Milestone 2 (ADR 0012) | pgx by hand, GORM, Ent |
 | TanStack Query | Fetches, caches and refreshes server data in React | Removes lots of hand-written loading and caching code | Milestone 2 | SWR, plain fetch |
-| CSS Modules (Vite default) or Tailwind CSS | Ways to style components | CSS Modules need no setup; Tailwind is popular and fast to write | Milestone 1 | vanilla-extract, plain CSS |
-| Vitest + Testing Library | Frontend unit and component tests | Vite's own test runner, fast, standard | Milestone 1 | Jest |
 | Playwright | End-to-end tests in a real browser | Tests full user flows across Chrome, Firefox and Safari engines | Milestone 3 | Cypress |
 | Testcontainers | Starts real Postgres and NATS in tests | Integration tests against real services | Milestone 2 | Compose-based test setup |
 | Mailpit | A fake email server with a web inbox, for development | Test invite and password-reset emails locally | Milestone 2 | MailHog |
 | Valkey | In-memory key-value store (open-source Redis fork) | Rate limiting, caching, presence, if NATS KV is not enough | Milestone 3+ | Redis, NATS KV |
-| Lefthook | Runs checks before each commit | Catches lint and format errors early | Milestone 1 | pre-commit, Husky |
-| Renovate | Opens pull requests to update dependencies | Keeps everything up to date automatically | Milestone 1+ | Dependabot |
+| Renovate | Opens pull requests to update dependencies | Keeps everything up to date automatically | Later (not wanted yet) | Dependabot |
 | Trivy, govulncheck | Scan images and Go code for known vulnerabilities | Security basics for a public repo | Milestone 2+ | Grype, Snyk |
 | cosign | Signs container images | Proves images were built by your CI | Milestone 10 | Notation |
 | Zot | Self-hosted container image registry | Fully self-hosted images | Milestone 10 | Harbor, Docker Registry |
@@ -423,7 +424,7 @@ Everything in this brief can change. These points are still open and must not be
 - **App name:** "Reach" for now.
 - **License:** MIT (decided). It is short and easy to read, the most widely used open-source license, and lets anyone learn from and reuse the code with only a copyright notice.
 - **Native app stack:** Flutter (native only, React stays for web) or Tauri (wraps the React app). Decided at phase 2.
-- **Exact service split:** starting proposal is `auth`, `chat`, `realtime`; `files` and `calls` added later.
+- **Exact service split:** starting proposal is `auth`, `chat`, `realtime`; `files` and `calls` added later. The `hello` service from milestone 1 stays as a small example (ADR 0011).
 - **File storage:** Garage or SeaweedFS.
 - **Group call server:** LiveKit, or a small SFU built with Pion for learning.
 - **End-to-end encryption design:** which protocol (custom with libsodium, Signal-style, or MLS).

@@ -1,5 +1,6 @@
 // The hello service: a small Go program that answers HTTP requests.
-// It exists for milestone 1. See docs/decisions/0011-start-with-a-hello-service.md.
+// Built in milestone 1, and kept as a small, complete example of a service.
+// See docs/decisions/0011-start-with-a-hello-service.md.
 // Learn more: docs/learn/go.md and docs/learn/http.md
 package main
 

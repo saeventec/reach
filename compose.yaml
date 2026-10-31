@@ -1,6 +1,7 @@
 # Starts the whole Reach system with Docker Compose. Run it with "task dev".
 # Each entry under "services" becomes one container.
 # Start order: postgres (healthy) → hello-migrate (finished) → hello.
+# web and gateway start right away. Open http://localhost:8080.
 # Learn more: docs/learn/docker-compose.md
 
 services:

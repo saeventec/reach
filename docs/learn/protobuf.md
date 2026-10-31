@@ -65,7 +65,7 @@ Field "1" on message "GetGreetingResponse" changed name from "message" to "id".
 Field "1" with name "id" on message "GetGreetingResponse" changed type from "string" to "int64".
 ```
 
-The fix: keep `message = 1`, and give the new field the next free number, `id = 2`. The order of the fields in the file doesn't matter, only the numbers. CI will run this check on every change (step 8).
+The fix: keep `message = 1`, and give the new field the next free number, `id = 2`. The order of the fields in the file doesn't matter, only the numbers. CI runs this check on every change (see [ci.md](ci.md)).
 
 ## Our config files
 
