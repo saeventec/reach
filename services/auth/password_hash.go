@@ -5,8 +5,11 @@ package main
 
 import (
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"strings"
 
 	"golang.org/x/crypto/argon2"
 )
@@ -48,4 +51,77 @@ func hashPassword(password string) string {
 	phcString := fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s",
 		argon2.Version, argonMemoryKiB, argonPasses, argonThreads, encodedSalt, encodedHash)
 	return phcString
+}
+
+// errMalformedHash means a stored hash is not in the format hashPassword
+// writes. That is a bug or damaged data, never the user's fault.
+var errMalformedHash = errors.New("the stored password hash is malformed")
+
+// argonSettings are the settings stored inside one PHC string.
+type argonSettings struct {
+	version   int
+	memoryKiB uint32
+	passes    uint32
+	threads   uint8
+	salt      []byte
+	hash      []byte
+}
+
+// verifyPassword reports whether a normalized password matches a hash made
+// by hashPassword. It hashes the password again, with the salt and settings
+// stored in the hash, and compares the two results.
+func verifyPassword(password string, phcString string) (bool, error) {
+	settings, err := parsePHCString(phcString)
+	if err != nil {
+		return false, err
+	}
+
+	hashLength := uint32(len(settings.hash))
+	newHash := argon2.IDKey([]byte(password), settings.salt, settings.passes, settings.memoryKiB, settings.threads, hashLength)
+
+	// ConstantTimeCompare takes the same time whether the first byte or the
+	// last byte differs. A normal comparison stops at the first difference,
+	// and the time it takes could tell an attacker how much was right.
+	matches := subtle.ConstantTimeCompare(newHash, settings.hash) == 1
+	return matches, nil
+}
+
+// parsePHCString reads the parts of "$argon2id$v=19$m=19456,t=2,p=1$<salt>$<hash>".
+func parsePHCString(phcString string) (argonSettings, error) {
+	// Splitting at "$" gives 6 parts. The first one is empty, because the
+	// text starts with "$".
+	parts := strings.Split(phcString, "$")
+	if len(parts) != 6 || parts[1] != "argon2id" {
+		return argonSettings{}, errMalformedHash
+	}
+
+	var settings argonSettings
+
+	// Sscanf reads values out of text, following a pattern: the opposite
+	// of Sprintf.
+	_, err := fmt.Sscanf(parts[2], "v=%d", &settings.version)
+	if err != nil || settings.version != argon2.Version {
+		return argonSettings{}, errMalformedHash
+	}
+
+	_, err = fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &settings.memoryKiB, &settings.passes, &settings.threads)
+	if err != nil {
+		return argonSettings{}, errMalformedHash
+	}
+	// argon2.IDKey crashes the program when passes or threads is 0. Our
+	// own hashes never have 0, but damaged data should give an error.
+	if settings.passes == 0 || settings.threads == 0 {
+		return argonSettings{}, errMalformedHash
+	}
+
+	settings.salt, err = base64.RawStdEncoding.DecodeString(parts[4])
+	if err != nil {
+		return argonSettings{}, errMalformedHash
+	}
+
+	settings.hash, err = base64.RawStdEncoding.DecodeString(parts[5])
+	if err != nil {
+		return argonSettings{}, errMalformedHash
+	}
+	return settings, nil
 }

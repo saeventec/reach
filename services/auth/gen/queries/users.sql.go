@@ -7,6 +7,7 @@ package queries
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -25,7 +26,7 @@ type CreateUserParams struct {
 type CreateUserRow struct {
 	ID        pgtype.UUID
 	Username  string
-	CreatedAt pgtype.Timestamptz
+	CreatedAt time.Time
 }
 
 // Adds a new account. It returns the new row without the password hash,
@@ -34,5 +35,26 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	row := q.db.QueryRow(ctx, createUser, arg.Username, arg.PasswordHash)
 	var i CreateUserRow
 	err := row.Scan(&i.ID, &i.Username, &i.CreatedAt)
+	return i, err
+}
+
+const findUserByUsername = `-- name: FindUserByUsername :one
+SELECT id, username, password_hash
+FROM users
+WHERE username = $1
+`
+
+type FindUserByUsernameRow struct {
+	ID           pgtype.UUID
+	Username     string
+	PasswordHash string
+}
+
+// Finds an account for login. It is the only query that returns the
+// password hash.
+func (q *Queries) FindUserByUsername(ctx context.Context, username string) (FindUserByUsernameRow, error) {
+	row := q.db.QueryRow(ctx, findUserByUsername, username)
+	var i FindUserByUsernameRow
+	err := row.Scan(&i.ID, &i.Username, &i.PasswordHash)
 	return i, err
 }

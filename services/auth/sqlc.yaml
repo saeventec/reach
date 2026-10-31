@@ -19,3 +19,10 @@ sql:
         # Generate code for pgx, the driver we already use, instead of Go's
         # general database/sql package.
         sql_package: "pgx/v5"
+        # Use Go's standard time.Time for timestamptz columns, instead of
+        # pgx's pgtype.Timestamptz wrapper. pgx reads and writes time.Time
+        # directly. (Only for NOT NULL columns: a nullable one would need a
+        # pointer.) Learn more: docs/learn/sqlc.md#time-values
+        overrides:
+          - db_type: "timestamptz"
+            go_type: "time.Time"

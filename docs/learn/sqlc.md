@@ -58,9 +58,22 @@ newUser, err := userQueries.CreateUser(ctx, queries.CreateUserParams{
 Things to know:
 
 - **`gen/queries/` is generated:** never edit it by hand. Change the `.sql` file and run `task generate`. Like the buf code, it is committed, and CI checks it is up to date ([ADR 0017](../decisions/0017-use-buf-with-local-generators.md)).
-- **`pgtype.UUID`, `pgtype.Timestamptz`:** pgx's own Go types for Postgres's `uuid` and `timestamptz`. They are sqlc's default with pgx, so we need no extra library. If they get awkward, sqlc can map them to other types with "overrides" in `sqlc.yaml`.
+- **`pgtype.UUID`:** pgx's own Go type for Postgres's `uuid`. It is sqlc's default with pgx, so we need no extra library. `id.String()` gives the usual text form.
+- **`sqlc.arg(name)`:** gives a parameter a clear Go name. Without it, sqlc guesses from the column, which goes wrong in queries like `RenewSession`, where two values are about expiry times.
 - **`queries.New(pool)`** accepts anything with `Exec`, `Query` and `QueryRow` (the `DBTX` interface): a pool, one connection, or a transaction.
 - The settings are in [services/auth/sqlc.yaml](../../services/auth/sqlc.yaml).
+
+## Time values
+
+By default, sqlc gives `timestamptz` columns pgx's `pgtype.Timestamptz` type, a wrapper around Go's `time.Time`. Sessions do arithmetic with time ("now plus 30 days"), which is much easier with `time.Time` itself. An **override** in `sqlc.yaml` changes the Go type for one database type:
+
+```yaml
+overrides:
+  - db_type: "timestamptz"
+    go_type: "time.Time"
+```
+
+pgx reads and writes `time.Time` directly. This override only covers `NOT NULL` columns: a column that can be empty would need a pointer (`*time.Time`), so it would need its own override with `nullable: true`.
 
 ## Alternatives
 

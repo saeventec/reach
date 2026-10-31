@@ -4,7 +4,9 @@
 
 We never store a password. We store a **hash** of it: the result of a one-way function. The same password always gives the same hash, but the hash can't be turned back into the password.
 
-At login (step 5), we hash what the person typed again and compare. If the hashes match, the password was right.
+At login, we hash what the person typed again, **with the same salt and settings** (read from the stored hash), and compare. If the hashes match, the password was right. That is `verifyPassword` in [services/auth/password_hash.go](../../services/auth/password_hash.go).
+
+The comparison uses `subtle.ConstantTimeCompare`, which always takes the same time. A normal `==` stops at the first different byte, so it is a little faster when the first bytes differ. An attacker who measures that time could learn how many bytes were right. This is called a **timing attack**.
 
 An analogy: a hash is like a fingerprint. You can check whether a finger matches a fingerprint, but you can't rebuild the finger from the print.
 
