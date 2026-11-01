@@ -1,6 +1,7 @@
 // The start page of a logged-in user: their conversations, the most
 // recently active first, and the forms to start a new chat or group.
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import type { User } from "../auth/authClient.ts";
 import type { ChatApi, Conversation } from "./chatClient.ts";
 import { conversationTitle, lastMessagePreview } from "./conversationText.ts";
@@ -120,17 +121,19 @@ function ConversationList({ state, myUserId }: ConversationListProps) {
   return (
     <ul className="flex flex-col gap-2">
       {state.conversations.map((conversation) => (
-        <li
-          key={conversation.id}
-          className="rounded border border-slate-200 bg-white px-3 py-2"
-        >
-          <p className="font-medium text-slate-900">
-            {conversationTitle(conversation, myUserId)}
-          </p>
-          {/* "truncate" cuts a long text at the end of the line, with "…". */}
-          <p className="truncate text-sm text-slate-500">
-            {lastMessagePreview(conversation, myUserId)}
-          </p>
+        <li key={conversation.id}>
+          <Link
+            to={`/chats/${conversation.id}`}
+            className="block rounded border border-slate-200 bg-white px-3 py-2 hover:bg-slate-50"
+          >
+            <p className="font-medium text-slate-900">
+              {conversationTitle(conversation, myUserId)}
+            </p>
+            {/* "truncate" cuts a long text at the end of the line, with "…". */}
+            <p className="truncate text-sm text-slate-500">
+              {lastMessagePreview(conversation, myUserId)}
+            </p>
+          </Link>
         </li>
       ))}
     </ul>

@@ -35,6 +35,10 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 
 **`<NavLink>`** is a `<Link>` that knows whether its page is the one showing. Its `className` can be a function that gets `{ isActive }`, so the menu (`MainMenu` in [App.tsx](../../apps/web/src/App.tsx)) highlights the current page.
 
+**URL parameters.** `<Route path="/chats/:conversationId">` matches any address like `/chats/01a19641-…`, and `useParams()` gives the part in that place: `{ conversationId: "01a19641-…" }`. One route serves every conversation.
+
+**`key` to start fresh.** `ConversationRoute` in [App.tsx](../../apps/web/src/App.tsx) passes the id as the page's `key`. When you open another chat, the key changes, so React throws the old page (with its messages in state) away and makes a new one. Without it, React would reuse the page and its old state.
+
 ## Pages that depend on being logged in
 
 `App` keeps the logged-in user in state, and each route decides what to draw from it:

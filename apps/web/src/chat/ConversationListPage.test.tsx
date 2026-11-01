@@ -2,6 +2,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { create } from "@bufbuild/protobuf";
 import { ConnectError, Code } from "@connectrpc/connect";
+import type { ReactElement } from "react";
+import { MemoryRouter } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
 import type { User } from "../auth/authClient.ts";
 import { ServerEventSchema } from "../gen/realtime/v1/events_pb.ts";
@@ -78,14 +80,19 @@ function fakeLiveUpdates() {
   return { live, subscribe };
 }
 
+// renderPage draws the page inside a router, because its items are links.
+function renderPage(page: ReactElement) {
+  return render(<MemoryRouter>{page}</MemoryRouter>);
+}
+
 // typeInto types a value into the input with this label.
 function typeInto(label: string, value: string) {
   const input = screen.getByLabelText(label);
   fireEvent.change(input, { target: { value } });
 }
 
-test("lists the chats with their newest message", async () => {
-  render(
+test("lists the chats with their newest message, as links", async () => {
+  renderPage(
     <ConversationListPage
       user={alice}
       chatApi={chatApi()}
@@ -95,12 +102,14 @@ test("lists the chats with their newest message", async () => {
 
   await screen.findByText("bob");
   screen.getByText("bob: see you at 8");
+  const link = screen.getByRole("link", { name: /bob/ });
+  expect(link.getAttribute("href")).toBe(`/chats/${chatWithBob.id}`);
 });
 
 test("says so when there are no chats yet", async () => {
   const listConversations = async () => [];
 
-  render(
+  renderPage(
     <ConversationListPage
       user={alice}
       chatApi={chatApi({ listConversations })}
@@ -114,7 +123,7 @@ test("says so when there are no chats yet", async () => {
 test("starts a chat and loads the list again", async () => {
   const startDirectConversation = vi.fn(async () => chatWithBob);
   const listConversations = vi.fn(async () => [chatWithBob]);
-  render(
+  renderPage(
     <ConversationListPage
       user={alice}
       chatApi={chatApi({ startDirectConversation, listConversations })}
@@ -135,7 +144,7 @@ test("starts a chat and loads the list again", async () => {
 
 test("creates a group from a name and a list of usernames", async () => {
   const createGroup = vi.fn(async () => friends);
-  render(
+  renderPage(
     <ConversationListPage
       user={alice}
       chatApi={chatApi({ createGroup })}
@@ -157,7 +166,7 @@ test("shows the service's message when the username is unknown", async () => {
   const startDirectConversation = async () => {
     throw new ConnectError("nobody has the username dave", Code.NotFound);
   };
-  render(
+  renderPage(
     <ConversationListPage
       user={alice}
       chatApi={chatApi({ startDirectConversation })}
@@ -178,7 +187,7 @@ test("shows an error when the chats can't be loaded", async () => {
   };
   vi.spyOn(console, "error").mockImplementation(() => {});
 
-  render(
+  renderPage(
     <ConversationListPage
       user={alice}
       chatApi={chatApi({ listConversations })}
@@ -192,7 +201,7 @@ test("shows an error when the chats can't be loaded", async () => {
 test("loads the list again on a new message, a new chat, and a reconnect", async () => {
   const listConversations = vi.fn(async () => [chatWithBob]);
   const { live, subscribe } = fakeLiveUpdates();
-  render(
+  renderPage(
     <ConversationListPage
       user={alice}
       chatApi={chatApi({ listConversations })}
@@ -216,7 +225,7 @@ test("loads the list again on a new message, a new chat, and a reconnect", async
 
 test("creates a group from a name and a list of usernames", async () => {
   const createGroup = vi.fn(async () => friends);
-  render(
+  renderPage(
     <ConversationListPage
       user={alice}
       chatApi={chatApi({ createGroup })}
@@ -238,7 +247,7 @@ test("shows the service's message when the username is unknown", async () => {
   const startDirectConversation = async () => {
     throw new ConnectError("nobody has the username dave", Code.NotFound);
   };
-  render(
+  renderPage(
     <ConversationListPage
       user={alice}
       chatApi={chatApi({ startDirectConversation })}
@@ -259,7 +268,7 @@ test("shows an error when the chats can't be loaded", async () => {
   };
   vi.spyOn(console, "error").mockImplementation(() => {});
 
-  render(
+  renderPage(
     <ConversationListPage
       user={alice}
       chatApi={chatApi({ listConversations })}
@@ -273,7 +282,7 @@ test("shows an error when the chats can't be loaded", async () => {
 test("loads the list again on a new message, a new chat, and a reconnect", async () => {
   const listConversations = vi.fn(async () => [chatWithBob]);
   const { live, subscribe } = fakeLiveUpdates();
-  render(
+  renderPage(
     <ConversationListPage
       user={alice}
       chatApi={chatApi({ listConversations })}
@@ -302,7 +311,7 @@ test("loads the list again on a new message, a new chat, and a reconnect", async
 
 test("closes the live updates when the page closes", async () => {
   const { live, subscribe } = fakeLiveUpdates();
-  const page = render(
+  const page = renderPage(
     <ConversationListPage
       user={alice}
       chatApi={chatApi()}

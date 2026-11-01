@@ -3,13 +3,14 @@
 // and docs/learn/react-router.md
 // The class names are Tailwind CSS. Learn more: docs/learn/tailwind.md
 import { useEffect, useState } from "react";
-import { NavLink, Navigate, Route, Routes } from "react-router";
+import { NavLink, Navigate, Route, Routes, useParams } from "react-router";
 import { AccountPage } from "./auth/AccountPage.tsx";
 import type { AuthApi, User } from "./auth/authClient.ts";
 import { LogInPage } from "./auth/LogInPage.tsx";
 import { SignUpPage } from "./auth/SignUpPage.tsx";
 import type { ChatApi } from "./chat/chatClient.ts";
 import { ConversationListPage } from "./chat/ConversationListPage.tsx";
+import { ConversationPage } from "./chat/ConversationPage.tsx";
 import type { Subscribe } from "./chat/liveUpdates.ts";
 import type { Greeting } from "./greeting/greetingClient.ts";
 import { NewestGreeting } from "./greeting/NewestGreeting.tsx";
@@ -167,6 +168,12 @@ function AppRoutes({
     <Navigate to="/login" replace />
   );
 
+  const conversationPage = isLoggedIn ? (
+    <ConversationRoute user={user} chatApi={chatApi} />
+  ) : (
+    <Navigate to="/login" replace />
+  );
+
   // Any other address, like "/", goes to the page that fits.
   const startPage = isLoggedIn ? "/chats" : "/login";
 
@@ -176,8 +183,32 @@ function AppRoutes({
       <Route path="/signup" element={signUpPage} />
       <Route path="/account" element={accountPage} />
       <Route path="/chats" element={chatsPage} />
+      {/* ":conversationId" is a URL parameter: any value in that place,
+          like /chats/01a19641-…, opens this page with that id. */}
+      <Route path="/chats/:conversationId" element={conversationPage} />
       <Route path="*" element={<Navigate to={startPage} replace />} />
     </Routes>
+  );
+}
+
+type ConversationRouteProps = {
+  user: User;
+  chatApi: ChatApi;
+};
+
+// ConversationRoute reads the id from the address, like /chats/01a19641-….
+function ConversationRoute({ user, chatApi }: ConversationRouteProps) {
+  const { conversationId = "" } = useParams();
+
+  // "key": when the id changes (another chat is opened), React throws the
+  // old page away and starts a new one, so no messages carry over.
+  return (
+    <ConversationPage
+      key={conversationId}
+      conversationId={conversationId}
+      user={user}
+      chatApi={chatApi}
+    />
   );
 }
 
