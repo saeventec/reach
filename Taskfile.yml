@@ -133,6 +133,24 @@ tasks:
       - go -C services/realtime test ./...
       - npm test --prefix apps/web
 
+  test:e2e:
+    desc: Run the end-to-end tests in a real browser, against a fresh copy of the whole system. Needs Docker running.
+    vars:
+      # The test system: its own Compose project, with the changes in
+      # compose.e2e.yaml (an empty database, the gateway on port 8180).
+      # Learn more: docs/learn/playwright.md#the-test-system
+      E2E_COMPOSE: docker compose -p reach-e2e -f compose.yaml -f apps/web/e2e/compose.e2e.yaml
+    cmds:
+      # Download the browser Playwright drives, if it isn't there yet.
+      - npx --prefix apps/web playwright install chromium
+      # "defer" runs this at the end, also when a test fails: stop the
+      # test system and delete its volumes, so the next run starts empty.
+      - defer: "{{.E2E_COMPOSE}} down --volumes"
+      # --wait: return only when every service is running and healthy
+      # (and the migrations have finished).
+      - "{{.E2E_COMPOSE}} up --build --wait"
+      - npm run test:e2e --prefix apps/web
+
   test:race:
     desc: Run realtime's tests with Go's race detector. Needs a C compiler (on WSL2, "sudo apt install gcc").
     cmds:

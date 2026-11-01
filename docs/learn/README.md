@@ -50,3 +50,4 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [Message ordering and idempotency](message-ordering.md)
 - [The transactional outbox](transactional-outbox.md)
 - [WebSocket and the realtime service](websocket.md)
+- [Playwright: end-to-end tests](playwright.md)

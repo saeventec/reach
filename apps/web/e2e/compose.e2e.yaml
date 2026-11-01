@@ -1,0 +1,17 @@
+# Changes to compose.yaml for the end-to-end tests ("task test:e2e").
+# They run as their own Compose project, "reach-e2e": their own containers
+# and their own volumes, so they start with an empty database and never
+# touch your data from "task dev". Only the gateway is published, on port
+# 8180, so the tests can run while "task dev" uses 8080.
+# Learn more: docs/learn/playwright.md#the-test-system
+services:
+  postgres:
+    # "!reset []": no published ports at all (compose.yaml publishes 5432).
+    ports: !reset []
+  nats:
+    ports: !reset []
+  gateway:
+    # "!override": this list replaces compose.yaml's list, instead of being
+    # added to it.
+    ports: !override
+      - "127.0.0.1:8180:80"

@@ -3,3 +3,6 @@
 # libraries; the image installs its own Linux versions with "npm ci".
 node_modules
 dist
+# Playwright's output: traces of failed end-to-end tests, and its report.
+test-results
+playwright-report
