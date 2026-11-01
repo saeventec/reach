@@ -1,15 +1,19 @@
-// One conversation: its messages, older ones on request, and sending.
+// One conversation: its messages, older ones on request, sending, and
+// live updates. ConversationSync keeps the messages; this page shows them.
 // Learn more: docs/learn/message-ordering.md
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { User } from "../auth/authClient.ts";
 import { errorMessage } from "../shared/errorMessage.ts";
-import type { ChatApi, Conversation, Message } from "./chatClient.ts";
+import { toMessage } from "./chatClient.ts";
+import type { ChatApi, Conversation } from "./chatClient.ts";
+import { ConversationSync } from "./conversationSync.ts";
+import type { TimelineView } from "./conversationSync.ts";
 import { conversationTitle } from "./conversationText.ts";
+import type { Subscribe } from "./liveUpdates.ts";
 import { MessageComposer } from "./MessageComposer.tsx";
 import { MessageList } from "./MessageList.tsx";
 import type { PendingMessage } from "./MessageList.tsx";
-import { mergeMessages } from "./messageTimeline.ts";
 import { newUUIDv7 } from "./uuidv7.ts";
 
 type PageState =
@@ -22,17 +26,26 @@ type ConversationPageProps = {
   conversationId: string;
   user: User;
   chatApi: ChatApi;
+  subscribe: Subscribe;
 };
 
 export function ConversationPage({
   conversationId,
   user,
   chatApi,
+  subscribe,
 }: ConversationPageProps) {
   const [pageState, setPageState] = useState<PageState>({ status: "loading" });
-  const [messages, setMessages] = useState<Message[]>([]);
-  // True if there are messages before the oldest one on screen.
-  const [hasOlder, setHasOlder] = useState(false);
+  const [view, setView] = useState<TimelineView>({
+    messages: [],
+    hasOlder: false,
+  });
+  // One ConversationSync for the page's whole life. A function passed to
+  // useState runs only once, when the page first appears. (The page gets a
+  // new "key" for each conversation, see App.tsx, so a new one each time.)
+  const [sync] = useState(
+    () => new ConversationSync(chatApi, conversationId, setView),
+  );
   const [pending, setPending] = useState<PendingMessage[]>([]);
   const [olderError, setOlderError] = useState("");
 
@@ -55,13 +68,9 @@ export function ConversationPage({
           return;
         }
 
-        const page = await chatApi.listMessages(conversationId, {
-          kind: "newest",
-        });
+        await sync.loadNewest();
         if (!ignore) {
           setPageState({ status: "loaded", conversation: found });
-          setMessages(page.messages);
-          setHasOlder(page.hasMore);
         }
       } catch (loadError) {
         console.error("could not load the conversation", loadError);
@@ -76,7 +85,29 @@ export function ConversationPage({
     return () => {
       ignore = true;
     };
-  }, [chatApi, conversationId]);
+  }, [chatApi, conversationId, sync]);
+
+  // Live updates: a new message in this conversation is added (a copy is
+  // ignored, a gap is filled), and after every (re)connect the page
+  // catches up on what it missed.
+  useEffect(() => {
+    const stop = subscribe({
+      onEvent: (serverEvent) => {
+        if (serverEvent.event.case !== "messageSent") {
+          return;
+        }
+        const eventMessage = serverEvent.event.value.message;
+        if (eventMessage?.conversationId !== conversationId) {
+          return;
+        }
+        sync.add(toMessage(eventMessage));
+      },
+      onConnected: () => {
+        sync.catchUp();
+      },
+    });
+    return stop;
+  }, [subscribe, conversationId, sync]);
 
   // send shows the message as "Sending…" at once, then asks the server.
   // A retry calls it again with the same id, so the server stores the
@@ -93,7 +124,7 @@ export function ConversationPage({
     try {
       const stored = await chatApi.sendMessage(conversationId, messageId, text);
       setPending((current) => removePending(current, messageId));
-      setMessages((current) => mergeMessages(current, [stored]));
+      sync.add(stored);
     } catch (sendError) {
       const failed: PendingMessage = {
         ...sending,
@@ -114,18 +145,9 @@ export function ConversationPage({
   }
 
   async function handleShowOlder() {
-    const oldest = messages[0];
-    if (oldest === undefined) {
-      return;
-    }
     setOlderError("");
     try {
-      const page = await chatApi.listMessages(conversationId, {
-        kind: "before",
-        sequence: oldest.sequence,
-      });
-      setMessages((current) => mergeMessages(current, page.messages));
-      setHasOlder(page.hasMore);
+      await sync.loadOlder();
     } catch (olderLoadError) {
       setOlderError(errorMessage(olderLoadError));
     }
@@ -154,7 +176,7 @@ export function ConversationPage({
           <h2 className="text-2xl font-semibold text-slate-900">
             {conversationTitle(pageState.conversation, user.id)}
           </h2>
-          {hasOlder && (
+          {view.hasOlder && (
             <button
               type="button"
               onClick={handleShowOlder}
@@ -167,7 +189,7 @@ export function ConversationPage({
           <MessageList
             conversation={pageState.conversation}
             myUserId={user.id}
-            messages={messages}
+            messages={view.messages}
             pending={pending}
             onRetry={handleRetry}
           />

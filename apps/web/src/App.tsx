@@ -169,7 +169,7 @@ function AppRoutes({
   );
 
   const conversationPage = isLoggedIn ? (
-    <ConversationRoute user={user} chatApi={chatApi} />
+    <ConversationRoute user={user} chatApi={chatApi} subscribe={subscribe} />
   ) : (
     <Navigate to="/login" replace />
   );
@@ -194,10 +194,15 @@ function AppRoutes({
 type ConversationRouteProps = {
   user: User;
   chatApi: ChatApi;
+  subscribe: Subscribe;
 };
 
 // ConversationRoute reads the id from the address, like /chats/01a19641-….
-function ConversationRoute({ user, chatApi }: ConversationRouteProps) {
+function ConversationRoute({
+  user,
+  chatApi,
+  subscribe,
+}: ConversationRouteProps) {
   const { conversationId = "" } = useParams();
 
   // "key": when the id changes (another chat is opened), React throws the
@@ -208,6 +213,7 @@ function ConversationRoute({ user, chatApi }: ConversationRouteProps) {
       conversationId={conversationId}
       user={user}
       chatApi={chatApi}
+      subscribe={subscribe}
     />
   );
 }

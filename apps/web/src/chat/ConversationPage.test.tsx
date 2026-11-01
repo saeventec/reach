@@ -1,12 +1,16 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { create } from "@bufbuild/protobuf";
+import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { ConnectError, Code } from "@connectrpc/connect";
 import { MemoryRouter } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
 import type { User } from "../auth/authClient.ts";
+import { ServerEventSchema } from "../gen/realtime/v1/events_pb.ts";
 import type { ChatApi, Conversation, Message } from "./chatClient.ts";
 import { ConversationPage } from "./ConversationPage.tsx";
 import { fakeChatApi } from "./fakeChatApi.ts";
+import type { LiveUpdateHandlers, Subscribe } from "./liveUpdates.ts";
 
 afterEach(() => {
   cleanup();
@@ -57,12 +61,43 @@ function chatApi(changes: Partial<ChatApi> = {}): ChatApi {
   });
 }
 
-function renderPage(api: ChatApi) {
+// No live updates: subscribing does nothing.
+const noLiveUpdates: Subscribe = () => () => {};
+
+function renderPage(api: ChatApi, subscribe: Subscribe = noLiveUpdates) {
   render(
     <MemoryRouter>
-      <ConversationPage conversationId={chatId} user={alice} chatApi={api} />
+      <ConversationPage
+        conversationId={chatId}
+        user={alice}
+        chatApi={api}
+        subscribe={subscribe}
+      />
     </MemoryRouter>,
   );
+}
+
+// fakeLiveUpdates keeps the page's handlers, so a test can play the server.
+function fakeLiveUpdates() {
+  const live: { handlers: LiveUpdateHandlers | null } = { handlers: null };
+  const subscribe: Subscribe = (handlers) => {
+    live.handlers = handlers;
+    return () => {};
+  };
+  return { live, subscribe };
+}
+
+// messageSentEvent is what realtime sends for a new message.
+function messageSentEvent(sent: Message) {
+  return create(ServerEventSchema, {
+    event: {
+      case: "messageSent",
+      value: {
+        message: { ...sent, sentAt: timestampFromDate(sent.sentAt) },
+        memberIds: [alice.id, bobId],
+      },
+    },
+  });
 }
 
 function typeMessage(text: string) {
@@ -157,4 +192,44 @@ test("shows older messages on request", async () => {
   expect(
     screen.queryByRole("button", { name: "Show older messages" }),
   ).toBeNull();
+});
+
+test("shows a live message for this chat, and ignores other chats", async () => {
+  const { live, subscribe } = fakeLiveUpdates();
+  renderPage(chatApi(), subscribe);
+  await screen.findByText("hey");
+
+  const otherChat = {
+    ...message(1n, bobId, "in another chat"),
+    conversationId: "01a19641-0000-7000-8000-0000000000c9",
+  };
+  live.handlers?.onEvent(messageSentEvent(otherChat));
+  live.handlers?.onEvent(messageSentEvent(message(3n, bobId, "you there?")));
+
+  await screen.findByText("you there?");
+  expect(screen.queryByText("in another chat")).toBeNull();
+});
+
+test("catches up after a reconnect", async () => {
+  const listMessages = vi
+    .fn()
+    .mockResolvedValueOnce({
+      messages: [message(1n, bobId, "hi alice")],
+      hasMore: false,
+    })
+    .mockResolvedValueOnce({
+      messages: [message(2n, bobId, "sent while you were offline")],
+      hasMore: false,
+    });
+  const { live, subscribe } = fakeLiveUpdates();
+  renderPage(chatApi({ listMessages }), subscribe);
+  await screen.findByText("hi alice");
+
+  live.handlers?.onConnected();
+
+  await screen.findByText("sent while you were offline");
+  expect(listMessages).toHaveBeenLastCalledWith(chatId, {
+    kind: "after",
+    sequence: 1n,
+  });
 });

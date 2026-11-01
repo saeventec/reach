@@ -211,7 +211,9 @@ function toMember(message: MemberMessage): Member {
   };
 }
 
-function toMessage(message: MessageMessage): Message {
+// toMessage is also used for the live events (ConversationPage.tsx),
+// which carry the same Message type.
+export function toMessage(message: MessageMessage): Message {
   return {
     id: message.id,
     conversationId: message.conversationId,

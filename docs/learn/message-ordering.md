@@ -76,6 +76,18 @@ The fixed test makes the collision certain:
 
 Now the test fails with "duplicate key value violates unique constraint" when the code for "try B" is removed. **A test only counts once you have seen it fail for the bug it is meant to catch.**
 
+## Catching up in the app
+
+The web app gets messages four ways: the first page, older pages, the answer to its own send, and live from the WebSocket. Live delivery can lose events (the WebSocket was closed) or repeat them ("at least once"). The sequence numbers make it safe anyway. [apps/web/src/chat/conversationSync.ts](../../apps/web/src/chat/conversationSync.ts) has the rules, in a plain TypeScript class (not React), so its tests need no page:
+
+- **Every message goes through one merge** ([messageTimeline.ts](../../apps/web/src/chat/messageTimeline.ts)): kept by sequence number, sorted. A copy has the same number, so it simply replaces itself. Your own message arrives twice (the send's answer and the live event) and shows once.
+- **A gap means something was missed.** With 1 to 42 on screen, a live message 45 is added, and then the app asks `ListMessages(after: 42)`, which brings 43 and 44 (and 45 again, ignored).
+- **After every (re)connect** it asks for everything after the newest message, page by page, until `has_more` is false.
+- **Only one catch-up at a time.** One asked for while another runs sets a flag, and the running one goes once more at the end. Otherwise two could ask "after 42" at once, which is only wasteful, or one could miss a message that arrived between its question and its answer, which is wrong. A test holds the first answer back to check this.
+- **Before the first page arrives,** live messages are merged but don't count as gaps: there is nothing to compare them with yet.
+
+The WebSocket only makes things fast. Correctness comes from `ListMessages(after: N)`.
+
 ## Delivered and read
 
 Sequence numbers also make "delivered" (✓✓) and "read" small. Each member has two numbers, called **watermarks**, in the `members` table: `delivered_up_to` and `read_up_to`. "bob: read up to 42" means bob has read messages 1 to 42. Like the line a flood leaves on a wall: it says how high the water came, and everything below it is covered.
