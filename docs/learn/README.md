@@ -46,3 +46,4 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [Git hooks and Lefthook](lefthook.md)
 - [CI with GitHub Actions](ci.md)
 - [NATS and JetStream](nats.md)
+- [Hexagonal architecture](hexagonal-architecture.md)

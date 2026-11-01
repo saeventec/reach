@@ -51,6 +51,7 @@ tasks:
       - buf lint
       - buf generate
       - cd services/auth && sqlc generate
+      - cd services/chat && sqlc generate
 
   lint:
     desc: Check all code for likely bugs and formatting (changes nothing)

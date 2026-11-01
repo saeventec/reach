@@ -6,8 +6,8 @@
 # (milestone 11).
 # A "snippet": a named piece of config that a route can reuse with
 # "import logged_in". A route that imports it only lets logged-in users
-# through, and tells the service behind it who they are. The chat and
-# realtime services (milestone 3) will use it.
+# through, and tells the service behind it who they are. The chat service
+# uses it, and realtime will.
 # Learn more: docs/learn/caddy.md#checking-the-session-at-the-gateway
 (logged_in) {
 	# Caddy normally runs directives in its own fixed order, not in the
@@ -43,6 +43,14 @@
 	# The auth service's API, like /auth.v1.AccountService/SignUp.
 	handle /auth.v1.* {
 		reverse_proxy auth:8080
+	}
+
+	# The chat service's API, like /chat.v1.ConversationService/CreateGroup.
+	# Only for logged-in users: the logged_in snippet above checks the
+	# session and adds X-User-Id first.
+	handle /chat.v1.* {
+		import logged_in
+		reverse_proxy chat:8080
 	}
 
 	# Everything else goes to the web app. A "handle" without a path is the

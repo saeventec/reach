@@ -13,12 +13,26 @@ import (
 	"syscall"
 	"time"
 
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
+
 	// Shared code, from packages/go. Learn more: docs/learn/go.md#sharing-code-between-modules
 	"github.com/saeventec/reach/packages/go/config"
 	"github.com/saeventec/reach/packages/go/database"
+	"github.com/saeventec/reach/packages/go/gen/chat/v1/chatv1connect"
 	"github.com/saeventec/reach/packages/go/health"
 	"github.com/saeventec/reach/packages/go/httpserver"
+
+	"github.com/saeventec/reach/services/chat/api"
+	"github.com/saeventec/reach/services/chat/authclient"
+	"github.com/saeventec/reach/services/chat/conversation"
+	"github.com/saeventec/reach/services/chat/postgres"
 )
+
+// maximumRequestBytes is the largest API message the service reads. A
+// group with 50 usernames is under 4 KiB. Bigger messages get a
+// RESOURCE_EXHAUSTED error. (The same limit as in the auth service.)
+const maximumRequestBytes = 16 * 1024
 
 // main is where every Go program starts. It only sets up logging and
 // reports the error from run, so the real work stays easy to test.
@@ -34,8 +48,8 @@ func main() {
 	}
 }
 
-// run connects to the database, then runs the HTTP server until it fails or
-// is asked to stop.
+// run connects the parts, then runs the HTTP server until it fails or is
+// asked to stop.
 // Learn more: docs/learn/graceful-shutdown.md
 func run() error {
 	// stopSignal is "done" when the operating system asks us to stop:
@@ -48,8 +62,11 @@ func run() error {
 		return err
 	}
 
-	// Nothing reads the database yet (the tables come in the next step).
-	// Connecting now still finds a wrong address or password at startup.
+	authURL, err := readAuthURL()
+	if err != nil {
+		return err
+	}
+
 	pool, err := database.Connect(stopSignal, databaseURL)
 	if err != nil {
 		return err
@@ -57,12 +74,19 @@ func run() error {
 	// Close the database connections last, after the server has stopped.
 	defer pool.Close()
 
+	// The hexagon: the core gets its two adapters (the database and the
+	// auth service), and the API adapter gets the core.
+	// Learn more: docs/learn/hexagonal-architecture.md
+	store := postgres.NewStore(pool)
+	directory := authclient.NewDirectory(authURL)
+	conversations := conversation.NewService(store, directory)
+
 	port := config.Port()
 	address := ":" + port
 
 	server := &http.Server{
 		Addr:    address,
-		Handler: newRouter(),
+		Handler: newRouter(conversations),
 		// Close connections that are too slow to send their request headers.
 		// Without a limit, a slow client could keep connections open forever.
 		ReadHeaderTimeout: 5 * time.Second,
@@ -72,8 +96,16 @@ func run() error {
 }
 
 // newRouter connects each URL path to the code that handles it.
-func newRouter() *http.ServeMux {
+func newRouter(conversations *conversation.Service) *http.ServeMux {
 	router := http.NewServeMux()
 	router.HandleFunc("GET /healthz", health.Handle)
+
+	// The Connect server answers the API calls defined in proto/chat/v1,
+	// like /chat.v1.ConversationService/ListConversations.
+	conversationServer := api.NewConversationServer(conversations)
+	connectServer := connect.NewServer()
+	chatv1connect.RegisterConversationServiceHandler(connectServer, conversationServer)
+	connecthttp.Mount(router, connectServer, connecthttp.WithReadMaxBytes(maximumRequestBytes))
+
 	return router
 }

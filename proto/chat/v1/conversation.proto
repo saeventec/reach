@@ -1,0 +1,94 @@
+// The chat service's API for conversations: 1:1 chats and groups.
+// Messages come in their own file. The gateway only lets logged-in users
+// through, and tells chat who they are (ADR 0029).
+// Learn more: docs/design/m03-real-time-chat.md
+syntax = "proto3";
+
+package chat.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// ConversationService starts conversations and lists them.
+service ConversationService {
+  // StartDirectConversation returns the 1:1 conversation between you and
+  // the person with this username, and creates it if it doesn't exist yet.
+  // There is only ever one per pair of people, so calling it twice is
+  // safe. It fails with NOT_FOUND if nobody has the username, and with
+  // INVALID_ARGUMENT for your own username.
+  rpc StartDirectConversation(StartDirectConversationRequest) returns (StartDirectConversationResponse) {}
+
+  // CreateGroup creates a group with a name, you, and the people with these
+  // usernames. It fails with NOT_FOUND if a username has no account, and
+  // with INVALID_ARGUMENT if the name or the number of people breaks the
+  // rules (the message says which rule).
+  rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse) {}
+
+  // ListConversations returns your conversations, the most recently active
+  // first.
+  rpc ListConversations(ListConversationsRequest) returns (ListConversationsResponse) {}
+}
+
+// StartDirectConversationRequest names the other person.
+message StartDirectConversationRequest {
+  // As typed. Spaces around it are removed, and it is made lowercase.
+  string username = 1;
+}
+
+// StartDirectConversationResponse is the 1:1 conversation.
+message StartDirectConversationResponse {
+  Conversation conversation = 1;
+}
+
+// CreateGroupRequest is what the person typed in the "new group" form.
+message CreateGroupRequest {
+  // 1 to 64 characters, after removing spaces around it.
+  string name = 1;
+  // The other members: at least 1, at most 49 (a group has at most 50
+  // members). You are added on your own; your own username here is ignored.
+  repeated string usernames = 2;
+}
+
+// CreateGroupResponse is the new group.
+message CreateGroupResponse {
+  Conversation conversation = 1;
+}
+
+// ListConversationsRequest is empty: the gateway says who is asking.
+message ListConversationsRequest {}
+
+// ListConversationsResponse lists your conversations.
+message ListConversationsResponse {
+  repeated Conversation conversations = 1;
+}
+
+// ConversationKind says whether a conversation is a 1:1 chat or a group.
+// An "enum" is a fixed list of named values. Protobuf needs value 0 to
+// mean "not set", so a missing field is never mistaken for a real kind.
+enum ConversationKind {
+  CONVERSATION_KIND_UNSPECIFIED = 0;
+  CONVERSATION_KIND_DIRECT = 1;
+  CONVERSATION_KIND_GROUP = 2;
+}
+
+// Conversation is a 1:1 chat or a group.
+message Conversation {
+  // A UUIDv7, as text.
+  string id = 1;
+  ConversationKind kind = 2;
+  // The group's name. Empty for a 1:1 chat: the web app shows the other
+  // person's username instead.
+  string group_name = 3;
+  // Everyone in the conversation, you included.
+  repeated Member members = 4;
+  google.protobuf.Timestamp created_at = 5;
+  // When something last happened: for now its creation, later the last
+  // message. The list is sorted by it.
+  google.protobuf.Timestamp last_activity_at = 6;
+}
+
+// Member is one person in a conversation.
+message Member {
+  // A UUIDv7, as text.
+  string user_id = 1;
+  string username = 2;
+}

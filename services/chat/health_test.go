@@ -13,7 +13,7 @@ func TestHealthAnswersOK(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	recorder := httptest.NewRecorder()
 
-	router := newRouter()
+	router := newRouter(nil)
 	router.ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusOK {

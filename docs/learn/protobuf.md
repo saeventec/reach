@@ -88,6 +88,22 @@ message Device {
 - **Well-known types** are standard messages that come with Protobuf, like `google.protobuf.Timestamp`. Each language maps them to its own type: `timestamppb.Timestamp` in Go (`timestamppb.New(time)` makes one), and `Timestamp` from `@bufbuild/protobuf/wkt` in TypeScript. In JSON, a Timestamp is text in the RFC 3339 format, always in UTC: `"2026-10-31T09:00:00Z"`.
 - **Default values are left out of JSON.** A `bool` that is `false`, a number that is `0` or an empty text is not sent at all. So a device that isn't the current one has no `isCurrentDevice` in the JSON. The generated code fills in the default again, so your code always sees `false`.
 
+### Enums
+
+An **enum** is a fixed list of named values. From [proto/chat/v1/conversation.proto](../../proto/chat/v1/conversation.proto):
+
+```protobuf
+enum ConversationKind {
+  CONVERSATION_KIND_UNSPECIFIED = 0;   // "not set"
+  CONVERSATION_KIND_DIRECT = 1;
+  CONVERSATION_KIND_GROUP = 2;
+}
+```
+
+- **Value 0 means "not set".** A missing field has the default value 0, like a missing number. If 0 were `DIRECT`, a message that forgot the field would silently be a 1:1 chat. buf's lint rules ask for a `_UNSPECIFIED` value 0 for this reason.
+- **The prefix** (`CONVERSATION_KIND_`) is another lint rule: in Protobuf, enum values share one namespace per package, so two enums can't both have a value called `DIRECT`.
+- In Go they are constants (`chatv1.ConversationKind_CONVERSATION_KIND_GROUP`), in JSON their names as text (`"CONVERSATION_KIND_GROUP"`).
+
 ## Our config files
 
 - `buf.yaml`: where the `.proto` files are (`proto/`) and which lint rules to use.
