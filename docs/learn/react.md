@@ -86,6 +86,17 @@ useEffect(() => {
 
 Later, TanStack Query can do this loading for us, with caching and retries. Writing it by hand first shows what such a library saves (the owner chose "later" in milestone 2).
 
+## Custom hooks
+
+A **custom hook** is your own function whose name starts with `use`, and that calls React's hooks inside. It packs a piece of page behavior into one line. [apps/web/src/chat/useMarkAsSeen.ts](../../apps/web/src/chat/useMarkAsSeen.ts) is one: the conversation page calls `useMarkAsSeen(chatApi, conversationId, newest)`, and the hook does the rest:
+
+- **`useRef`** keeps a value between renders, like state, but changing it doesn't draw the page again. Here: what we already told the server, so a call isn't repeated.
+- **An effect with an event listener:** `document.addEventListener("visibilitychange", mark)` runs `mark` when you switch tabs. `document.visibilityState` is `"visible"` when the tab is in front. The effect's cleanup removes the listener, so an old page never reacts.
+
+Tests pretend the tab is hidden with `vi.spyOn(document, "visibilityState", "get")`.
+
+Another way to keep a page small is a plain class, like [conversationSync.ts](../../apps/web/src/chat/conversationSync.ts): no React inside, so its rules can be tested without drawing anything. The page creates one with `useState(() => new ConversationSync(...))`: the function runs only once, so the page keeps the same object.
+
 ## Forms
 
 From [apps/web/src/auth/LogInPage.tsx](../../apps/web/src/auth/LogInPage.tsx):

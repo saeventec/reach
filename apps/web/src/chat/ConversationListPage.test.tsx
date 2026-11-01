@@ -57,6 +57,7 @@ function chatApi(changes: Partial<ChatApi> = {}): ChatApi {
     listConversations: async () => [chatWithBob],
     startDirectConversation: async () => chatWithBob,
     createGroup: async () => friends,
+    markDelivered: async () => {},
     ...changes,
   });
 }
@@ -323,4 +324,50 @@ test("closes the live updates when the page closes", async () => {
   page.unmount();
 
   expect(live.stopped).toBe(true);
+});
+
+test("marks a new message from someone else as delivered", async () => {
+  // bob's message 1 is newer than alice's delivered watermark (0).
+  const markDelivered = vi.fn(async () => {});
+  renderPage(
+    <ConversationListPage
+      user={alice}
+      chatApi={chatApi({ markDelivered })}
+      subscribe={noLiveUpdates}
+    />,
+  );
+
+  await vi.waitFor(() =>
+    expect(markDelivered).toHaveBeenCalledWith(chatWithBob.id, 1n),
+  );
+});
+
+test("doesn't mark what was already delivered, or your own messages", async () => {
+  const alreadyDelivered: Conversation = {
+    ...chatWithBob,
+    members: [
+      { userId: alice.id, username: "alice", deliveredUpTo: 1n, readUpTo: 0n },
+      { userId: bobId, username: "bob", deliveredUpTo: 1n, readUpTo: 1n },
+    ],
+  };
+  // "!" tells TypeScript the value is not null: chatWithBob above has a
+  // last message.
+  const fromAlice: Conversation = {
+    ...friends,
+    lastMessage: { ...chatWithBob.lastMessage!, senderId: alice.id },
+  };
+  const markDelivered = vi.fn(async () => {});
+  renderPage(
+    <ConversationListPage
+      user={alice}
+      chatApi={chatApi({
+        markDelivered,
+        listConversations: async () => [alreadyDelivered, fromAlice],
+      })}
+      subscribe={noLiveUpdates}
+    />,
+  );
+  await screen.findByText("Friends");
+
+  expect(markDelivered).not.toHaveBeenCalled();
 });

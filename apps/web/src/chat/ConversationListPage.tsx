@@ -6,6 +6,10 @@ import type { User } from "../auth/authClient.ts";
 import type { ChatApi, Conversation } from "./chatClient.ts";
 import { conversationTitle, lastMessagePreview } from "./conversationText.ts";
 import type { Subscribe } from "./liveUpdates.ts";
+import {
+  markListDelivered,
+  markLiveMessageDelivered,
+} from "./markDelivered.ts";
 import { NewChatForm } from "./NewChatForm.tsx";
 import { NewGroupForm } from "./NewGroupForm.tsx";
 
@@ -41,6 +45,7 @@ export function ConversationListPage({
         const conversations = await chatApi.listConversations();
         if (!ignore) {
           setState({ status: "loaded", conversations });
+          markListDelivered(chatApi, conversations, user.id);
         }
       } catch (loadError) {
         console.error("could not load the conversations", loadError);
@@ -55,7 +60,7 @@ export function ConversationListPage({
     return () => {
       ignore = true;
     };
-  }, [chatApi, reloadCount]);
+  }, [chatApi, reloadCount, user.id]);
 
   // Live updates: a new message changes a preview and the order, and a new
   // conversation (maybe started by someone else) joins the list. The list
@@ -64,6 +69,9 @@ export function ConversationListPage({
   useEffect(() => {
     const stop = subscribe({
       onEvent: (serverEvent) => {
+        // No conversation is open on this page: mark every new message
+        // from someone else as delivered.
+        markLiveMessageDelivered(chatApi, user.id, serverEvent, null);
         const kind = serverEvent.event.case;
         if (kind === "messageSent" || kind === "conversationCreated") {
           setReloadCount((count) => count + 1);
@@ -77,7 +85,7 @@ export function ConversationListPage({
     });
     // The cleanup: when the page closes, close the WebSocket too.
     return stop;
-  }, [subscribe]);
+  }, [subscribe, chatApi, user.id]);
 
   // After a new chat or group, load the list again: the server puts it in
   // the right place (the newest first). The old list stays on screen until

@@ -57,6 +57,8 @@ function chatApi(changes: Partial<ChatApi> = {}): ChatApi {
       messages: [message(1n, bobId, "hi alice"), message(2n, alice.id, "hey")],
       hasMore: false,
     }),
+    markDelivered: async () => {},
+    markRead: async () => {},
     ...changes,
   });
 }
@@ -232,4 +234,72 @@ test("catches up after a reconnect", async () => {
     kind: "after",
     sequence: 1n,
   });
+});
+
+// setTabVisible pretends the browser tab is in front (true) or in the
+// background (false). vi.spyOn replaces the property's getter for the test.
+function setTabVisible(isVisible: boolean) {
+  const state = isVisible ? "visible" : "hidden";
+  vi.spyOn(document, "visibilityState", "get").mockReturnValue(state);
+}
+
+test("marks the messages read when the page is visible", async () => {
+  setTabVisible(true);
+  const markRead = vi.fn(async () => {});
+  renderPage(chatApi({ markRead }));
+  await screen.findByText("hey");
+
+  await vi.waitFor(() => expect(markRead).toHaveBeenCalledWith(chatId, 2n));
+});
+
+test("only marks them delivered while the tab is in the background", async () => {
+  setTabVisible(false);
+  const markRead = vi.fn(async () => {});
+  const markDelivered = vi.fn(async () => {});
+  renderPage(chatApi({ markRead, markDelivered }));
+  await screen.findByText("hey");
+  await vi.waitFor(() =>
+    expect(markDelivered).toHaveBeenCalledWith(chatId, 2n),
+  );
+  expect(markRead).not.toHaveBeenCalled();
+
+  // Coming back to the tab: now they are read.
+  setTabVisible(true);
+  document.dispatchEvent(new Event("visibilitychange"));
+
+  await vi.waitFor(() => expect(markRead).toHaveBeenCalledWith(chatId, 2n));
+});
+
+test("shows delivered, then read, as bob's watermarks move", async () => {
+  // bob has received alice's message 2, but not read it.
+  const withBobsWatermarks = {
+    ...chatWithBob,
+    members: [
+      { userId: alice.id, username: "alice", deliveredUpTo: 2n, readUpTo: 2n },
+      { userId: bobId, username: "bob", deliveredUpTo: 2n, readUpTo: 1n },
+    ],
+  };
+  const { live, subscribe } = fakeLiveUpdates();
+  renderPage(
+    chatApi({ listConversations: async () => [withBobsWatermarks] }),
+    subscribe,
+  );
+  await screen.findByLabelText("Delivered");
+
+  live.handlers?.onEvent(
+    create(ServerEventSchema, {
+      event: {
+        case: "receiptUpdated",
+        value: {
+          conversationId: chatId,
+          userId: bobId,
+          deliveredUpTo: 2n,
+          readUpTo: 2n,
+          memberIds: [alice.id, bobId],
+        },
+      },
+    }),
+  );
+
+  await screen.findByLabelText("Read");
 });

@@ -1,7 +1,9 @@
 // The messages of a conversation, the oldest at the top. Your own
-// messages are on the right, in blue; the others on the left, with the
-// sender's name.
-import type { Conversation, Message } from "./chatClient.ts";
+// messages are on the right, in blue, with ✓ (sent), ✓✓ (delivered) or
+// "Read"; the others on the left, with the sender's name.
+import type { Member, Message } from "./chatClient.ts";
+import { messageStatus } from "./receipts.ts";
+import type { MessageStatus } from "./receipts.ts";
 
 // A message you sent that the server hasn't confirmed yet.
 export type PendingMessage = {
@@ -13,7 +15,8 @@ export type PendingMessage = {
 };
 
 type MessageListProps = {
-  conversation: Conversation;
+  // The members with their watermarks.
+  members: Member[];
   myUserId: string;
   messages: Message[];
   pending: PendingMessage[];
@@ -21,7 +24,7 @@ type MessageListProps = {
 };
 
 export function MessageList({
-  conversation,
+  members,
   myUserId,
   messages,
   pending,
@@ -38,7 +41,8 @@ export function MessageList({
           key={message.id}
           message={message}
           isMine={message.senderId === myUserId}
-          senderName={senderName(conversation, message.senderId)}
+          senderName={senderName(members, message.senderId)}
+          status={messageStatus(message, members)}
         />
       ))}
       {pending.map((pendingMessage) => (
@@ -56,16 +60,33 @@ type MessageItemProps = {
   message: Message;
   isMine: boolean;
   senderName: string;
+  status: MessageStatus;
 };
 
-function MessageItem({ message, isMine, senderName }: MessageItemProps) {
+// The marks for each status. aria-label lets screen readers say a word
+// instead of "check mark check mark".
+const statusMarks: Record<MessageStatus, { mark: string; label: string }> = {
+  sent: { mark: "✓", label: "Sent" },
+  delivered: { mark: "✓✓", label: "Delivered" },
+  read: { mark: "Read", label: "Read" },
+};
+
+function MessageItem({
+  message,
+  isMine,
+  senderName,
+  status,
+}: MessageItemProps) {
   const time = formatTime(message.sentAt);
 
   if (isMine) {
+    const { mark, label } = statusMarks[status];
     return (
       <li className="self-end rounded bg-blue-600 px-3 py-2 text-white">
         <p className="whitespace-pre-wrap">{message.text}</p>
-        <p className="text-right text-xs text-blue-100">{time}</p>
+        <p className="text-right text-xs text-blue-100">
+          {time} <span aria-label={label}>{mark}</span>
+        </p>
       </li>
     );
   }
@@ -103,10 +124,8 @@ function PendingItem({ pendingMessage, onRetry }: PendingItemProps) {
 }
 
 // senderName is the username of the member with this id.
-function senderName(conversation: Conversation, senderId: string): string {
-  const sender = conversation.members.find(
-    (member) => member.userId === senderId,
-  );
+function senderName(members: Member[], senderId: string): string {
+  const sender = members.find((member) => member.userId === senderId);
   return sender === undefined ? "Someone" : sender.username;
 }
 

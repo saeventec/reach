@@ -1,12 +1,13 @@
-// One conversation: its messages, older ones on request, sending, and
-// live updates. ConversationSync keeps the messages; this page shows them.
+// One conversation: its messages, older ones on request, sending, live
+// updates, and delivered and read. ConversationSync keeps the messages;
+// this page shows them.
 // Learn more: docs/learn/message-ordering.md
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { User } from "../auth/authClient.ts";
 import { errorMessage } from "../shared/errorMessage.ts";
 import { toMessage } from "./chatClient.ts";
-import type { ChatApi, Conversation } from "./chatClient.ts";
+import type { ChatApi, Conversation, Member } from "./chatClient.ts";
 import { ConversationSync } from "./conversationSync.ts";
 import type { TimelineView } from "./conversationSync.ts";
 import { conversationTitle } from "./conversationText.ts";
@@ -14,6 +15,10 @@ import type { Subscribe } from "./liveUpdates.ts";
 import { MessageComposer } from "./MessageComposer.tsx";
 import { MessageList } from "./MessageList.tsx";
 import type { PendingMessage } from "./MessageList.tsx";
+import { newestSequence } from "./messageTimeline.ts";
+import { markLiveMessageDelivered } from "./markDelivered.ts";
+import { applyReceipt } from "./receipts.ts";
+import { useMarkAsSeen } from "./useMarkAsSeen.ts";
 import { newUUIDv7 } from "./uuidv7.ts";
 
 type PageState =
@@ -48,6 +53,11 @@ export function ConversationPage({
   );
   const [pending, setPending] = useState<PendingMessage[]>([]);
   const [olderError, setOlderError] = useState("");
+  // The members with their watermarks: from the list at first, then moved
+  // by live receipt events. They decide the ✓ marks.
+  const [members, setMembers] = useState<Member[]>([]);
+
+  useMarkAsSeen(chatApi, conversationId, newestSequence(view.messages));
 
   useEffect(() => {
     // See NewestGreeting.tsx for why "ignore" is needed.
@@ -71,6 +81,7 @@ export function ConversationPage({
         await sync.loadNewest();
         if (!ignore) {
           setPageState({ status: "loaded", conversation: found });
+          setMembers(found.members);
         }
       } catch (loadError) {
         console.error("could not load the conversation", loadError);
@@ -88,26 +99,33 @@ export function ConversationPage({
   }, [chatApi, conversationId, sync]);
 
   // Live updates: a new message in this conversation is added (a copy is
-  // ignored, a gap is filled), and after every (re)connect the page
-  // catches up on what it missed.
+  // ignored, a gap is filled), a receipt moves a member's watermarks, and
+  // after every (re)connect the page catches up on what it missed.
   useEffect(() => {
     const stop = subscribe({
       onEvent: (serverEvent) => {
-        if (serverEvent.event.case !== "messageSent") {
-          return;
+        // Messages in your other conversations count as delivered.
+        markLiveMessageDelivered(chatApi, user.id, serverEvent, conversationId);
+        const event = serverEvent.event;
+        if (event.case === "messageSent") {
+          const eventMessage = event.value.message;
+          if (eventMessage?.conversationId === conversationId) {
+            sync.add(toMessage(eventMessage));
+          }
         }
-        const eventMessage = serverEvent.event.value.message;
-        if (eventMessage?.conversationId !== conversationId) {
-          return;
+        if (event.case === "receiptUpdated") {
+          const receipt = event.value;
+          if (receipt.conversationId === conversationId) {
+            setMembers((current) => applyReceipt(current, receipt));
+          }
         }
-        sync.add(toMessage(eventMessage));
       },
       onConnected: () => {
         sync.catchUp();
       },
     });
     return stop;
-  }, [subscribe, conversationId, sync]);
+  }, [subscribe, conversationId, sync, chatApi, user.id]);
 
   // send shows the message as "Sending…" at once, then asks the server.
   // A retry calls it again with the same id, so the server stores the
@@ -187,7 +205,7 @@ export function ConversationPage({
           )}
           {olderError !== "" && <p className="text-red-600">{olderError}</p>}
           <MessageList
-            conversation={pageState.conversation}
+            members={members}
             myUserId={user.id}
             messages={view.messages}
             pending={pending}
