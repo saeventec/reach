@@ -63,13 +63,13 @@ Connect with any Postgres tool. The recommended one is the **PostgreSQL** extens
 | --- | --- |
 | Host | `localhost` |
 | Port | `5432` |
-| Database | `auth` or `hello` |
+| Database | `auth`, `chat` or `hello` |
 | User and password | see below; the passwords are in your `.env` |
 | SSL | off (disable): fine on your own computer, not on a real server |
 
 Which user:
 
-- **`auth` or `hello`** (`AUTH_DATABASE_PASSWORD`, `HELLO_DATABASE_PASSWORD`): you see exactly what that service sees, and nothing else. A good habit for everyday browsing.
+- **`auth`, `chat` or `hello`** (`AUTH_DATABASE_PASSWORD`, `CHAT_DATABASE_PASSWORD`, `HELLO_DATABASE_PASSWORD`): you see exactly what that service sees, and nothing else. A good habit for everyday browsing.
 - **`postgres`** (`POSTGRES_PASSWORD`): the superuser. It sees and can change everything, in every database. Use it carefully.
 
 If port 5432 is already taken (for example, by another Postgres installed on your computer), `task dev` fails with "port is already allocated". Stop the other Postgres, or change the first number, for example `"127.0.0.1:5433:5432"`, and connect to port 5433.
@@ -82,8 +82,9 @@ If port 5432 is already taken (for example, by another Postgres installed on you
 | --- | --- | --- |
 | hello | `hello` | `hello` |
 | auth | `auth` | `auth` |
+| chat | `chat` | `chat` |
 
-This is the **principle of least privilege**: give each part only the rights it needs. Each service's password is in `.env` (`HELLO_DATABASE_PASSWORD`, `AUTH_DATABASE_PASSWORD`).
+This is the **principle of least privilege**: give each part only the rights it needs. Each service's password is in `.env` (`HELLO_DATABASE_PASSWORD`, `AUTH_DATABASE_PASSWORD`, `CHAT_DATABASE_PASSWORD`).
 
 The `postgres-setup` container creates the roles and databases. It runs [postgres/setup.sql](../../postgres/setup.sql) with `psql` on every `task dev`, before the migrations. ([ADR 0024](../decisions/0024-create-databases-with-a-setup-container.md) explains why.) Because it runs every time, each step must be **idempotent**: safe to repeat, with the same result as running it once. Postgres has no `CREATE DATABASE IF NOT EXISTS`, so the file uses a psql pattern:
 

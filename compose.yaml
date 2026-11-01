@@ -1,7 +1,8 @@
 # Starts the whole Reach system with Docker Compose. Run it with "task dev".
 # Each entry under "services" becomes one container.
 # Start order: postgres (healthy) → postgres-setup (finished) →
-# hello-migrate and auth-migrate (finished) → hello and auth.
+# hello-migrate and auth-migrate (finished) → hello and auth. chat starts
+# after postgres-setup.
 # nats, web and gateway start right away. Open http://localhost:8080.
 # Learn more: docs/learn/docker-compose.md
 
@@ -44,9 +45,10 @@ services:
     environment:
       # psql reads the superuser's password from PGPASSWORD.
       PGPASSWORD: ${POSTGRES_PASSWORD}
-      # setup.sql gives these passwords to the hello and auth users.
+      # setup.sql gives these passwords to the hello, auth and chat users.
       HELLO_DATABASE_PASSWORD: ${HELLO_DATABASE_PASSWORD:?Set HELLO_DATABASE_PASSWORD in .env (see .env.example)}
       AUTH_DATABASE_PASSWORD: ${AUTH_DATABASE_PASSWORD:?Set AUTH_DATABASE_PASSWORD in .env (see .env.example)}
+      CHAT_DATABASE_PASSWORD: ${CHAT_DATABASE_PASSWORD:?Set CHAT_DATABASE_PASSWORD in .env (see .env.example)}
     volumes:
       # Share the postgres/ folder (with setup.sql), read-only.
       - ./postgres:/setup:ro
@@ -165,6 +167,34 @@ services:
     depends_on:
       # Start only after the migrations finished without an error.
       auth-migrate:
+        condition: service_completed_successfully
+
+  # Conversations and messages (milestone 3). Learn more: services/chat/main.go
+  chat:
+    build:
+      # Like hello: the whole repo, for packages/go.
+      context: .
+      dockerfile: services/chat/Dockerfile
+    environment:
+      DATABASE_URL: postgres://chat:${CHAT_DATABASE_PASSWORD}@postgres:5432/chat?sslmode=disable
+    # No "ports", on purpose: chat trusts the X-User-Id header, which only
+    # the gateway may set (ADR 0029). With a published port, anyone could
+    # call chat directly and pretend to be any user.
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/healthz"]
+      start_period: 30s
+      start_interval: 1s
+    develop:
+      watch:
+        - action: rebuild
+          path: ./services/chat
+        # The shared code is part of this program too.
+        - action: rebuild
+          path: ./packages/go
+    depends_on:
+      # Start only after the chat user and database exist. (Its migrations
+      # come with its first tables.)
+      postgres-setup:
         condition: service_completed_successfully
 
   # The web app's development server (Vite). Reached through the gateway.
