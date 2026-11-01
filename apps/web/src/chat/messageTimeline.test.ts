@@ -1,6 +1,10 @@
 import { expect, test } from "vitest";
 import type { Message } from "./chatClient.ts";
-import { mergeMessages, newestSequence } from "./messageTimeline.ts";
+import {
+  mergeMessages,
+  newestSequence,
+  newestSequenceFromOthers,
+} from "./messageTimeline.ts";
 
 // message makes a message with this sequence number.
 function message(sequence: bigint): Message {
@@ -36,4 +40,13 @@ test("adds a message that arrives twice only once", () => {
 test("knows the newest sequence number, or 0 for none", () => {
   expect(newestSequence([message(1n), message(7n)])).toBe(7n);
   expect(newestSequence([])).toBe(0n);
+});
+
+test("knows the newest message from someone else", () => {
+  const mine = { ...message(3n), senderId: "me" };
+
+  expect(newestSequenceFromOthers([message(1n), message(2n), mine], "me")).toBe(
+    2n,
+  );
+  expect(newestSequenceFromOthers([mine], "me")).toBe(0n);
 });

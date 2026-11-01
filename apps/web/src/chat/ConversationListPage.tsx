@@ -6,10 +6,7 @@ import type { User } from "../auth/authClient.ts";
 import type { ChatApi, Conversation } from "./chatClient.ts";
 import { conversationTitle, lastMessagePreview } from "./conversationText.ts";
 import type { Subscribe } from "./liveUpdates.ts";
-import {
-  markListDelivered,
-  markLiveMessageDelivered,
-} from "./markDelivered.ts";
+import { markListDelivered } from "./markDelivered.ts";
 import { NewChatForm } from "./NewChatForm.tsx";
 import { NewGroupForm } from "./NewGroupForm.tsx";
 
@@ -64,14 +61,12 @@ export function ConversationListPage({
 
   // Live updates: a new message changes a preview and the order, and a new
   // conversation (maybe started by someone else) joins the list. The list
-  // simply loads again: one small call, and always right. Delivered and
-  // read don't change the list, so they are ignored here.
+  // simply loads again: one small call, and always right. The load also
+  // marks the new messages delivered (markListDelivered). Delivered and
+  // read events don't change the list, so they are ignored here.
   useEffect(() => {
     const stop = subscribe({
       onEvent: (serverEvent) => {
-        // No conversation is open on this page: mark every new message
-        // from someone else as delivered.
-        markLiveMessageDelivered(chatApi, user.id, serverEvent, null);
         const kind = serverEvent.event.case;
         if (kind === "messageSent" || kind === "conversationCreated") {
           setReloadCount((count) => count + 1);
@@ -85,7 +80,7 @@ export function ConversationListPage({
     });
     // The cleanup: when the page closes, close the WebSocket too.
     return stop;
-  }, [subscribe, chatApi, user.id]);
+  }, [subscribe]);
 
   // After a new chat or group, load the list again: the server puts it in
   // the right place (the newest first). The old list stays on screen until

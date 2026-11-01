@@ -35,6 +35,19 @@ export function newestSequence(messages: Message[]): bigint {
   return newest.sequence;
 }
 
+// newestSequenceFromOthers is the sequence number of the newest message
+// someone else sent, or 0 when there is none. Your own messages don't need
+// marking as read: you wrote them.
+export function newestSequenceFromOthers(
+  messages: Message[],
+  myUserId: string,
+): bigint {
+  const fromOthers = messages.filter(
+    (message) => message.senderId !== myUserId,
+  );
+  return newestSequence(fromOthers);
+}
+
 // compareBySequence sorts the oldest first. sort() wants a negative number,
 // 0, or a positive number; bigints can't be subtracted into a plain number,
 // so compare them.

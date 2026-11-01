@@ -15,9 +15,9 @@ import type { Subscribe } from "./liveUpdates.ts";
 import { MessageComposer } from "./MessageComposer.tsx";
 import { MessageList } from "./MessageList.tsx";
 import type { PendingMessage } from "./MessageList.tsx";
-import { newestSequence } from "./messageTimeline.ts";
 import { markLiveMessageDelivered } from "./markDelivered.ts";
-import { applyReceipt } from "./receipts.ts";
+import { newestSequence, newestSequenceFromOthers } from "./messageTimeline.ts";
+import { applyReceipt, mergeMembers } from "./receipts.ts";
 import { useMarkAsSeen } from "./useMarkAsSeen.ts";
 import { newUUIDv7 } from "./uuidv7.ts";
 
@@ -58,7 +58,8 @@ export function ConversationPage({
   const [members, setMembers] = useState<Member[]>([]);
 
   const newest = newestSequence(view.messages);
-  useMarkAsSeen(chatApi, conversationId, newest);
+  const newestFromOthers = newestSequenceFromOthers(view.messages, user.id);
+  useMarkAsSeen(chatApi, conversationId, newestFromOthers);
 
   // A ref to an element on the page: the empty <div> at the bottom. When
   // a newer message arrives, or you send one, scroll it into view, so the
@@ -87,7 +88,7 @@ export function ConversationPage({
         await sync.loadNewest();
         if (!ignore) {
           setPageState({ status: "loaded", conversation: found });
-          setMembers(found.members);
+          setMembers((current) => mergeMembers(current, found.members));
         }
       } catch (loadError) {
         console.error("could not load the conversation", loadError);
@@ -108,6 +109,19 @@ export function ConversationPage({
   // ignored, a gap is filled), a receipt moves a member's watermarks, and
   // after every (re)connect the page catches up on what it missed.
   useEffect(() => {
+    // refreshMembers loads the members' watermarks again: receipt events
+    // sent while the WebSocket was closed are lost, like messages.
+    async function refreshMembers() {
+      try {
+        const found = await chatApi.getConversation(conversationId);
+        if (found !== null) {
+          setMembers((current) => mergeMembers(current, found.members));
+        }
+      } catch (refreshError) {
+        console.error("could not reload the members", refreshError);
+      }
+    }
+
     const stop = subscribe({
       onEvent: (serverEvent) => {
         // Messages in your other conversations count as delivered.
@@ -128,6 +142,7 @@ export function ConversationPage({
       },
       onConnected: () => {
         sync.catchUp();
+        refreshMembers();
       },
     });
     return stop;

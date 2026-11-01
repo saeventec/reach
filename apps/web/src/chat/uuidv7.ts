@@ -40,9 +40,9 @@ export function newUUIDv7(
 // formatUUID writes 16 bytes as 32 hexadecimal digits in the groups
 // 8-4-4-4-12.
 function formatUUID(bytes: Uint8Array): string {
-  const digits = Array.from(bytes, (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  ).join("");
+  const byteList = Array.from(bytes);
+  const pairs = byteList.map(toHexPair);
+  const digits = pairs.join("");
   const groups = [
     digits.slice(0, 8),
     digits.slice(8, 12),
@@ -51,4 +51,10 @@ function formatUUID(bytes: Uint8Array): string {
     digits.slice(20, 32),
   ];
   return groups.join("-");
+}
+
+// toHexPair writes one byte as two hexadecimal digits: 10 becomes "0a".
+function toHexPair(byte: number): string {
+  const hex = byte.toString(16);
+  return hex.padStart(2, "0");
 }

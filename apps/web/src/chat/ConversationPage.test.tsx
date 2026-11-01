@@ -251,12 +251,13 @@ function setTabVisible(isVisible: boolean) {
 }
 
 test("marks the messages read when the page is visible", async () => {
+  // Up to bob's message 1. Message 2 is alice's own: nothing to mark.
   setTabVisible(true);
   const markRead = vi.fn(async () => {});
   renderPage(chatApi({ markRead }));
   await screen.findByText("hey");
 
-  await vi.waitFor(() => expect(markRead).toHaveBeenCalledWith(chatId, 2n));
+  await vi.waitFor(() => expect(markRead).toHaveBeenCalledWith(chatId, 1n));
 });
 
 test("only marks them delivered while the tab is in the background", async () => {
@@ -266,7 +267,7 @@ test("only marks them delivered while the tab is in the background", async () =>
   renderPage(chatApi({ markRead, markDelivered }));
   await screen.findByText("hey");
   await vi.waitFor(() =>
-    expect(markDelivered).toHaveBeenCalledWith(chatId, 2n),
+    expect(markDelivered).toHaveBeenCalledWith(chatId, 1n),
   );
   expect(markRead).not.toHaveBeenCalled();
 
@@ -274,7 +275,7 @@ test("only marks them delivered while the tab is in the background", async () =>
   setTabVisible(true);
   document.dispatchEvent(new Event("visibilitychange"));
 
-  await vi.waitFor(() => expect(markRead).toHaveBeenCalledWith(chatId, 2n));
+  await vi.waitFor(() => expect(markRead).toHaveBeenCalledWith(chatId, 1n));
 });
 
 test("shows delivered, then read, as bob's watermarks move", async () => {
@@ -321,4 +322,43 @@ test("scrolls to the newest message when one arrives", async () => {
 
   await screen.findByText("new one");
   expect(scrollIntoView).toHaveBeenCalled();
+});
+
+test("a failed mark is tried again at the next chance", async () => {
+  setTabVisible(true);
+  const markRead = vi
+    .fn()
+    .mockRejectedValueOnce(new ConnectError("restarting", Code.Unavailable))
+    .mockResolvedValue(undefined);
+  vi.spyOn(console, "error").mockImplementation(() => {});
+  renderPage(chatApi({ markRead }));
+  await vi.waitFor(() => expect(markRead).toHaveBeenCalledTimes(1));
+
+  // The next chance: coming back to the tab.
+  document.dispatchEvent(new Event("visibilitychange"));
+
+  await vi.waitFor(() => expect(markRead).toHaveBeenCalledTimes(2));
+  expect(markRead).toHaveBeenLastCalledWith(chatId, 1n);
+});
+
+test("reloads the members' watermarks after a reconnect", async () => {
+  const fresh = {
+    ...chatWithBob,
+    members: [
+      { userId: alice.id, username: "alice", deliveredUpTo: 2n, readUpTo: 2n },
+      { userId: bobId, username: "bob", deliveredUpTo: 2n, readUpTo: 2n },
+    ],
+  };
+  const getConversation = vi
+    .fn()
+    .mockResolvedValueOnce(chatWithBob) // opening: bob has nothing yet
+    .mockResolvedValue(fresh); // after the reconnect: bob has read it
+  const { live, subscribe } = fakeLiveUpdates();
+  renderPage(chatApi({ getConversation }), subscribe);
+  await screen.findByLabelText("Sent");
+
+  // bob read it while alice's WebSocket was closed: the event was lost.
+  live.handlers?.onConnected();
+
+  await screen.findByLabelText("Read");
 });

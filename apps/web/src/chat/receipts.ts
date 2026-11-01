@@ -54,6 +54,26 @@ export function applyReceipt(members: Member[], receipt: Receipt): Member[] {
   });
 }
 
+// mergeMembers takes freshly loaded members (after a reconnect, when
+// receipt events may have been missed) and keeps, for each one, the higher
+// of the two watermarks: a fresh load can be a moment older than a live
+// event that arrived meanwhile, and watermarks never go down.
+export function mergeMembers(current: Member[], fresh: Member[]): Member[] {
+  return fresh.map((freshMember) => {
+    const known = current.find(
+      (member) => member.userId === freshMember.userId,
+    );
+    if (known === undefined) {
+      return freshMember;
+    }
+    return {
+      ...freshMember,
+      deliveredUpTo: larger(known.deliveredUpTo, freshMember.deliveredUpTo),
+      readUpTo: larger(known.readUpTo, freshMember.readUpTo),
+    };
+  });
+}
+
 // larger returns the larger of two bigints. (Math.max only takes numbers.)
 function larger(first: bigint, second: bigint): bigint {
   return first > second ? first : second;

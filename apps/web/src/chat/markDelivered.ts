@@ -6,13 +6,14 @@ import type { ServerEvent } from "../gen/realtime/v1/events_pb.ts";
 import type { ChatApi, Conversation } from "./chatClient.ts";
 
 // markLiveMessageDelivered marks a live message from someone else as
-// delivered. Not for the conversation open on screen: that page marks its
-// messages read (useMarkAsSeen), which counts as delivered too.
+// delivered: the conversation page uses it for the other conversations.
+// (The conversation on screen is marked read by useMarkAsSeen, which counts
+// as delivered too; the list page marks new messages when it reloads.)
 export function markLiveMessageDelivered(
   chatApi: ChatApi,
   myUserId: string,
   serverEvent: ServerEvent,
-  openConversationId: string | null,
+  openConversationId: string,
 ): void {
   if (serverEvent.event.case !== "messageSent") {
     return;

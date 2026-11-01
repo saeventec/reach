@@ -49,8 +49,10 @@ func (store *Store) SaveMessage(ctx context.Context, newMessage conversation.New
 		return conversation.Message{}, err
 	}
 
-	// Most sends are new. A retry is usually found here, without taking
-	// the conversation's lock.
+	// A quick look for a retry first: one lookup by primary key. It costs a
+	// little on every send, but a retry then never waits for the
+	// conversation's lock behind other senders, and never burns a number.
+	// The fallback below catches the retries that slip past this check.
 	existing, found, err := store.findMessage(ctx, parameters.ID.String())
 	if err != nil {
 		return conversation.Message{}, err
@@ -85,8 +87,7 @@ func (store *Store) SaveMessage(ctx context.Context, newMessage conversation.New
 	// undone: the +1 on the counter and the event too. Return the stored
 	// message.
 	if isUniqueViolation(err) {
-		existing, _, findErr := store.findMessage(ctx, parameters.ID.String())
-		return existing, findErr
+		return store.findStoredRetry(ctx, parameters.ID.String())
 	}
 	if err != nil {
 		return conversation.Message{}, err
@@ -94,6 +95,20 @@ func (store *Store) SaveMessage(ctx context.Context, newMessage conversation.New
 
 	store.wakeRelay()
 	return saved, nil
+}
+
+// findStoredRetry returns the message a colliding retry stored. It must
+// exist: the database just refused a copy of it. If it can't be found, the
+// refusal had another cause, and returning an empty message would hide it.
+func (store *Store) findStoredRetry(ctx context.Context, messageID string) (conversation.Message, error) {
+	existing, found, err := store.findMessage(ctx, messageID)
+	if err != nil {
+		return conversation.Message{}, err
+	}
+	if !found {
+		return conversation.Message{}, fmt.Errorf("the message %s was refused as a copy, but is not stored", messageID)
+	}
+	return existing, nil
 }
 
 // ListMessages returns the messages the query asks for, the oldest first.

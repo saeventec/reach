@@ -6,6 +6,9 @@
 import { useEffect, useRef } from "react";
 import type { ChatApi } from "./chatClient.ts";
 
+// newestSequence is the newest message from someone else (see
+// newestSequenceFromOthers). A failed mark only means the ✓✓ is late for
+// the sender, so it is logged, not shown, and tried again later.
 export function useMarkAsSeen(
   chatApi: ChatApi,
   conversationId: string,
@@ -23,16 +26,29 @@ export function useMarkAsSeen(
 
     function mark() {
       const isVisible = document.visibilityState === "visible";
-      if (isVisible && newestSequence > told.current.read) {
+      const before = told.current;
+      if (isVisible && newestSequence > before.read) {
         // Read also counts as delivered, on the server too.
         told.current = { delivered: newestSequence, read: newestSequence };
-        chatApi.markRead(conversationId, newestSequence).catch(logError);
+        const marking = chatApi.markRead(conversationId, newestSequence);
+        marking.catch((markError) => forget(before, markError));
         return;
       }
-      if (!isVisible && newestSequence > told.current.delivered) {
-        told.current = { ...told.current, delivered: newestSequence };
-        chatApi.markDelivered(conversationId, newestSequence).catch(logError);
+      if (!isVisible && newestSequence > before.delivered) {
+        told.current = { ...before, delivered: newestSequence };
+        const marking = chatApi.markDelivered(conversationId, newestSequence);
+        marking.catch((markError) => forget(before, markError));
       }
+    }
+
+    // forget undoes what we noted as told, after a failed call, so the
+    // next chance (a new message, or coming back to the tab) tries again.
+    function forget(
+      before: { delivered: bigint; read: bigint },
+      markError: unknown,
+    ) {
+      told.current = before;
+      console.error("could not mark the messages", markError);
     }
 
     mark();
@@ -42,10 +58,4 @@ export function useMarkAsSeen(
       document.removeEventListener("visibilitychange", mark);
     };
   }, [chatApi, conversationId, newestSequence]);
-}
-
-// A failed mark only means the ✓✓ is late for the sender; the next message
-// tries again. So it is logged, not shown.
-function logError(markError: unknown) {
-  console.error("could not mark the messages", markError);
 }

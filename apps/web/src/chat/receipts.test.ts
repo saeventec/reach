@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Member, Message } from "./chatClient.ts";
-import { applyReceipt, messageStatus } from "./receipts.ts";
+import { applyReceipt, mergeMembers, messageStatus } from "./receipts.ts";
 
 const aliceId = "01a00000-0000-7000-8000-00000000000a";
 const bobId = "01a00000-0000-7000-8000-00000000000b";
@@ -61,4 +61,14 @@ test("a receipt moves one member's watermarks, and only up", () => {
   expect(updated[1]).toEqual(member(bobId, 9n, 8n));
   // The other members are not touched.
   expect(updated[0]).toBe(members[0]);
+});
+
+test("merging freshly loaded members keeps the higher watermarks", () => {
+  // A live event moved bob to 9 just before an older fresh load (7) came.
+  const current = [member(aliceId, 3n, 3n), member(bobId, 9n, 9n)];
+  const fresh = [member(aliceId, 5n, 4n), member(bobId, 7n, 7n)];
+
+  const merged = mergeMembers(current, fresh);
+
+  expect(merged).toEqual([member(aliceId, 5n, 4n), member(bobId, 9n, 9n)]);
 });

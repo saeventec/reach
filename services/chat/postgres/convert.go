@@ -45,14 +45,12 @@ func addMembersToList(ctx context.Context, databaseQueries *queries.Queries, con
 		return fmt.Errorf("list the members: %w", err)
 	}
 
-	// A map from a conversation's id to its place in the list.
-	indexByID := make(map[string]int, len(conversations))
-	for index, found := range conversations {
-		indexByID[found.ID] = index
-	}
-
+	indexByID := indexByConversationID(conversations)
 	for _, row := range rows {
-		index := indexByID[row.ConversationID.String()]
+		index, err := placeInList(indexByID, row.ConversationID)
+		if err != nil {
+			return err
+		}
 		member := conversation.Member{
 			UserID:        row.UserID.String(),
 			DeliveredUpTo: row.DeliveredUpTo,
@@ -76,19 +74,40 @@ func addLastMessagesToList(ctx context.Context, databaseQueries *queries.Queries
 		return fmt.Errorf("list the last messages: %w", err)
 	}
 
-	indexByID := make(map[string]int, len(conversations))
-	for index, found := range conversations {
-		indexByID[found.ID] = index
-	}
-
+	indexByID := indexByConversationID(conversations)
 	for _, row := range rows {
-		index := indexByID[row.ConversationID.String()]
+		index, err := placeInList(indexByID, row.ConversationID)
+		if err != nil {
+			return err
+		}
 		lastMessage := toMessage(row)
 		// &lastMessage is a pointer to this message. Each turn of the loop
 		// has its own lastMessage variable, so the pointers don't mix.
 		conversations[index].LastMessage = &lastMessage
 	}
 	return nil
+}
+
+// indexByConversationID maps each conversation's id to its place in the
+// list.
+func indexByConversationID(conversations []conversation.Conversation) map[string]int {
+	indexByID := make(map[string]int, len(conversations))
+	for index, found := range conversations {
+		indexByID[found.ID] = index
+	}
+	return indexByID
+}
+
+// placeInList returns where the conversation with this id is in the list.
+// A row for a conversation that isn't in the list is a bug in a query; it
+// is reported, instead of being put on the wrong conversation. (A map
+// lookup of a missing key gives 0, the first conversation.)
+func placeInList(indexByID map[string]int, conversationID pgtype.UUID) (int, error) {
+	index, found := indexByID[conversationID.String()]
+	if !found {
+		return 0, fmt.Errorf("a row for the conversation %s, which is not in the list", conversationID.String())
+	}
+	return index, nil
 }
 
 // parseUUID turns a UUID in text form into the type the queries use.
