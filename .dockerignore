@@ -1,0 +1,9 @@
+# The Go services' images are built with the whole repo as their "build
+# context": the files Docker can see while it builds. This file says which
+# files are sent to Docker. "*" leaves everything out, and each "!" line
+# lets one folder back in. So secrets (.env), node_modules and .git never
+# reach an image, and builds start faster.
+# Learn more: docs/learn/docker.md#the-build-context
+*
+!packages/go
+!services

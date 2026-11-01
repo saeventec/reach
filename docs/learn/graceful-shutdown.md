@@ -13,9 +13,9 @@ The operating system asks a program to stop by sending a **signal**:
 
 Containers are stopped and started all the time: on every `task dev`, on updates, and when Kubernetes moves them. A graceful shutdown means no request is cut off halfway. It also stops faster: our service exits in a fraction of a second, instead of waiting 10 seconds to be killed.
 
-## How the hello service does it
+## How our services do it
 
-`run()` in `services/hello/main.go`:
+Every service does the same, so the code is shared: `run()` in each service's `main.go` makes the stop signal (step 1), and `Run()` in [packages/go/httpserver](../../packages/go/httpserver/httpserver.go) does the rest:
 
 1. `signal.NotifyContext` gives a **context** that becomes "done" when SIGINT or SIGTERM arrives. A context is Go's standard way to tell code "stop now" or "you have N seconds".
 2. The server starts in a **goroutine**: a function that runs at the same time as the rest of the program. You start one with the word `go`.
@@ -40,8 +40,8 @@ case <-stopSignal.Done():     // someone asked us to stop
 What you see in the logs after `docker compose stop hello`:
 
 ```
-level=INFO msg="stop signal received, shutting down"
-level=INFO msg="the hello service stopped cleanly"
+level=INFO msg="stop signal received, shutting down" service=hello
+level=INFO msg="the service stopped cleanly" service=hello
 hello-1 exited with code 0
 ```
 

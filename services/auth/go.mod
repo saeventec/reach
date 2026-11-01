@@ -6,6 +6,7 @@ require (
 	connectrpc.com/connect/v2 v2.0.2
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/pressly/goose/v3 v3.29.0
+	github.com/saeventec/reach/packages/go v0.0.0
 	github.com/testcontainers/testcontainers-go v0.44.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.44.0
 	golang.org/x/crypto v0.58.0
@@ -71,3 +72,8 @@ require (
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 )
+
+// The shared Go code lives in this repo, not on the internet. "replace"
+// tells Go to use the folder instead of downloading the module.
+// Learn more: docs/learn/go.md#sharing-code-between-modules
+replace github.com/saeventec/reach/packages/go => ../../packages/go

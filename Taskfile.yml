@@ -65,6 +65,7 @@ tasks:
       # Each service is its own Go module, so it is checked from its own
       # folder. Each command runs on its own, so a "cd" doesn't carry over
       # to the next line.
+      - cd packages/go && golangci-lint run ./...
       - cd services/hello && golangci-lint run ./...
       - cd services/auth && golangci-lint run ./...
 
@@ -92,6 +93,7 @@ tasks:
   format:go:
     desc: Format the Go code
     cmds:
+      - cd packages/go && golangci-lint fmt ./...
       - cd services/hello && golangci-lint fmt ./...
       - cd services/auth && golangci-lint fmt ./...
 
@@ -114,11 +116,12 @@ tasks:
       - docker compose build
 
   test:
-    desc: Run all tests (the Go services and the web app). Needs Docker running.
+    desc: Run all tests (the shared Go code, the Go services and the web app). Needs Docker running.
     cmds:
       # The auth service's integration tests start a Postgres in Docker
       # (docs/learn/testing.md#integration-tests).
       # -C and --prefix run each command inside the given folder.
+      - go -C packages/go test ./...
       - go -C services/hello test ./...
       - go -C services/auth test ./...
       - npm test --prefix apps/web

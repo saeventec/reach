@@ -14,7 +14,7 @@ It is fast, well maintained, and the most used Postgres driver for Go. See [ADR 
 
 ## Tiny example
 
-From `services/hello/database.go`:
+Connecting is in `packages/go/database/database.go` (shared by all services), the query in `services/hello/database.go`:
 
 ```go
 pool, err := pgxpool.New(ctx, databaseURL) // create the pool (no connection yet)

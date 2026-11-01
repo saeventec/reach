@@ -1,6 +1,6 @@
-package main
-
-// Talking to Postgres with pgx. Learn more: docs/learn/pgx.md
+// Package database connects to Postgres with pgx.
+// Learn more: docs/learn/pgx.md
+package database
 
 import (
 	"context"
@@ -13,9 +13,8 @@ import (
 // connectTimeout is how long the service waits for the database at startup.
 const connectTimeout = 5 * time.Second
 
-// connectToDatabase creates a connection pool and checks that the
-// database answers.
-func connectToDatabase(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
+// Connect creates a connection pool and checks that the database answers.
+func Connect(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("create the database pool: %w", err)

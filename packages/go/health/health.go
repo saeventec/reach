@@ -1,4 +1,5 @@
-package main
+// Package health answers health checks.
+package health
 
 import (
 	"io"
@@ -6,10 +7,10 @@ import (
 	"net/http"
 )
 
-// handleHealth answers "ok" so other tools can check that the service is
+// Handle answers "ok" so other tools can check that the service is
 // running. Docker Compose (and later Kubernetes) calls it regularly.
 // Learn more: docs/learn/http.md#health-checks
-func handleHealth(writer http.ResponseWriter, request *http.Request) {
+func Handle(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
 	_, err := io.WriteString(writer, "ok")

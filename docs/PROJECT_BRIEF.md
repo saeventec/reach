@@ -246,7 +246,7 @@ reach/
 │   ├── chat/              # Go service: conversations, messages, events
 │   └── realtime/          # Go service: WebSocket connections, pushes events
 ├── packages/
-│   └── go/                # small shared Go code (config, logging)
+│   └── go/                # small shared Go code: settings, health check, database, server (ADR 0035)
 ├── proto/                 # Protobuf definitions: the single API contract
 ├── gateway/
 │   └── Caddyfile          # routes browser requests to services

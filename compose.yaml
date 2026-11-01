@@ -68,8 +68,11 @@ services:
         condition: service_completed_successfully
 
   hello:
-    # Build the image from services/hello/Dockerfile.
-    build: ./services/hello
+    build:
+      # The whole repo is the build context, so the Dockerfile can also copy
+      # the shared code in packages/go. Learn more: docs/learn/docker.md#the-build-context
+      context: .
+      dockerfile: services/hello/Dockerfile
     environment:
       # The same database address as hello-migrate uses.
       DATABASE_URL: postgres://hello:${HELLO_DATABASE_PASSWORD}@postgres:5432/hello?sslmode=disable
@@ -90,6 +93,9 @@ services:
           path: ./services/hello
           ignore:
             - migrations/ # applied by hello-migrate, not part of this image's program
+        # The shared code is part of this program too.
+        - action: rebuild
+          path: ./packages/go
     depends_on:
       # Start only after the migrations finished without an error.
       hello-migrate:
@@ -107,7 +113,10 @@ services:
 
   # Accounts, login, sessions and devices. Learn more: services/auth/main.go
   auth:
-    build: ./services/auth
+    build:
+      # Like hello: the whole repo, for packages/go.
+      context: .
+      dockerfile: services/auth/Dockerfile
     environment:
       DATABASE_URL: postgres://auth:${AUTH_DATABASE_PASSWORD}@postgres:5432/auth?sslmode=disable
       # ":-true" means: use true if .env doesn't set it.
@@ -123,6 +132,9 @@ services:
           path: ./services/auth
           ignore:
             - migrations/ # applied by auth-migrate, not part of this image's program
+        # The shared code is part of this program too.
+        - action: rebuild
+          path: ./packages/go
     depends_on:
       # Start only after the migrations finished without an error.
       auth-migrate:

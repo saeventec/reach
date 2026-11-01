@@ -17,7 +17,9 @@ Parts of our `compose.yaml`:
 ```yaml
 services:
   hello:                          # the service name
-    build: ./services/hello       # build the image from this folder's Dockerfile
+    build:
+      context: .                  # the files Docker may use: the whole repo
+      dockerfile: services/hello/Dockerfile  # the build steps
     healthcheck:                  # how Docker checks that it is alive
       test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/healthz"]
 
@@ -28,6 +30,7 @@ services:
 ```
 
 - **ports:** publishes a container's port on your computer. Without it, a service is only reachable inside the Compose network, by its name (`hello:8080`). Only the gateway has `ports`: everything else is reached through it. `127.0.0.1` keeps it private to your computer.
+- **build:** how to build the service's image. The short form `build: ./services/hello` uses that folder for both. Our Go services need the whole repo, for the shared code in `packages/go` (see [docker.md](docker.md#the-build-context)).
 - **healthcheck:** Docker runs the `test` command regularly. `wget --spider` asks for the page without saving it. The timing is explained in "Start order" below.
 
 ## Start order: depends_on

@@ -35,6 +35,14 @@ The final image is about 28 MB. With the compiler inside, it would be several hu
 
 Image tags like `alpine:3.24.3` pin an exact version, so a build gives the same result next month. We update them on purpose, by hand. (A bot like Renovate could do it later.)
 
+## The build context
+
+The **build context** is the set of files Docker can see while it builds an image. `COPY` can only copy files from inside it. With `docker build ./services/hello`, the context is that folder, so the Dockerfile can't reach `packages/go`, which is outside it.
+
+So our Go services are built with the **whole repo** as their context ([compose.yaml](../../compose.yaml): `context: .` and `dockerfile: services/hello/Dockerfile`), and each `COPY` names its folder from the repo's top: `COPY packages/go /src/packages/go`.
+
+The whole repo would be a lot to send (`node_modules`, `.git`), and it holds a secret (`.env`). A **`.dockerignore`** file at the top of the context says what to leave out. Ours leaves out everything (`*`), then lets the Go folders back in (`!packages/go`, `!services`). Listing what to keep, instead of what to skip, means a new folder is never sent by accident.
+
 ## Useful commands
 
 ```sh

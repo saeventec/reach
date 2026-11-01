@@ -1,7 +1,6 @@
-package main
-
-// Configuration comes from environment variables, so the same program runs
-// anywhere. Learn more: docs/learn/environment-variables.md
+// Package config reads a service's settings from environment variables, so
+// the same program runs anywhere. Learn more: docs/learn/environment-variables.md
+package config
 
 import (
 	"errors"
@@ -11,8 +10,8 @@ import (
 // defaultPort is used when the PORT environment variable is empty.
 const defaultPort = "8080"
 
-// readPort returns the port to listen on, from the PORT environment variable.
-func readPort() string {
+// Port returns the port to listen on, from the PORT environment variable.
+func Port() string {
 	port := os.Getenv("PORT")
 	if port == "" {
 		return defaultPort
@@ -20,10 +19,10 @@ func readPort() string {
 	return port
 }
 
-// readDatabaseURL returns the database address, from the DATABASE_URL
+// DatabaseURL returns the database address, from the DATABASE_URL
 // environment variable. It has no default: it contains a password, so it
 // must always be set on purpose.
-func readDatabaseURL() (string, error) {
+func DatabaseURL() (string, error) {
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
 		return "", errors.New("the DATABASE_URL environment variable is not set")
