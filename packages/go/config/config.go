@@ -29,3 +29,14 @@ func DatabaseURL() (string, error) {
 	}
 	return databaseURL, nil
 }
+
+// NATSURL returns the NATS server's address, like "nats://nats:4222", from
+// the NATS_URL environment variable. It has no default, so compose.yaml
+// says plainly which services use NATS.
+func NATSURL() (string, error) {
+	natsURL := os.Getenv("NATS_URL")
+	if natsURL == "" {
+		return "", errors.New("the NATS_URL environment variable is not set")
+	}
+	return natsURL, nil
+}

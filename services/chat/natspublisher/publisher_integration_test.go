@@ -11,6 +11,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	testnats "github.com/testcontainers/testcontainers-go/modules/nats"
 
+	"github.com/saeventec/reach/packages/go/chatevents"
 	"github.com/saeventec/reach/services/chat/outbox"
 )
 
@@ -50,7 +51,7 @@ func TestPublisher(t *testing.T) {
 		return found
 	}
 
-	event := outbox.Event{ID: 1, Subject: outbox.MessageSentSubject, Payload: []byte("an event")}
+	event := outbox.Event{ID: 1, Subject: chatevents.MessageSent, Payload: []byte("an event")}
 
 	t.Run("the stream stores a published event", func(t *testing.T) {
 		err := publisher.Publish(t.Context(), event)
@@ -58,7 +59,7 @@ func TestPublisher(t *testing.T) {
 			t.Fatalf("publish: %v", err)
 		}
 
-		stored, err := stream(t).GetLastMsgForSubject(t.Context(), outbox.MessageSentSubject)
+		stored, err := stream(t).GetLastMsgForSubject(t.Context(), chatevents.MessageSent)
 		if err != nil {
 			t.Fatalf("read the stored event: %v", err)
 		}

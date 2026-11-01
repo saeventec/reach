@@ -9,6 +9,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
+	"github.com/saeventec/reach/packages/go/chatevents"
 	chatv1 "github.com/saeventec/reach/packages/go/gen/chat/v1"
 	"github.com/saeventec/reach/services/chat/conversation"
 	"github.com/saeventec/reach/services/chat/outbox"
@@ -51,8 +52,8 @@ func TestOutboxStore(t *testing.T) {
 		if len(events) != 1 {
 			t.Fatalf("got %d events, want 1", len(events))
 		}
-		if events[0].Subject != outbox.MessageSentSubject {
-			t.Errorf("got subject %q, want %q", events[0].Subject, outbox.MessageSentSubject)
+		if events[0].Subject != chatevents.MessageSent {
+			t.Errorf("got subject %q, want %q", events[0].Subject, chatevents.MessageSent)
 		}
 
 		decoded := &chatv1.MessageSent{}

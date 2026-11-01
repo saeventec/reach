@@ -71,7 +71,7 @@ func run() error {
 		return err
 	}
 
-	natsURL, err := readNATSURL()
+	natsURL, err := config.NATSURL()
 	if err != nil {
 		return err
 	}

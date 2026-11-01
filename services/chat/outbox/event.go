@@ -11,12 +11,10 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/saeventec/reach/packages/go/chatevents"
 	chatv1 "github.com/saeventec/reach/packages/go/gen/chat/v1"
 	"github.com/saeventec/reach/services/chat/conversation"
 )
-
-// MessageSentSubject is the NATS subject of a chatv1.MessageSent event.
-const MessageSentSubject = "chat.message.sent"
 
 // Event is one event: where it goes (the subject) and what it says (the
 // payload, a Protobuf message in its binary form).
@@ -42,7 +40,7 @@ func NewMessageSent(message conversation.Message, memberIDs []string) (Event, er
 		return Event{}, fmt.Errorf("encode the message sent event: %w", err)
 	}
 
-	event := Event{Subject: MessageSentSubject, Payload: payload}
+	event := Event{Subject: chatevents.MessageSent, Payload: payload}
 	return event, nil
 }
 

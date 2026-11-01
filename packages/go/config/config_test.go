@@ -32,3 +32,13 @@ func TestDatabaseURLMustBeSet(t *testing.T) {
 		t.Error("got no error, want one: DATABASE_URL has no default")
 	}
 }
+
+func TestNATSURLMustBeSet(t *testing.T) {
+	t.Setenv("NATS_URL", "")
+
+	_, err := NATSURL()
+
+	if err == nil {
+		t.Error("got no error, want one: NATS_URL has no default")
+	}
+}

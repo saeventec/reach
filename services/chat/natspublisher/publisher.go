@@ -14,15 +14,12 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 
+	"github.com/saeventec/reach/packages/go/chatevents"
 	"github.com/saeventec/reach/services/chat/outbox"
 )
 
 // streamName is the JetStream stream that keeps the chat events.
 const streamName = "CHAT"
-
-// streamSubjects are the subjects the stream keeps: ">" matches the rest,
-// so this is every subject that starts with "chat.".
-const streamSubjects = "chat.>"
 
 // eventMaximumAge is how long the stream keeps an event. Events are only
 // for live updates: the full history is in Postgres. Without a limit, the
@@ -65,7 +62,7 @@ func Connect(ctx context.Context, url string) (*Publisher, error) {
 func createStream(ctx context.Context, jetStream jetstream.JetStream) error {
 	streamConfig := jetstream.StreamConfig{
 		Name:     streamName,
-		Subjects: []string{streamSubjects},
+		Subjects: []string{chatevents.All},
 		MaxAge:   eventMaximumAge,
 	}
 
