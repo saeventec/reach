@@ -110,7 +110,7 @@ We found one trap while testing. `CloseRead` (which reads in the background, to 
 - **The conversation list** ([ConversationListPage.tsx](../../apps/web/src/chat/ConversationListPage.tsx)) loads the list again on `messageSent`, `conversationCreated` and every connect. Simple and always right: the server sorts the list and writes the previews. Its effect's cleanup closes the WebSocket when the page closes.
 - **Tests** use a fake socket and **fake timers** (`vi.useFakeTimers()`): the test moves the clock itself, so "wait 30 seconds" takes no time.
 
-For now, each page that wants live updates opens its own WebSocket. Sharing one between pages is a small later improvement.
+Each page that wants live updates opens its own WebSocket. Only one page is on screen at a time, so there is only ever one. Moving to another page closes it and opens a new one, and the new page catches up, so nothing is missed in between.
 
 ## What we tested
 

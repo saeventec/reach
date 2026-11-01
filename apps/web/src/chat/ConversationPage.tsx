@@ -2,7 +2,7 @@
 // updates, and delivered and read. ConversationSync keeps the messages;
 // this page shows them.
 // Learn more: docs/learn/message-ordering.md
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import type { User } from "../auth/authClient.ts";
 import { errorMessage } from "../shared/errorMessage.ts";
@@ -57,7 +57,18 @@ export function ConversationPage({
   // by live receipt events. They decide the ✓ marks.
   const [members, setMembers] = useState<Member[]>([]);
 
-  useMarkAsSeen(chatApi, conversationId, newestSequence(view.messages));
+  const newest = newestSequence(view.messages);
+  useMarkAsSeen(chatApi, conversationId, newest);
+
+  // A ref to an element on the page: the empty <div> at the bottom. When
+  // a newer message arrives, or you send one, scroll it into view, so the
+  // newest message and the form are on screen. Older messages (added at
+  // the top) don't change "newest", so reading old ones isn't disturbed.
+  const bottom = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // "?." does nothing while the page is still loading (no element yet).
+    bottom.current?.scrollIntoView({ block: "end" });
+  }, [newest, pending.length]);
 
   useEffect(() => {
     // See NewestGreeting.tsx for why "ignore" is needed.
@@ -207,6 +218,7 @@ export function ConversationPage({
             onRetry={handleRetry}
           />
           <MessageComposer onSend={handleSend} />
+          <div ref={bottom} />
         </>
       )}
     </section>

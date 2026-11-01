@@ -4,7 +4,7 @@ import { create } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { ConnectError, Code } from "@connectrpc/connect";
 import { MemoryRouter } from "react-router";
-import { afterEach, expect, test, vi } from "vitest";
+import { afterEach, beforeAll, expect, test, vi } from "vitest";
 import type { User } from "../auth/authClient.ts";
 import { ServerEventSchema } from "../gen/realtime/v1/events_pb.ts";
 import type { ChatApi, Conversation, Message } from "./chatClient.ts";
@@ -15,6 +15,13 @@ import type { LiveUpdateHandlers, Subscribe } from "./liveUpdates.ts";
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+});
+
+// jsdom, the page that tests draw into, doesn't scroll, so it has no
+// scrollIntoView. A stand-in that records its calls.
+const scrollIntoView = vi.fn();
+beforeAll(() => {
+  Element.prototype.scrollIntoView = scrollIntoView;
 });
 
 const alice: User = {
@@ -302,4 +309,16 @@ test("shows delivered, then read, as bob's watermarks move", async () => {
   );
 
   await screen.findByLabelText("Read");
+});
+
+test("scrolls to the newest message when one arrives", async () => {
+  const { live, subscribe } = fakeLiveUpdates();
+  renderPage(chatApi(), subscribe);
+  await screen.findByText("hey");
+  scrollIntoView.mockClear();
+
+  live.handlers?.onEvent(messageSentEvent(message(3n, bobId, "new one")));
+
+  await screen.findByText("new one");
+  expect(scrollIntoView).toHaveBeenCalled();
 });
