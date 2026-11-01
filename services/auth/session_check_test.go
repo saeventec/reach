@@ -16,7 +16,7 @@ func checkSession(sessions *fakeSessionStore, cookieHeader string) *httptest.Res
 	}
 	recorder := httptest.NewRecorder()
 
-	router := newRouter(&fakeUserStore{}, sessions, newLoginLimiters(), true)
+	router := newRouter(&fakeUserStore{}, sessions, newLoginLimiters(defaultIPLimitBurst), true)
 	router.ServeHTTP(recorder, request)
 	return recorder
 }
@@ -82,7 +82,7 @@ func TestCheckSessionOnlyAnswersGet(t *testing.T) {
 	request := httptest.NewRequest(http.MethodPost, "/internal/check-session", nil)
 	recorder := httptest.NewRecorder()
 
-	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 	router.ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusMethodNotAllowed {

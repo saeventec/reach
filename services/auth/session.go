@@ -59,7 +59,7 @@ func (server *sessionServer) LogIn(ctx context.Context, request *authv1.LogInReq
 	user, err := server.checkLogin(ctx, username, password)
 	if connect.CodeOf(err) == connect.CodeUnauthenticated {
 		// A wrong username or password: count it against this username.
-		server.limiters.byUsername.take(username)
+		server.limiters.byUsername.Take(username)
 		return nil, err
 	}
 	if err != nil {
@@ -85,11 +85,11 @@ func (server *sessionServer) LogIn(ctx context.Context, request *authv1.LogInReq
 // LogIn). It returns a RESOURCE_EXHAUSTED error when a limit is reached.
 // Learn more: docs/learn/rate-limiting.md
 func (server *sessionServer) checkLoginLimits(ip string, username string) error {
-	if !server.limiters.byIP.take(ip) {
+	if !server.limiters.byIP.Take(ip) {
 		slog.Warn("too many login tries from one address", "ip", ip)
 		return connect.NewError(connect.CodeResourceExhausted, tooManyAttemptsMessage)
 	}
-	if server.limiters.byUsername.isEmpty(username) {
+	if server.limiters.byUsername.IsEmpty(username) {
 		slog.Warn("too many failed logins for one username", "ip", ip)
 		return connect.NewError(connect.CodeResourceExhausted, tooManyAttemptsMessage)
 	}

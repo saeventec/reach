@@ -5,6 +5,13 @@
 # 8180, so the tests can run while "task dev" uses 8080.
 # Learn more: docs/learn/playwright.md#the-test-system
 services:
+  auth:
+    environment:
+      # All the test browsers share one address, and every test person
+      # signs up and logs in. auth's default limit (20 at once) would stop
+      # the tests after about 10 people. Only here is it raised.
+      # Learn more: docs/learn/rate-limiting.md#our-limits
+      RATE_LIMIT_BURST_PER_IP: "500"
   postgres:
     # "!reset []": no published ports at all (compose.yaml publishes 5432).
     ports: !reset []

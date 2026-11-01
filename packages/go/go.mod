@@ -5,6 +5,7 @@ go 1.27.3
 require (
 	connectrpc.com/connect/v2 v2.0.2
 	github.com/jackc/pgx/v5 v5.11.0
+	golang.org/x/time v0.16.0
 	google.golang.org/protobuf v1.36.12
 )
 

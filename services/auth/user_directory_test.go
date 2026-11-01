@@ -17,7 +17,7 @@ const (
 
 func TestFindUsersByUsernameNormalizesTheNames(t *testing.T) {
 	users := &fakeUserStore{foundUsers: []publicUser{{id: testUserID, username: "sadra"}}}
-	router := newRouter(users, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(users, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 
 	response := callAPI(router, findUsersByUsernamePath, `{"usernames": [" Sadra "]}`, "")
 
@@ -35,7 +35,7 @@ func TestFindUsersByUsernameNormalizesTheNames(t *testing.T) {
 }
 
 func TestFindUsersByUsernameRefusesTooManyNames(t *testing.T) {
-	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 	body := lookupBody("usernames", maximumLookups+1)
 
 	response := callAPI(router, findUsersByUsernamePath, body, "")
@@ -48,7 +48,7 @@ func TestFindUsersByUsernameRefusesTooManyNames(t *testing.T) {
 func TestFindUsersByIDRefusesAnIDThatIsNotAUUID(t *testing.T) {
 	// The fake returns the error the real store returns for a bad id.
 	users := &fakeUserStore{err: fmt.Errorf("%w: %q", errInvalidUUID, "x")}
-	router := newRouter(users, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(users, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 
 	response := callAPI(router, findUsersByIDPath, `{"userIds": ["x"]}`, "")
 
@@ -59,7 +59,7 @@ func TestFindUsersByIDRefusesAnIDThatIsNotAUUID(t *testing.T) {
 
 func TestFindUsersByIDHidesDatabaseErrors(t *testing.T) {
 	users := &fakeUserStore{err: errors.New("connection refused")}
-	router := newRouter(users, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(users, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 
 	response := callAPI(router, findUsersByIDPath, `{"userIds": []}`, "")
 

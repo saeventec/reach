@@ -8,6 +8,7 @@ Small Go code shared by the Go services: reading settings, the health check, con
 | `health` | The `/healthz` handler |
 | `database` | Connects to Postgres and checks that it answers |
 | `httpserver` | Runs an HTTP server until a stop signal, then shuts it down cleanly |
+| `ratelimit` | Token buckets per key, for rate limits (auth's logins, chat's messages) |
 | `chatevents` | The NATS subjects of chat's events, for chat (publishes) and realtime (subscribes) |
 | `gen` | Go code generated from `proto/` by `task generate`. Never edit it by hand |
 

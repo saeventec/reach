@@ -79,7 +79,11 @@ func run() error {
 
 	// The rate limits keep their counts in memory. A goroutine forgets old
 	// counts every minute, until the stop signal arrives.
-	limiters := newLoginLimiters()
+	ipLimitBurst, err := readIPRateLimitBurst()
+	if err != nil {
+		return err
+	}
+	limiters := newLoginLimiters(ipLimitBurst)
 	go limiters.removeFullBucketsRegularly(stopSignal)
 
 	port := config.Port()

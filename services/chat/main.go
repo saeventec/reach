@@ -23,6 +23,7 @@ import (
 	"github.com/saeventec/reach/packages/go/gen/chat/v1/chatv1connect"
 	"github.com/saeventec/reach/packages/go/health"
 	"github.com/saeventec/reach/packages/go/httpserver"
+	"github.com/saeventec/reach/packages/go/ratelimit"
 
 	"github.com/saeventec/reach/services/chat/api"
 	"github.com/saeventec/reach/services/chat/authclient"
@@ -102,12 +103,17 @@ func run() error {
 	conversations := conversation.NewService(store, directory)
 	relay := outbox.NewRelay(store, publisher, eventSaved)
 
+	// The limit on sending keeps its counts in memory, like auth's limits.
+	// A goroutine forgets old counts every minute, until the stop signal.
+	sendLimiter := api.NewSendLimiter()
+	go sendLimiter.RemoveFullBucketsRegularly(stopSignal)
+
 	port := config.Port()
 	address := ":" + port
 
 	server := &http.Server{
 		Addr:    address,
-		Handler: newRouter(conversations),
+		Handler: newRouter(conversations, sendLimiter),
 		// Close connections that are too slow to send their request headers.
 		// Without a limit, a slow client could keep connections open forever.
 		ReadHeaderTimeout: 5 * time.Second,
@@ -131,7 +137,7 @@ func run() error {
 }
 
 // newRouter connects each URL path to the code that handles it.
-func newRouter(conversations *conversation.Service) *http.ServeMux {
+func newRouter(conversations *conversation.Service, sendLimiter *ratelimit.Limiter) *http.ServeMux {
 	router := http.NewServeMux()
 	router.HandleFunc("GET /healthz", health.Handle)
 
@@ -141,7 +147,7 @@ func newRouter(conversations *conversation.Service) *http.ServeMux {
 	conversationServer := api.NewConversationServer(conversations)
 	connectServer := connect.NewServer()
 	chatv1connect.RegisterConversationServiceHandler(connectServer, conversationServer)
-	messageServer := api.NewMessageServer(conversations)
+	messageServer := api.NewMessageServer(conversations, sendLimiter)
 	chatv1connect.RegisterMessageServiceHandler(connectServer, messageServer)
 	connecthttp.Mount(router, connectServer, connecthttp.WithReadMaxBytes(maximumRequestBytes))
 

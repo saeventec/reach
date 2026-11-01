@@ -96,7 +96,7 @@ func errorCode(t *testing.T, recorder *httptest.ResponseRecorder) string {
 
 func TestSignUpCreatesTheAccount(t *testing.T) {
 	store := &fakeUserStore{}
-	router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 
 	recorder := callAPI(router, signUpPath, credentialsBody(" Sadra ", "purple tram winter"), "")
 
@@ -128,7 +128,7 @@ func TestSignUpRejectsBadInput(t *testing.T) {
 
 	for _, testCase := range testCases {
 		store := &fakeUserStore{}
-		router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(), true)
+		router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 
 		recorder := callAPI(router, signUpPath, credentialsBody(testCase.username, testCase.password), "")
 
@@ -144,7 +144,7 @@ func TestSignUpRejectsBadInput(t *testing.T) {
 
 func TestSignUpReportsATakenUsername(t *testing.T) {
 	store := &fakeUserStore{err: errUsernameTaken}
-	router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 
 	recorder := callAPI(router, signUpPath, credentialsBody("sadra", "purple tram winter"), "")
 
@@ -156,7 +156,7 @@ func TestSignUpReportsATakenUsername(t *testing.T) {
 
 func TestSignUpHidesDatabaseErrors(t *testing.T) {
 	store := &fakeUserStore{err: errors.New("connection refused")}
-	router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 
 	recorder := callAPI(router, signUpPath, credentialsBody("sadra", "purple tram winter"), "")
 
@@ -173,7 +173,7 @@ func TestSignUpHidesDatabaseErrors(t *testing.T) {
 // browser will: a POST with a JSON body to the call's path.
 func TestSignUpOverHTTP(t *testing.T) {
 	store := &fakeUserStore{}
-	router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 
 	requestBody := strings.NewReader(`{"username": "sadra", "password": "purple tram winter"}`)
 	request := httptest.NewRequest(http.MethodPost, "/auth.v1.AccountService/SignUp", requestBody)
@@ -223,7 +223,7 @@ func TestIsUniqueViolation(t *testing.T) {
 
 func TestSignUpRefusesHugeRequests(t *testing.T) {
 	store := &fakeUserStore{}
-	router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(store, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 	hugePassword := strings.Repeat("a", 20*1024) // 20 KiB, over the 16 KiB limit
 	body := `{"username": "sadra", "password": "` + hugePassword + `"}`
 

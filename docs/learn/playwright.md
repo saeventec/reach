@@ -25,7 +25,7 @@ It needs Docker running. The first run downloads Chromium (the open-source base 
 1. Downloads the browser, if it isn't there yet.
 2. Starts a separate copy of the whole system: `docker compose -p reach-e2e … up --build --wait`.
    - `-p reach-e2e` is its own Compose **project**: its own containers and its own volumes, so an empty database. Your `task dev` data is never touched.
-   - [apps/web/e2e/compose.e2e.yaml](../../apps/web/e2e/compose.e2e.yaml) changes `compose.yaml` a little: no published ports, except the gateway on **8180**. So the tests can run while `task dev` uses 8080.
+   - [apps/web/e2e/compose.e2e.yaml](../../apps/web/e2e/compose.e2e.yaml) changes `compose.yaml` a little: no published ports, except the gateway on **8180**, so the tests can run while `task dev` uses 8080; and a higher sign-up limit in auth (see below).
    - `--wait` returns once every service is healthy and the migrations have finished.
 3. Runs the tests: `playwright test`, with the settings in [apps/web/playwright.config.ts](../../apps/web/playwright.config.ts).
 4. Stops the copy and deletes its volumes (`defer`: this runs even when a test fails).
@@ -72,7 +72,7 @@ Each test makes its own usernames with a random suffix (like `alice-3f9a01c2`), 
 ## Things we learned
 
 - **The tests found nothing wrong in the app**, but the first tries found two mistakes in the tests: the "Username" locator, and reusing usernames when a test is repeated (`--repeat-each`).
-- **The rate limit counts us too.** auth allows 20 sign-ups and logins at once per address ([rate-limiting.md](rate-limiting.md)), and each person in a test uses 2. The 8 people in today's tests use 16. More tests need a plan, for example: a setting for the limit that the test system raises; or signing up a few people once and reusing their logins (Playwright's "storage state").
+- **The rate limit counts us too.** auth allows 20 sign-ups and logins at once per address ([rate-limiting.md](rate-limiting.md)), all the test browsers share one address, and each test person uses 2. So the test system raises that one limit with a setting, in `compose.e2e.yaml`; the real default stays 20. (The other option was signing up a few people once and reusing their logins, Playwright's "storage state".)
 - **Checking for flaky tests:** a **flaky** test sometimes passes and sometimes fails with the same code. We ran the suite 5 times in a row (restarting auth in between, for the limit): 15 out of 15 passed.
 
 ## Alternatives

@@ -13,11 +13,9 @@ function newSuffix(): string {
   return crypto.randomUUID().slice(0, 8);
 }
 
-// Careful: auth allows 20 sign-ups and logins at once per address, then
-// one more every 3 seconds (services/auth/rate_limit.go). Each person here
-// uses 2 (the sign-up, then the login it does by itself), so the 7 people
-// in this file use 14, and gateway.e2e.ts uses 2 more: 16 of 20. More
-// tests need a plan: see docs/learn/playwright.md.
+// auth limits sign-ups and logins per address. The test system raises
+// that limit (compose.e2e.yaml), because all these browsers share one
+// address.
 
 // signUp opens a new browser window for a new person, creates their
 // account, and waits for their chats page.

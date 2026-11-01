@@ -5,57 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 )
-
-func TestRateLimiterAllowsTheBurstThenRefuses(t *testing.T) {
-	// 3 tries at once, then one per hour: no new token arrives during the test.
-	limiter := newRateLimiter(3, time.Hour)
-
-	for try := 1; try <= 3; try++ {
-		if !limiter.take("1.2.3.4") {
-			t.Fatalf("try %d was refused, want allowed", try)
-		}
-	}
-	if limiter.take("1.2.3.4") {
-		t.Errorf("try 4 was allowed, want refused")
-	}
-	// Each key has its own bucket.
-	if !limiter.take("5.6.7.8") {
-		t.Errorf("another address was refused")
-	}
-}
-
-func TestRateLimiterIsEmptyTakesNothing(t *testing.T) {
-	limiter := newRateLimiter(1, time.Hour)
-
-	for check := 1; check <= 3; check++ {
-		if limiter.isEmpty("sadra") {
-			t.Fatalf("check %d: the bucket is empty, but nothing was taken", check)
-		}
-	}
-	limiter.take("sadra")
-	if !limiter.isEmpty("sadra") {
-		t.Errorf("the bucket is not empty after taking its only token")
-	}
-}
-
-func TestRemoveFullBucketsKeepsTheUsedOnes(t *testing.T) {
-	limiter := newRateLimiter(3, time.Hour)
-	limiter.isEmpty("idle") // makes a full bucket
-	limiter.take("busy")    // makes a bucket with 2 of 3 tokens left
-
-	limiter.removeFullBuckets()
-
-	_, idleFound := limiter.buckets["idle"]
-	_, busyFound := limiter.buckets["busy"]
-	if idleFound {
-		t.Errorf("the full bucket was kept")
-	}
-	if !busyFound {
-		t.Errorf("the used bucket was removed: its count would be lost")
-	}
-}
 
 // callAPIFrom sends a Connect call as if it came through the gateway from
 // this IP address (in the X-Forwarded-For header).
@@ -70,9 +20,9 @@ func callAPIFrom(router http.Handler, path string, body string, ip string) *http
 
 func TestLogInIsLimitedPerAddress(t *testing.T) {
 	users := &fakeUserStore{foundUser: testLoginUser}
-	router := newRouter(users, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(users, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 	// Different usernames, so only the address limit can stop them.
-	for try := 1; try <= ipLimitBurst; try++ {
+	for try := 1; try <= defaultIPLimitBurst; try++ {
 		body := credentialsBody("someone"+strings.Repeat("x", try), "purple tram winter")
 		recorder := callAPIFrom(router, logInPath, body, "203.0.113.7")
 		if errorCode(t, recorder) == "resource_exhausted" {
@@ -84,7 +34,7 @@ func TestLogInIsLimitedPerAddress(t *testing.T) {
 	otherAddress := callAPIFrom(router, logInPath, credentialsBody("sadra", "purple tram winter"), "198.51.100.9")
 
 	if errorCode(t, limited) != "resource_exhausted" {
-		t.Errorf("try %d: got %s, want resource_exhausted", ipLimitBurst+1, limited.Body.String())
+		t.Errorf("try %d: got %s, want resource_exhausted", defaultIPLimitBurst+1, limited.Body.String())
 	}
 	if otherAddress.Code != http.StatusOK {
 		t.Errorf("another address was limited too: %s", otherAddress.Body.String())
@@ -93,7 +43,7 @@ func TestLogInIsLimitedPerAddress(t *testing.T) {
 
 func TestLogInIsLimitedPerUsernameAfterFailedTries(t *testing.T) {
 	users := &fakeUserStore{foundUser: testLoginUser}
-	router := newRouter(users, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(users, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 	// Each wrong try comes from a different address, as in an attack from
 	// many computers, so only the username limit can stop them.
 	for try := 1; try <= usernameLimitBurst; try++ {
@@ -116,7 +66,7 @@ func TestLogInIsLimitedPerUsernameAfterFailedTries(t *testing.T) {
 // username limit.
 func TestSuccessfulLoginsDontCountPerUsername(t *testing.T) {
 	users := &fakeUserStore{foundUser: testLoginUser}
-	router := newRouter(users, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(users, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 
 	for try := 1; try <= usernameLimitBurst+2; try++ {
 		recorder := callAPIFrom(router, logInPath, credentialsBody("sadra", "purple tram winter"), "203.0.113.7")
@@ -127,8 +77,8 @@ func TestSuccessfulLoginsDontCountPerUsername(t *testing.T) {
 }
 
 func TestSignUpIsLimitedPerAddress(t *testing.T) {
-	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, newLoginLimiters(), true)
-	for try := 1; try <= ipLimitBurst; try++ {
+	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
+	for try := 1; try <= defaultIPLimitBurst; try++ {
 		callAPIFrom(router, signUpPath, credentialsBody("sadra", "purple tram winter"), "203.0.113.7")
 	}
 
@@ -141,9 +91,9 @@ func TestSignUpIsLimitedPerAddress(t *testing.T) {
 
 // The address added by our gateway is the last one in X-Forwarded-For.
 func TestClientIPUsesTheLastForwardedAddress(t *testing.T) {
-	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 	// Use up the limit of 203.0.113.7.
-	for try := 1; try <= ipLimitBurst; try++ {
+	for try := 1; try <= defaultIPLimitBurst; try++ {
 		callAPIFrom(router, signUpPath, credentialsBody("sadra", "purple tram winter"), "203.0.113.7")
 	}
 
