@@ -1,6 +1,6 @@
 // The page of a logged-in user: who you are, your devices, and logging out.
 import { useState } from "react";
-import { errorMessage } from "./authClient.ts";
+import { errorMessage } from "../shared/errorMessage.ts";
 import type { AuthApi, User } from "./authClient.ts";
 import { DeviceList } from "./DeviceList.tsx";
 

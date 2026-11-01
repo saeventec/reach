@@ -7,6 +7,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
 import App from "./App.tsx";
 import type { AuthApi, User } from "./auth/authClient.ts";
+import type { ChatApi } from "./chat/chatClient.ts";
 
 afterEach(() => {
   cleanup();
@@ -33,6 +34,18 @@ function fakeAuthApi(changes: Partial<AuthApi> = {}): AuthApi {
   return { ...defaults, ...changes };
 }
 
+// A chat API where you have no conversations yet. The chat pages have
+// their own tests (chat/ConversationListPage.test.tsx).
+const chatApi: ChatApi = {
+  listConversations: async () => [],
+  startDirectConversation: async () => {
+    throw new Error("not used in this test");
+  },
+  createGroup: async () => {
+    throw new Error("not used in this test");
+  },
+};
+
 const loadGreeting = async () => ({ id: 1n, message: "Hello, test!" });
 
 // renderApp draws the app as if the browser had opened this address.
@@ -40,7 +53,7 @@ const loadGreeting = async () => ({ id: 1n, message: "Hello, test!" });
 function renderApp(authApi: AuthApi, address: string) {
   render(
     <MemoryRouter initialEntries={[address]}>
-      <App authApi={authApi} loadGreeting={loadGreeting} />
+      <App authApi={authApi} chatApi={chatApi} loadGreeting={loadGreeting} />
     </MemoryRouter>,
   );
 }
@@ -57,16 +70,26 @@ test("sends you to the login page when nobody is logged in", async () => {
   await screen.findByRole("heading", { name: "Log in" });
 });
 
-test("sends you to your account when you are logged in", async () => {
+test("sends you to your chats when you are logged in", async () => {
   const authApi = fakeAuthApi({ getCurrentUser: async () => sadra });
 
   renderApp(authApi, "/login");
+
+  await screen.findByRole("heading", { name: "Chats" });
+});
+
+test("the menu leads to your account", async () => {
+  const authApi = fakeAuthApi({ getCurrentUser: async () => sadra });
+  renderApp(authApi, "/chats");
+  await screen.findByRole("heading", { name: "Chats" });
+
+  fireEvent.click(screen.getByRole("link", { name: "Account" }));
 
   await screen.findByRole("heading", { name: "Your account" });
   screen.getByText("sadra");
 });
 
-test("logs you in and shows your account", async () => {
+test("logs you in and shows your chats", async () => {
   const logIn = vi.fn(async () => sadra);
   renderApp(fakeAuthApi({ logIn }), "/login");
   await screen.findByRole("heading", { name: "Log in" });
@@ -75,7 +98,7 @@ test("logs you in and shows your account", async () => {
   typeInto("Password", "purple tram winter");
   fireEvent.click(screen.getByRole("button", { name: "Log in" }));
 
-  await screen.findByRole("heading", { name: "Your account" });
+  await screen.findByRole("heading", { name: "Chats" });
   expect(logIn).toHaveBeenCalledWith("sadra", "purple tram winter");
 });
 
@@ -108,7 +131,7 @@ test("hides the details of unexpected errors", async () => {
   expect(screen.queryByText(/database/)).toBeNull();
 });
 
-test("signs you up, logs you in and shows your account", async () => {
+test("signs you up, logs you in and shows your chats", async () => {
   const signUp = vi.fn(async () => {});
   const logIn = vi.fn(async () => sadra);
   renderApp(fakeAuthApi({ signUp, logIn }), "/signup");
@@ -118,7 +141,7 @@ test("signs you up, logs you in and shows your account", async () => {
   typeInto("Password", "purple tram winter");
   fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 
-  await screen.findByRole("heading", { name: "Your account" });
+  await screen.findByRole("heading", { name: "Chats" });
   expect(signUp).toHaveBeenCalledWith("sadra", "purple tram winter");
   expect(logIn).toHaveBeenCalledWith("sadra", "purple tram winter");
 });

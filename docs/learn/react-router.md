@@ -33,6 +33,8 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 - **`<Link to="/signup">`** is a link that changes the address without reloading the page. (A plain `<a href>` would reload the whole app.)
 - **`<Navigate to="/login" replace />`** changes the address as soon as it is drawn: a redirect. `replace` swaps the current entry in the browser's history, so Back doesn't return to the page that redirected you.
 
+**`<NavLink>`** is a `<Link>` that knows whether its page is the one showing. Its `className` can be a function that gets `{ isActive }`, so the menu (`MainMenu` in [App.tsx](../../apps/web/src/App.tsx)) highlights the current page.
+
 ## Pages that depend on being logged in
 
 `App` keeps the logged-in user in state, and each route decides what to draw from it:

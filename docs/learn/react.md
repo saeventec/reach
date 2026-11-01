@@ -82,6 +82,8 @@ useEffect(() => {
 - `LoadState` is a **union type**: the state is either loading, loaded (with a greeting), or failed. TypeScript only lets you use `state.greeting` after checking that `state.status === "loaded"`.
 - Functions whose names start with `use` are called **hooks**. Call them only at the top of a component, never inside an `if`.
 
+**Loading again.** The list in the effect's last line (`[loadGreeting]`) says when to run it again: whenever one of its values changes. The conversation list ([apps/web/src/chat/ConversationListPage.tsx](../../apps/web/src/chat/ConversationListPage.tsx)) uses this to reload: it keeps a number, `reloadCount`, in that list, and adds 1 to it after a new chat. React runs the effect again, which loads the list again. The old list stays on screen until the new one arrives.
+
 Later, TanStack Query can do this loading for us, with caching and retries. Writing it by hand first shows what such a library saves (the owner chose "later" in milestone 2).
 
 ## Forms

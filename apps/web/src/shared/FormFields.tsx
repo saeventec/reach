@@ -1,11 +1,13 @@
-// Labeled input fields, shared by the login and sign-up forms.
+// Labeled input fields, shared by all forms (login, sign-up, new chat,
+// new group).
 
 type FieldProps = {
   label: string;
   value: string;
   onChange: (value: string) => void;
   // Tells the browser and password managers what the field is for, so they
-  // can fill it in: "username", "current-password" or "new-password".
+  // can fill it in: "username", "current-password" or "new-password". "off"
+  // asks it not to suggest anything (like someone else's username).
   autoComplete: string;
 };
 
