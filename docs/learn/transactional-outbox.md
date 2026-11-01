@@ -71,6 +71,7 @@ The first two carry everything a receiver needs ("event-carried state"). `chat.c
 - **Unit tests** ([relay_test.go](../../services/chat/outbox/relay_test.go)) with a fake store and a fake publisher: publishing in order, stopping at a failure, and waking up.
 - **Postgres** ([outbox_store_integration_test.go](../../services/chat/postgres/outbox_store_integration_test.go)): a sent message saves one event with the right members; a retried message saves none.
 - **NATS** ([publisher_integration_test.go](../../services/chat/natspublisher/publisher_integration_test.go)): an event published twice is stored once. Without the message id, this test fails.
+- **All together** ([relay_integration_test.go](../../services/chat/postgres/relay_integration_test.go)): a real Postgres, the relay and a real NATS, wired as in `main.go`. A new group and a message in it arrive on NATS as two events, in that order, and the outbox is empty afterwards.
 - **By hand, with the whole system:** messages sent while NATS was stopped for 15 seconds were saved at once. The relay logged an error every 5 seconds and kept trying. When NATS was started again, the waiting events were published, in order, without copies.
 
 ## Tiny example

@@ -16,7 +16,8 @@ function newSuffix(): string {
 // Careful: auth allows 20 sign-ups and logins at once per address, then
 // one more every 3 seconds (services/auth/rate_limit.go). Each person here
 // uses 2 (the sign-up, then the login it does by itself), so the 7 people
-// in this file use 14. More tests need a plan: see docs/learn/playwright.md.
+// in this file use 14, and gateway.e2e.ts uses 2 more: 16 of 20. More
+// tests need a plan: see docs/learn/playwright.md.
 
 // signUp opens a new browser window for a new person, creates their
 // account, and waits for their chats page.

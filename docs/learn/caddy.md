@@ -71,6 +71,8 @@ The snippet `(logged_in)` in `gateway/Caddyfile` does it. A route uses it with `
 
 **Why only the gateway can reach `/internal/check-session`:** Caddy forwards only `/auth.v1.*` from the browser to `auth`. A browser asking for `/internal/check-session` gets the web app's page.
 
+**Tested automatically:** [apps/web/e2e/gateway.e2e.ts](../../apps/web/e2e/gateway.e2e.ts) sends forged headers through the real gateway, with and without a session (see [playwright.md](playwright.md#our-tests)).
+
 **The danger of a trusted header:** if a service ever got a published port, anyone could call it directly with a made-up `X-User-Id`. That's why `chat` and `realtime` have no `ports` in `compose.yaml`.
 
 ## Useful commands

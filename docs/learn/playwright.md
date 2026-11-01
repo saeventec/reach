@@ -63,13 +63,16 @@ test("alice and bob chat live", async ({ browser }) => {
 | alice and bob chat live | a new chat appears in bob's list live; the message arrives; alice sees ✓✓ then "Read"; bob's answer arrives on alice's open page |
 | a group of three | a group appears for everyone live; a message reaches both others; "Read" needs everyone |
 | a reload | after reloading, each message is shown once |
+| the gateway ([gateway.e2e.ts](../../apps/web/e2e/gateway.e2e.ts)) | without a session, a forged `X-User-Id` gets 401, for chat and for `/realtime`; with a session, the gateway replaces a forged header with the real user's id |
+
+The gateway tests use Playwright's **`request` fixture**: plain HTTP calls, without a page, that keep cookies like a browser. They are proven too: with the session check taken off the `/chat.v1.*` route, both forged-header tests fail.
 
 Each test makes its own usernames with a random suffix (like `alice-3f9a01c2`), so tests never share accounts, also when run again.
 
 ## Things we learned
 
 - **The tests found nothing wrong in the app**, but the first tries found two mistakes in the tests: the "Username" locator, and reusing usernames when a test is repeated (`--repeat-each`).
-- **The rate limit counts us too.** auth allows 20 sign-ups and logins at once per address ([rate-limiting.md](rate-limiting.md)), and each person in a test uses 2. The 7 people in today's tests use 14. More tests need a plan, for example: a setting for the limit that the test system raises; or signing up a few people once and reusing their logins (Playwright's "storage state").
+- **The rate limit counts us too.** auth allows 20 sign-ups and logins at once per address ([rate-limiting.md](rate-limiting.md)), and each person in a test uses 2. The 8 people in today's tests use 16. More tests need a plan, for example: a setting for the limit that the test system raises; or signing up a few people once and reusing their logins (Playwright's "storage state").
 - **Checking for flaky tests:** a **flaky** test sometimes passes and sometimes fails with the same code. We ran the suite 5 times in a row (restarting auth in between, for the limit): 15 out of 15 passed.
 
 ## Alternatives

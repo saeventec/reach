@@ -29,7 +29,7 @@ Each step is one small commit that runs. The agent commits each finished step ri
 - [x] 11. The web app: the conversation list, new chat and new group forms; the last message in `ListConversations`, and the `chat.conversation.created` event. Built in five commits: the last message, the event, a fix for generated TypeScript enums (`task build` had failed since step 6), the list page, and live updates. The list items link nowhere yet: the conversation page comes in step 12.
 - [x] 12. The web app: the conversation page, live updates, catching up, delivered and read status. Built in four commits: the message calls and a UUIDv7 maker, the page with sending and retries, live updates with catching up (`ConversationSync`), and delivered and read.
 - [x] 13. End-to-end tests with Playwright: alice and bob chat live, locally and in CI (ADR 0034). Three tests (a 1:1 chat with delivered and read, a group of three, a reload), in `apps/web/e2e/`, run by `task test:e2e` against a separate Compose project. Open: auth's rate limit allows only a few more sign-ups per run.
-- [ ] 14. Security and tests: a message size limit, the forged-header test, integration tests with Postgres and NATS, the race detector on `realtime`
+- [x] 14. Security and tests: a message size limit, the forged-header test, integration tests with Postgres and NATS, the race detector on `realtime`. The size limit and the race detector came with steps 7 and 9; this step added the forged-header tests (end to end, through the real gateway) and an integration test of the store, the relay and NATS together.
 
 The steps can change as we learn. Any change is written here.
 
