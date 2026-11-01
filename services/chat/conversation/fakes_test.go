@@ -52,11 +52,15 @@ func (directory *fakeDirectory) FindUsersByID(ctx context.Context, userIDs []str
 	return found, nil
 }
 
-// fakeStore keeps conversations in a list, in memory.
+// fakeStore keeps conversations and messages in lists, in memory.
 type fakeStore struct {
 	conversations []Conversation
 	// pairKeys maps a 1:1 conversation's pair key to its index in the list.
 	pairKeys map[string]int
+	// messages are all messages of all conversations, in the order saved.
+	messages []Message
+	// lastQuery is what ListMessages was last asked for.
+	lastQuery MessageQuery
 }
 
 func newFakeStore() *fakeStore {
@@ -95,10 +99,11 @@ func (store *fakeStore) ListConversationsOfUser(ctx context.Context, userID stri
 	return found, nil
 }
 
-// add saves a new conversation, with a made-up id, and returns a copy.
+// add saves a new conversation and returns a copy.
 func (store *fakeStore) add(kind Kind, name string, members []Member) Conversation {
 	conversation := Conversation{
-		ID:        fmt.Sprintf("conversation-%d", len(store.conversations)),
+		// A made-up UUID, numbered: like the real database, ids are UUIDs.
+		ID:        fmt.Sprintf("01a19641-0000-7000-9000-%012d", len(store.conversations)),
 		Kind:      kind,
 		GroupName: name,
 		Members:   members,
@@ -115,4 +120,74 @@ func copyConversation(conversation Conversation) Conversation {
 	copy(members, conversation.Members)
 	conversation.Members = members
 	return conversation
+}
+
+func (store *fakeStore) IsMember(ctx context.Context, conversationID string, userID string) (bool, error) {
+	for _, conversation := range store.conversations {
+		if conversation.ID != conversationID {
+			continue
+		}
+		for _, member := range conversation.Members {
+			if member.UserID == userID {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
+func (store *fakeStore) SaveMessage(ctx context.Context, newMessage NewMessage) (Message, error) {
+	for _, message := range store.messages {
+		if message.ID == newMessage.ID {
+			return message, nil
+		}
+	}
+
+	lastSequence := int64(0)
+	for _, message := range store.messages {
+		if message.ConversationID == newMessage.ConversationID {
+			lastSequence = message.Sequence
+		}
+	}
+
+	message := Message{
+		ID:             newMessage.ID,
+		ConversationID: newMessage.ConversationID,
+		Sequence:       lastSequence + 1,
+		SenderID:       newMessage.SenderID,
+		Text:           newMessage.Text,
+		SentAt:         time.Now(),
+	}
+	store.messages = append(store.messages, message)
+	return message, nil
+}
+
+// ListMessages answers like the real store: up to MaximumCount messages,
+// the oldest first.
+func (store *fakeStore) ListMessages(ctx context.Context, query MessageQuery) ([]Message, error) {
+	store.lastQuery = query
+
+	matching := []Message{}
+	for _, message := range store.messages {
+		if message.ConversationID != query.ConversationID {
+			continue
+		}
+		if query.Position == PositionAfter && message.Sequence <= query.Sequence {
+			continue
+		}
+		if query.Position == PositionBefore && message.Sequence >= query.Sequence {
+			continue
+		}
+		matching = append(matching, message)
+	}
+
+	if len(matching) <= query.MaximumCount {
+		return matching, nil
+	}
+	// Catching up keeps the oldest ones; the other positions the newest.
+	if query.Position == PositionAfter {
+		return matching[:query.MaximumCount], nil
+	}
+	start := len(matching) - query.MaximumCount
+	return matching[start:], nil
 }

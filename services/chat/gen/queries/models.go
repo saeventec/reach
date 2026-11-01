@@ -17,10 +17,20 @@ type Conversation struct {
 	DirectPairKey  pgtype.Text
 	CreatedAt      time.Time
 	LastActivityAt time.Time
+	LastSequence   int64
 }
 
 type Member struct {
 	ConversationID pgtype.UUID
 	UserID         pgtype.UUID
 	JoinedAt       time.Time
+}
+
+type Message struct {
+	ID             pgtype.UUID
+	ConversationID pgtype.UUID
+	Sequence       int64
+	SenderID       pgtype.UUID
+	Text           string
+	SentAt         time.Time
 }

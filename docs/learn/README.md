@@ -47,3 +47,4 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [CI with GitHub Actions](ci.md)
 - [NATS and JetStream](nats.md)
 - [Hexagonal architecture](hexagonal-architecture.md)
+- [Message ordering and idempotency](message-ordering.md)

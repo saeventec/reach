@@ -29,10 +29,11 @@ import (
 	"github.com/saeventec/reach/services/chat/postgres"
 )
 
-// maximumRequestBytes is the largest API message the service reads. A
-// group with 50 usernames is under 4 KiB. Bigger messages get a
-// RESOURCE_EXHAUSTED error. (The same limit as in the auth service.)
-const maximumRequestBytes = 16 * 1024
+// maximumRequestBytes is the largest API message the service reads. The
+// biggest real one is a message of 4000 characters: a character takes up
+// to 4 bytes, so up to 16 000 bytes, plus the rest of the request. Bigger
+// messages get a RESOURCE_EXHAUSTED error.
+const maximumRequestBytes = 32 * 1024
 
 // main is where every Go program starts. It only sets up logging and
 // reports the error from run, so the real work stays easy to test.
@@ -101,10 +102,13 @@ func newRouter(conversations *conversation.Service) *http.ServeMux {
 	router.HandleFunc("GET /healthz", health.Handle)
 
 	// The Connect server answers the API calls defined in proto/chat/v1,
-	// like /chat.v1.ConversationService/ListConversations.
+	// like /chat.v1.ConversationService/ListConversations and
+	// /chat.v1.MessageService/SendMessage.
 	conversationServer := api.NewConversationServer(conversations)
 	connectServer := connect.NewServer()
 	chatv1connect.RegisterConversationServiceHandler(connectServer, conversationServer)
+	messageServer := api.NewMessageServer(conversations)
+	chatv1connect.RegisterMessageServiceHandler(connectServer, messageServer)
 	connecthttp.Mount(router, connectServer, connecthttp.WithReadMaxBytes(maximumRequestBytes))
 
 	return router

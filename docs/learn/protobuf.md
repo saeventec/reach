@@ -88,6 +88,36 @@ message Device {
 - **Well-known types** are standard messages that come with Protobuf, like `google.protobuf.Timestamp`. Each language maps them to its own type: `timestamppb.Timestamp` in Go (`timestamppb.New(time)` makes one), and `Timestamp` from `@bufbuild/protobuf/wkt` in TypeScript. In JSON, a Timestamp is text in the RFC 3339 format, always in UTC: `"2026-10-31T09:00:00Z"`.
 - **Default values are left out of JSON.** A `bool` that is `false`, a number that is `0` or an empty text is not sent at all. So a device that isn't the current one has no `isCurrentDevice` in the JSON. The generated code fills in the default again, so your code always sees `false`.
 
+### oneof
+
+A **oneof** is a group of fields where at most one is set, and the receiver can tell which one, or none. From [proto/chat/v1/message.proto](../../proto/chat/v1/message.proto):
+
+```protobuf
+message ListMessagesRequest {
+  oneof position {
+    int64 after_sequence = 2;    // catch up
+    int64 before_sequence = 3;   // scroll back
+  }
+}
+```
+
+- **Why not two plain fields:** a plain `int64` that is 0 looks exactly like one that isn't set (default values aren't sent). But "after 0" is a real request: "from the first message". In a oneof, setting `after_sequence` to 0 still says "this field was chosen".
+- **In Go,** the oneof is one field holding one of two small types. A **type switch** finds out which (`toPosition` in [services/chat/api/message_server.go](../../services/chat/api/message_server.go)):
+
+```go
+switch position := request.GetPosition().(type) {
+case *chatv1.ListMessagesRequest_AfterSequence:
+	return conversation.PositionAfter, position.AfterSequence
+...
+}
+```
+
+- **In JSON,** you just send the one field: `{"afterSequence": "0"}`.
+
+### int64 in JSON
+
+A Protobuf `int64` is sent as **text** in JSON: `"sequence": "42"`, not `42`. JavaScript numbers are exact only up to about 9 million billion (2^53), and an int64 goes higher. In the web app's generated TypeScript, an int64 is a `bigint`, JavaScript's type for big whole numbers (`42n`).
+
 ### Enums
 
 An **enum** is a fixed list of named values. From [proto/chat/v1/conversation.proto](../../proto/chat/v1/conversation.proto):

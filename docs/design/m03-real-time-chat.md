@@ -212,7 +212,7 @@ The core only knows its interfaces ("ports"). So its tests need no database, and
 - **Events at least once.** Every receiver must handle duplicates. The browser handles them by sequence number.
 - **Several copies of `realtime`.** It works with 2 copies, because each copy receives every event and delivers only to its own sockets. A good small experiment after this milestone.
 - **Message text in plain text in Postgres.** Until end-to-end encryption (milestone 8). The design never needs to read it, so it can become encrypted later.
-- **No abuse protection yet**, apart from a size limit (4 KiB of text per message) and the membership check. Rate limiting message sending is a small later step.
+- **No abuse protection yet**, apart from a size limit (4000 characters per message; changed while building from "4 KiB", because people count characters, not bytes) and the membership check. Rate limiting message sending is a small later step.
 
 ## Learning
 

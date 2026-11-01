@@ -22,7 +22,7 @@ Each step is one small commit that runs. The agent commits each finished step ri
 - [x] 4. Authentication at the gateway: a session-check endpoint in `auth`, and `forward_auth` in Caddy that removes forged `X-User-Id` headers (ADR 0029)
 - [x] 5. The `chat` service skeleton, in hexagonal style: its database, user and Compose entries (ADR 0030). For now only `main.go` and the health check: the hexagonal folders come with their first code in step 6, so no folder is empty.
 - [x] 6. Conversations: the first migrations, `StartDirectConversation`, `CreateGroup` and `ListConversations`; usernames from a new internal `auth` API. Built in three commits: all generated Go code moved to `packages/go/gen` first (ADR 0017), then the internal API, then the conversations.
-- [ ] 7. Messages: `SendMessage` with sequence numbers and client-made ids, and `ListMessages` (ADR 0032)
+- [x] 7. Messages: `SendMessage` with sequence numbers and client-made ids, and `ListMessages` (ADR 0032). The last message in `ListConversations` comes with the conversation list page (step 11), where it is first needed.
 - [ ] 8. Events: the outbox table and the relay that publishes to NATS JetStream (ADR 0031)
 - [ ] 9. The `realtime` service: WebSocket connections, subscribing to NATS, pushing events to each member's open connections (ADR 0033)
 - [ ] 10. Delivered and read: `MarkDelivered`, `MarkRead` and their events

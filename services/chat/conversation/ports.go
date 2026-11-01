@@ -23,6 +23,18 @@ type Store interface {
 	// ListConversationsOfUser returns the user's conversations, the most
 	// recently active first.
 	ListConversationsOfUser(ctx context.Context, userID string) ([]Conversation, error)
+
+	// IsMember reports whether the user is a member of the conversation.
+	IsMember(ctx context.Context, conversationID string, userID string) (bool, error)
+
+	// SaveMessage stores a message with the conversation's next sequence
+	// number, and returns it. If a message with this id exists already, it
+	// stores nothing and returns the existing one.
+	SaveMessage(ctx context.Context, message NewMessage) (Message, error)
+
+	// ListMessages returns the messages the query asks for, the oldest
+	// first.
+	ListMessages(ctx context.Context, query MessageQuery) ([]Message, error)
 }
 
 // UserDirectory finds people by username or id. The auth service owns
