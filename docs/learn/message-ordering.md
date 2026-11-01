@@ -76,6 +76,8 @@ The fixed test makes the collision certain:
 
 Now the test fails with "duplicate key value violates unique constraint" when the code for "try B" is removed. **A test only counts once you have seen it fail for the bug it is meant to catch.**
 
+**It passed here, and hung on GitHub.** The test needs 7 database connections at once: one holds the lock, 5 retries wait for it, and one watches them. pgxpool's default pool size depends on the computer: the number of CPUs, at least 4. GitHub's machines have 4 CPUs, so the waiting retries took every connection, the watcher waited for a free one, and nothing ever moved: a 10-minute timeout. The test's pool now has a fixed size (10), and the watcher's query gives up after 2 seconds with a clear message. Lessons: a test that depends on the machine's size is a hidden assumption, and every wait in a test needs a time limit.
+
 ## Catching up in the app
 
 The web app gets messages four ways: the first page, older pages, the answer to its own send, and live from the WebSocket. Live delivery can lose events (the WebSocket was closed) or repeat them ("at least once"). The sequence numbers make it safe anyway. [apps/web/src/chat/conversationSync.ts](../../apps/web/src/chat/conversationSync.ts) has the rules, in a plain TypeScript class (not React), so its tests need no page:

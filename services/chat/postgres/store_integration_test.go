@@ -201,7 +201,17 @@ func startTestDatabase(t *testing.T) *pgxpool.Pool {
 
 	applyMigrations(t, databaseURL)
 
-	pool, err := pgxpool.New(t.Context(), databaseURL)
+	poolConfig, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		t.Fatalf("read the database address: %v", err)
+	}
+	// A fixed number of connections. The default depends on the computer
+	// (the number of CPUs, at least 4), and the colliding-retries test needs
+	// 7 at once: one holds the lock, 5 wait for it, and one watches them.
+	// With 4 (GitHub's machines), the waiting retries took every connection,
+	// and the test waited for a free one forever.
+	poolConfig.MaxConns = 10
+	pool, err := pgxpool.NewWithConfig(t.Context(), poolConfig)
 	if err != nil {
 		t.Fatalf("connect: %v", err)
 	}

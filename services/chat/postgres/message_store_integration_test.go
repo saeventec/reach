@@ -4,6 +4,7 @@ package postgres
 // store_integration_test.go for how the database is started.
 
 import (
+	"context"
 	"fmt"
 	"slices"
 	"sync"
@@ -102,6 +103,11 @@ func TestMessageStore(t *testing.T) {
 		if err != nil {
 			t.Fatalf("begin: %v", err)
 		}
+		// If the test stops early, undo the lock, so the waiting retries
+		// are let go too. (After the Commit below, Rollback does nothing.)
+		t.Cleanup(func() {
+			_ = blocker.Rollback(context.Background())
+		})
 		_, err = blocker.Exec(t.Context(), "SELECT 1 FROM conversations WHERE id = $1 FOR UPDATE", group.ID)
 		if err != nil {
 			t.Fatalf("lock the conversation: %v", err)
@@ -259,16 +265,28 @@ func waitUntilWaitingForLocks(t *testing.T, pool *pgxpool.Pool, count int) {
 	t.Helper()
 	deadline := time.Now().Add(5 * time.Second)
 	for time.Now().Before(deadline) {
-		var waiting int
-		row := pool.QueryRow(t.Context(), "SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock'")
-		err := row.Scan(&waiting)
-		if err != nil {
-			t.Fatalf("read pg_stat_activity: %v", err)
-		}
+		waiting := countLockWaiters(t, pool)
 		if waiting >= count {
 			return
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
 	t.Fatalf("fewer than %d connections are waiting for the lock after 5 seconds", count)
+}
+
+// countLockWaiters asks how many connections wait for a lock. It gives up
+// after 2 seconds, so a test whose pool has no free connection fails at
+// once, instead of waiting forever.
+func countLockWaiters(t *testing.T, pool *pgxpool.Pool) int {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
+	defer cancel()
+
+	var waiting int
+	row := pool.QueryRow(ctx, "SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock'")
+	err := row.Scan(&waiting)
+	if err != nil {
+		t.Fatalf("read pg_stat_activity (is every connection in use?): %v", err)
+	}
+	return waiting
 }
