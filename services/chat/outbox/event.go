@@ -64,6 +64,23 @@ func NewReceiptUpdated(receipt conversation.Receipt, memberIDs []string) (Event,
 	return event, nil
 }
 
+// NewConversationCreated makes the event that announces a new
+// conversation to its members.
+func NewConversationCreated(conversationID string, memberIDs []string) (Event, error) {
+	conversationCreated := &chatv1.ConversationCreated{
+		ConversationId: conversationID,
+		MemberIds:      memberIDs,
+	}
+
+	payload, err := proto.Marshal(conversationCreated)
+	if err != nil {
+		return Event{}, fmt.Errorf("encode the conversation created event: %w", err)
+	}
+
+	event := Event{Subject: chatevents.ConversationCreated, Payload: payload}
+	return event, nil
+}
+
 // toEventMessage turns the core's message into the Protobuf message. The
 // api adapter has the same function: each adapter keeps its own
 // translation, so the API and the events can change apart.

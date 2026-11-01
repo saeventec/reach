@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file chat/v1/events.proto.
  */
 export const file_chat_v1_events: GenFile = /*@__PURE__*/
-  fileDesc("ChRjaGF0L3YxL2V2ZW50cy5wcm90bxIHY2hhdC52MSJECgtNZXNzYWdlU2VudBIhCgdtZXNzYWdlGAEgASgLMhAuY2hhdC52MS5NZXNzYWdlEhIKCm1lbWJlcl9pZHMYAiADKAkiewoOUmVjZWlwdFVwZGF0ZWQSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSFwoPZGVsaXZlcmVkX3VwX3RvGAMgASgDEhIKCnJlYWRfdXBfdG8YBCABKAMSEgoKbWVtYmVyX2lkcxgFIAMoCUKSAQoLY29tLmNoYXQudjFCC0V2ZW50c1Byb3RvUAFaOWdpdGh1Yi5jb20vc2FldmVudGVjL3JlYWNoL3BhY2thZ2VzL2dvL2dlbi9jaGF0L3YxO2NoYXR2MaICA0NYWKoCB0NoYXQuVjHKAgdDaGF0XFYx4gITQ2hhdFxWMVxHUEJNZXRhZGF0YeoCCENoYXQ6OlYxYgZwcm90bzM", [file_chat_v1_message]);
+  fileDesc("ChRjaGF0L3YxL2V2ZW50cy5wcm90bxIHY2hhdC52MSJECgtNZXNzYWdlU2VudBIhCgdtZXNzYWdlGAEgASgLMhAuY2hhdC52MS5NZXNzYWdlEhIKCm1lbWJlcl9pZHMYAiADKAkiewoOUmVjZWlwdFVwZGF0ZWQSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSFwoPZGVsaXZlcmVkX3VwX3RvGAMgASgDEhIKCnJlYWRfdXBfdG8YBCABKAMSEgoKbWVtYmVyX2lkcxgFIAMoCSJCChNDb252ZXJzYXRpb25DcmVhdGVkEhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRISCgptZW1iZXJfaWRzGAIgAygJQpIBCgtjb20uY2hhdC52MUILRXZlbnRzUHJvdG9QAVo5Z2l0aHViLmNvbS9zYWV2ZW50ZWMvcmVhY2gvcGFja2FnZXMvZ28vZ2VuL2NoYXQvdjE7Y2hhdHYxogIDQ1hYqgIHQ2hhdC5WMcoCB0NoYXRcVjHiAhNDaGF0XFYxXEdQQk1ldGFkYXRh6gIIQ2hhdDo6VjFiBnByb3RvMw", [file_chat_v1_message]);
 
 /**
  * MessageSent is published on the subject "chat.message.sent" after a
@@ -95,4 +95,33 @@ export type ReceiptUpdated = Message<"chat.v1.ReceiptUpdated"> & {
  */
 export const ReceiptUpdatedSchema: GenMessage<ReceiptUpdated> = /*@__PURE__*/
   messageDesc(file_chat_v1_events, 1);
+
+/**
+ * ConversationCreated is published on the subject
+ * "chat.conversation.created" when a group or a 1:1 chat is created. It
+ * only says that it happened, not everything about it: a receiver that
+ * wants the details (like the usernames) asks chat's API.
+ *
+ * @generated from message chat.v1.ConversationCreated
+ */
+export type ConversationCreated = Message<"chat.v1.ConversationCreated"> & {
+  /**
+   * @generated from field: string conversation_id = 1;
+   */
+  conversationId: string;
+
+  /**
+   * All the new conversation's members, the creator too.
+   *
+   * @generated from field: repeated string member_ids = 2;
+   */
+  memberIds: string[];
+};
+
+/**
+ * Describes the message chat.v1.ConversationCreated.
+ * Use `create(ConversationCreatedSchema)` to create a new message.
+ */
+export const ConversationCreatedSchema: GenMessage<ConversationCreated> = /*@__PURE__*/
+  messageDesc(file_chat_v1_events, 2);
 

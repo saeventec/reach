@@ -167,6 +167,63 @@ func (x *ReceiptUpdated) GetMemberIds() []string {
 	return nil
 }
 
+// ConversationCreated is published on the subject
+// "chat.conversation.created" when a group or a 1:1 chat is created. It
+// only says that it happened, not everything about it: a receiver that
+// wants the details (like the usernames) asks chat's API.
+type ConversationCreated struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ConversationId string                 `protobuf:"bytes,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
+	// All the new conversation's members, the creator too.
+	MemberIds     []string `protobuf:"bytes,2,rep,name=member_ids,json=memberIds,proto3" json:"member_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConversationCreated) Reset() {
+	*x = ConversationCreated{}
+	mi := &file_chat_v1_events_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConversationCreated) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConversationCreated) ProtoMessage() {}
+
+func (x *ConversationCreated) ProtoReflect() protoreflect.Message {
+	mi := &file_chat_v1_events_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConversationCreated.ProtoReflect.Descriptor instead.
+func (*ConversationCreated) Descriptor() ([]byte, []int) {
+	return file_chat_v1_events_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ConversationCreated) GetConversationId() string {
+	if x != nil {
+		return x.ConversationId
+	}
+	return ""
+}
+
+func (x *ConversationCreated) GetMemberIds() []string {
+	if x != nil {
+		return x.MemberIds
+	}
+	return nil
+}
+
 var File_chat_v1_events_proto protoreflect.FileDescriptor
 
 const file_chat_v1_events_proto_rawDesc = "" +
@@ -183,7 +240,11 @@ const file_chat_v1_events_proto_rawDesc = "" +
 	"\n" +
 	"read_up_to\x18\x04 \x01(\x03R\breadUpTo\x12\x1d\n" +
 	"\n" +
-	"member_ids\x18\x05 \x03(\tR\tmemberIdsB\x92\x01\n" +
+	"member_ids\x18\x05 \x03(\tR\tmemberIds\"]\n" +
+	"\x13ConversationCreated\x12'\n" +
+	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\x12\x1d\n" +
+	"\n" +
+	"member_ids\x18\x02 \x03(\tR\tmemberIdsB\x92\x01\n" +
 	"\vcom.chat.v1B\vEventsProtoP\x01Z9github.com/saeventec/reach/packages/go/gen/chat/v1;chatv1\xa2\x02\x03CXX\xaa\x02\aChat.V1\xca\x02\aChat\\V1\xe2\x02\x13Chat\\V1\\GPBMetadata\xea\x02\bChat::V1b\x06proto3"
 
 var (
@@ -198,14 +259,15 @@ func file_chat_v1_events_proto_rawDescGZIP() []byte {
 	return file_chat_v1_events_proto_rawDescData
 }
 
-var file_chat_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_chat_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_chat_v1_events_proto_goTypes = []any{
-	(*MessageSent)(nil),    // 0: chat.v1.MessageSent
-	(*ReceiptUpdated)(nil), // 1: chat.v1.ReceiptUpdated
-	(*Message)(nil),        // 2: chat.v1.Message
+	(*MessageSent)(nil),         // 0: chat.v1.MessageSent
+	(*ReceiptUpdated)(nil),      // 1: chat.v1.ReceiptUpdated
+	(*ConversationCreated)(nil), // 2: chat.v1.ConversationCreated
+	(*Message)(nil),             // 3: chat.v1.Message
 }
 var file_chat_v1_events_proto_depIdxs = []int32{
-	2, // 0: chat.v1.MessageSent.message:type_name -> chat.v1.Message
+	3, // 0: chat.v1.MessageSent.message:type_name -> chat.v1.Message
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -225,7 +287,7 @@ func file_chat_v1_events_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_chat_v1_events_proto_rawDesc), len(file_chat_v1_events_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

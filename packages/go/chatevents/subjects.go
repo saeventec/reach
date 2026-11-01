@@ -7,6 +7,9 @@ package chatevents
 // MessageSent is the subject of a chatv1.MessageSent event.
 const MessageSent = "chat.message.sent"
 
+// ConversationCreated is the subject of a chatv1.ConversationCreated event.
+const ConversationCreated = "chat.conversation.created"
+
 // ReceiptUpdated is the subject of a chatv1.ReceiptUpdated event.
 const ReceiptUpdated = "chat.receipt.updated"
 

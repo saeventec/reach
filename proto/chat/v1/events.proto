@@ -33,3 +33,13 @@ message ReceiptUpdated {
   // everyone sees who has read what.
   repeated string member_ids = 5;
 }
+
+// ConversationCreated is published on the subject
+// "chat.conversation.created" when a group or a 1:1 chat is created. It
+// only says that it happened, not everything about it: a receiver that
+// wants the details (like the usernames) asks chat's API.
+message ConversationCreated {
+  string conversation_id = 1;
+  // All the new conversation's members, the creator too.
+  repeated string member_ids = 2;
+}

@@ -33,23 +33,39 @@ func NewStore(pool *pgxpool.Pool, eventSaved chan<- struct{}) *Store {
 
 // FindOrCreateDirectConversation returns the 1:1 conversation with this
 // pair key, and creates it, with both members, if it doesn't exist yet.
+// Only a new one gets a "conversation created" event.
 func (store *Store) FindOrCreateDirectConversation(ctx context.Context, pairKey string, firstUserID string, secondUserID string) (conversation.Conversation, error) {
 	memberIDs := []string{firstUserID, secondUserID}
 
 	var found conversation.Conversation
+	created := false
 	err := store.inTransaction(ctx, func(transactionQueries *queries.Queries) error {
-		conversationID, err := findOrCreateDirect(ctx, transactionQueries, pairKey)
+		conversationID, isNew, err := findOrCreateDirect(ctx, transactionQueries, pairKey)
 		if err != nil {
 			return err
 		}
+		created = isNew
 		err = addMembers(ctx, transactionQueries, conversationID, memberIDs)
 		if err != nil {
 			return err
 		}
 		found, err = findConversation(ctx, transactionQueries, conversationID)
-		return err
+		if err != nil {
+			return err
+		}
+		if !created {
+			return nil
+		}
+		return saveConversationCreatedEvent(ctx, transactionQueries, found.ID, memberIDs)
 	})
-	return found, err
+	if err != nil {
+		return conversation.Conversation{}, err
+	}
+
+	if created {
+		store.wakeRelay()
+	}
+	return found, nil
 }
 
 // CreateGroupConversation creates a group with these members.
@@ -66,9 +82,17 @@ func (store *Store) CreateGroupConversation(ctx context.Context, name string, me
 			return err
 		}
 		created, err = findConversation(ctx, transactionQueries, conversationID)
-		return err
+		if err != nil {
+			return err
+		}
+		return saveConversationCreatedEvent(ctx, transactionQueries, created.ID, memberIDs)
 	})
-	return created, err
+	if err != nil {
+		return conversation.Conversation{}, err
+	}
+
+	store.wakeRelay()
+	return created, nil
 }
 
 // ListConversationsOfUser returns the user's conversations, the most
@@ -134,24 +158,25 @@ func (store *Store) inTransaction(ctx context.Context, work func(transactionQuer
 }
 
 // findOrCreateDirect returns the id of the 1:1 conversation with this pair
-// key, and creates it if it doesn't exist yet.
-func findOrCreateDirect(ctx context.Context, transactionQueries *queries.Queries, pairKey string) (pgtype.UUID, error) {
+// key, and creates it if it doesn't exist yet. The bool says whether it was
+// created now.
+func findOrCreateDirect(ctx context.Context, transactionQueries *queries.Queries, pairKey string) (pgtype.UUID, bool, error) {
 	databasePairKey := pgtype.Text{String: pairKey, Valid: true}
 
 	createdID, err := transactionQueries.CreateDirectConversation(ctx, databasePairKey)
 	if err == nil {
-		return createdID, nil
+		return createdID, true, nil
 	}
 	// No row means "ON CONFLICT DO NOTHING": it exists already.
 	if !errors.Is(err, pgx.ErrNoRows) {
-		return pgtype.UUID{}, fmt.Errorf("create the direct conversation: %w", err)
+		return pgtype.UUID{}, false, fmt.Errorf("create the direct conversation: %w", err)
 	}
 
 	existingID, err := transactionQueries.FindDirectConversation(ctx, databasePairKey)
 	if err != nil {
-		return pgtype.UUID{}, fmt.Errorf("find the direct conversation: %w", err)
+		return pgtype.UUID{}, false, fmt.Errorf("find the direct conversation: %w", err)
 	}
-	return existingID, nil
+	return existingID, false, nil
 }
 
 // addMembers adds these users to a conversation.

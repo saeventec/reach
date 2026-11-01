@@ -56,6 +56,16 @@ The channel is `make(chan struct{}, 1)`: a channel with room for one empty value
 - `chan<- struct{}` (the store's side) can only send. `<-chan struct{}` (the relay's side) can only receive. Go checks this, so neither side uses the channel the wrong way.
 - The store sends with `select { case channel <- struct{}{}: default: }`. If a wake-up is already waiting, `default` runs and the send is skipped. That's fine: the relay will read *all* waiting events when it wakes, this one too. So a busy chat never blocks on the channel.
 
+### Which events chat publishes
+
+| Subject | When | What it carries |
+| --- | --- | --- |
+| `chat.message.sent` | a message was stored | the whole message, and the members |
+| `chat.receipt.updated` | a member's delivered or read watermark moved up | both watermarks, and the members |
+| `chat.conversation.created` | a group, or a new 1:1 chat, was created (not an existing 1:1 found again) | only the conversation's id, and the members |
+
+The first two carry everything a receiver needs ("event-carried state"). `chat.conversation.created` only says that something happened ("event notification"): the app then asks `ListConversations` for the details, like the usernames, which `chat` doesn't store. Both styles are common. Carrying the data saves a call; a notification keeps the event small and never out of date.
+
 ## What we tested
 
 - **Unit tests** ([relay_test.go](../../services/chat/outbox/relay_test.go)) with a fake store and a fake publisher: publishing in order, stopping at a failure, and waking up.

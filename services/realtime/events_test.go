@@ -87,6 +87,38 @@ func TestEventHandler(t *testing.T) {
 		}
 	})
 
+	t.Run("tells the members about a new conversation", func(t *testing.T) {
+		hub := NewHub()
+		bob := newClient("bob")
+		carol := newClient("carol")
+		hub.add(bob)
+		hub.add(carol)
+		handler := NewEventHandler(hub)
+		conversationCreated := &chatv1.ConversationCreated{ConversationId: "chat-1", MemberIds: []string{"alice", "bob"}}
+		payload, err := proto.Marshal(conversationCreated)
+		if err != nil {
+			t.Fatalf("encode: %v", err)
+		}
+
+		err = handler.handle(chatevents.ConversationCreated, payload)
+		if err != nil {
+			t.Fatalf("got error %v, want none", err)
+		}
+
+		if receivedCount(carol) != 0 {
+			t.Error("carol was told, but she is not a member")
+		}
+		frame := <-bob.frames
+		decoded := &realtimev1.ServerEvent{}
+		err = protojson.Unmarshal(frame, decoded)
+		if err != nil {
+			t.Fatalf("decode %s: %v", frame, err)
+		}
+		if decoded.GetConversationCreated().GetConversationId() != "chat-1" {
+			t.Errorf("got %s, want the conversation chat-1", frame)
+		}
+	})
+
 	t.Run("skips an event it doesn't know", func(t *testing.T) {
 		handler := NewEventHandler(NewHub())
 

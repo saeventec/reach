@@ -35,6 +35,7 @@ type ServerEvent struct {
 	//
 	//	*ServerEvent_MessageSent
 	//	*ServerEvent_ReceiptUpdated
+	//	*ServerEvent_ConversationCreated
 	Event         isServerEvent_Event `protobuf_oneof:"event"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -95,6 +96,15 @@ func (x *ServerEvent) GetReceiptUpdated() *v1.ReceiptUpdated {
 	return nil
 }
 
+func (x *ServerEvent) GetConversationCreated() *v1.ConversationCreated {
+	if x != nil {
+		if x, ok := x.Event.(*ServerEvent_ConversationCreated); ok {
+			return x.ConversationCreated
+		}
+	}
+	return nil
+}
+
 type isServerEvent_Event interface {
 	isServerEvent_Event()
 }
@@ -110,18 +120,27 @@ type ServerEvent_ReceiptUpdated struct {
 	ReceiptUpdated *v1.ReceiptUpdated `protobuf:"bytes,2,opt,name=receipt_updated,json=receiptUpdated,proto3,oneof"`
 }
 
+type ServerEvent_ConversationCreated struct {
+	// You are in a new conversation: someone started a chat or a group
+	// with you (or you did, on another device).
+	ConversationCreated *v1.ConversationCreated `protobuf:"bytes,3,opt,name=conversation_created,json=conversationCreated,proto3,oneof"`
+}
+
 func (*ServerEvent_MessageSent) isServerEvent_Event() {}
 
 func (*ServerEvent_ReceiptUpdated) isServerEvent_Event() {}
+
+func (*ServerEvent_ConversationCreated) isServerEvent_Event() {}
 
 var File_realtime_v1_events_proto protoreflect.FileDescriptor
 
 const file_realtime_v1_events_proto_rawDesc = "" +
 	"\n" +
-	"\x18realtime/v1/events.proto\x12\vrealtime.v1\x1a\x14chat/v1/events.proto\"\x95\x01\n" +
+	"\x18realtime/v1/events.proto\x12\vrealtime.v1\x1a\x14chat/v1/events.proto\"\xe8\x01\n" +
 	"\vServerEvent\x129\n" +
 	"\fmessage_sent\x18\x01 \x01(\v2\x14.chat.v1.MessageSentH\x00R\vmessageSent\x12B\n" +
-	"\x0freceipt_updated\x18\x02 \x01(\v2\x17.chat.v1.ReceiptUpdatedH\x00R\x0ereceiptUpdatedB\a\n" +
+	"\x0freceipt_updated\x18\x02 \x01(\v2\x17.chat.v1.ReceiptUpdatedH\x00R\x0ereceiptUpdated\x12Q\n" +
+	"\x14conversation_created\x18\x03 \x01(\v2\x1c.chat.v1.ConversationCreatedH\x00R\x13conversationCreatedB\a\n" +
 	"\x05eventB\xae\x01\n" +
 	"\x0fcom.realtime.v1B\vEventsProtoP\x01ZAgithub.com/saeventec/reach/packages/go/gen/realtime/v1;realtimev1\xa2\x02\x03RXX\xaa\x02\vRealtime.V1\xca\x02\vRealtime\\V1\xe2\x02\x17Realtime\\V1\\GPBMetadata\xea\x02\fRealtime::V1b\x06proto3"
 
@@ -139,18 +158,20 @@ func file_realtime_v1_events_proto_rawDescGZIP() []byte {
 
 var file_realtime_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_realtime_v1_events_proto_goTypes = []any{
-	(*ServerEvent)(nil),       // 0: realtime.v1.ServerEvent
-	(*v1.MessageSent)(nil),    // 1: chat.v1.MessageSent
-	(*v1.ReceiptUpdated)(nil), // 2: chat.v1.ReceiptUpdated
+	(*ServerEvent)(nil),            // 0: realtime.v1.ServerEvent
+	(*v1.MessageSent)(nil),         // 1: chat.v1.MessageSent
+	(*v1.ReceiptUpdated)(nil),      // 2: chat.v1.ReceiptUpdated
+	(*v1.ConversationCreated)(nil), // 3: chat.v1.ConversationCreated
 }
 var file_realtime_v1_events_proto_depIdxs = []int32{
 	1, // 0: realtime.v1.ServerEvent.message_sent:type_name -> chat.v1.MessageSent
 	2, // 1: realtime.v1.ServerEvent.receipt_updated:type_name -> chat.v1.ReceiptUpdated
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	3, // 2: realtime.v1.ServerEvent.conversation_created:type_name -> chat.v1.ConversationCreated
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_realtime_v1_events_proto_init() }
@@ -161,6 +182,7 @@ func file_realtime_v1_events_proto_init() {
 	file_realtime_v1_events_proto_msgTypes[0].OneofWrappers = []any{
 		(*ServerEvent_MessageSent)(nil),
 		(*ServerEvent_ReceiptUpdated)(nil),
+		(*ServerEvent_ConversationCreated)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

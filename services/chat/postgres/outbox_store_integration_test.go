@@ -25,12 +25,6 @@ func TestOutboxStore(t *testing.T) {
 	eventSaved := make(chan struct{}, 1)
 	store := NewStore(pool, eventSaved)
 
-	group, err := store.CreateGroupConversation(t.Context(), "Outbox", []string{aliceID, bobID})
-	if err != nil {
-		t.Fatalf("create the group: %v", err)
-	}
-	newMessage := conversation.NewMessage{ID: testMessageID(9, 1), ConversationID: group.ID, SenderID: aliceID, Text: "hi"}
-
 	// listUnpublished returns the waiting events, and fails the test on an
 	// error.
 	listUnpublished := func(t *testing.T) []outbox.Event {
@@ -41,6 +35,75 @@ func TestOutboxStore(t *testing.T) {
 		}
 		return events
 	}
+
+	// takeEvents returns the waiting events and marks them published, so
+	// the next check starts empty.
+	takeEvents := func(t *testing.T) []outbox.Event {
+		t.Helper()
+		events := listUnpublished(t)
+		for _, event := range events {
+			err := store.MarkEventPublished(t.Context(), event.ID)
+			if err != nil {
+				t.Fatalf("mark: %v", err)
+			}
+		}
+		return events
+	}
+
+	// decodeCreated reads a "conversation created" event.
+	decodeCreated := func(t *testing.T, event outbox.Event) *chatv1.ConversationCreated {
+		t.Helper()
+		if event.Subject != chatevents.ConversationCreated {
+			t.Fatalf("got subject %q, want %q", event.Subject, chatevents.ConversationCreated)
+		}
+		created := &chatv1.ConversationCreated{}
+		err := proto.Unmarshal(event.Payload, created)
+		if err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		return created
+	}
+
+	t.Run("a new group saves its event, with the members", func(t *testing.T) {
+		group, err := store.CreateGroupConversation(t.Context(), "Created", []string{aliceID, bobID})
+		if err != nil {
+			t.Fatalf("create the group: %v", err)
+		}
+
+		events := takeEvents(t)
+		if len(events) != 1 {
+			t.Fatalf("got %d events, want 1", len(events))
+		}
+		created := decodeCreated(t, events[0])
+		if created.GetConversationId() != group.ID || !slices.Equal(created.GetMemberIds(), []string{aliceID, bobID}) {
+			t.Errorf("got %v, want the group with alice and bob", created)
+		}
+	})
+
+	t.Run("only a new 1:1 chat saves an event, not a found one", func(t *testing.T) {
+		_, err := store.FindOrCreateDirectConversation(t.Context(), "alice:carol", aliceID, carolID)
+		if err != nil {
+			t.Fatalf("create: %v", err)
+		}
+		_, err = store.FindOrCreateDirectConversation(t.Context(), "alice:carol", carolID, aliceID)
+		if err != nil {
+			t.Fatalf("find: %v", err)
+		}
+
+		events := takeEvents(t)
+		if len(events) != 1 {
+			t.Fatalf("got %d events, want 1", len(events))
+		}
+		decodeCreated(t, events[0])
+	})
+
+	group, err := store.CreateGroupConversation(t.Context(), "Outbox", []string{aliceID, bobID})
+	if err != nil {
+		t.Fatalf("create the group: %v", err)
+	}
+	// The group's own event is not what the next subtests look at.
+	takeEvents(t)
+	newMessage := conversation.NewMessage{ID: testMessageID(9, 1), ConversationID: group.ID, SenderID: aliceID, Text: "hi"}
 
 	t.Run("a sent message saves its event, and wakes the relay", func(t *testing.T) {
 		saved, err := store.SaveMessage(t.Context(), newMessage)
@@ -69,7 +132,8 @@ func TestOutboxStore(t *testing.T) {
 			t.Errorf("got members %v, want %v", decoded.GetMemberIds(), wantMembers)
 		}
 
-		// The store sent a wake-up after the commit.
+		// The store sent a wake-up after the commit. (Other subtests may
+		// have left one too: the test only checks that there is one.)
 		select {
 		case <-eventSaved:
 		default:

@@ -42,6 +42,8 @@ func (handler *EventHandler) handle(subject string, payload []byte) error {
 		return handler.handleMessageSent(payload)
 	case chatevents.ReceiptUpdated:
 		return handler.handleReceiptUpdated(payload)
+	case chatevents.ConversationCreated:
+		return handler.handleConversationCreated(payload)
 	default:
 		// An event this version doesn't know yet (chat may be newer). It
 		// is fine to skip: the browser catches up through chat's API.
@@ -76,6 +78,20 @@ func (handler *EventHandler) handleReceiptUpdated(payload []byte) error {
 		Event: &realtimev1.ServerEvent_ReceiptUpdated{ReceiptUpdated: receiptUpdated},
 	}
 	return handler.deliver(receiptUpdated.GetMemberIds(), serverEvent)
+}
+
+// handleConversationCreated tells every member about a new conversation.
+func (handler *EventHandler) handleConversationCreated(payload []byte) error {
+	conversationCreated := &chatv1.ConversationCreated{}
+	err := proto.Unmarshal(payload, conversationCreated)
+	if err != nil {
+		return fmt.Errorf("decode the conversation created event: %w", err)
+	}
+
+	serverEvent := &realtimev1.ServerEvent{
+		Event: &realtimev1.ServerEvent_ConversationCreated{ConversationCreated: conversationCreated},
+	}
+	return handler.deliver(conversationCreated.GetMemberIds(), serverEvent)
 }
 
 // deliver turns the event into JSON and hands it to the hub.

@@ -69,6 +69,16 @@ func saveReceiptUpdatedEvent(ctx context.Context, transactionQueries *queries.Qu
 	return saveEvent(ctx, transactionQueries, event)
 }
 
+// saveConversationCreatedEvent saves the event that announces a new
+// conversation. It runs inside the conversation's transaction.
+func saveConversationCreatedEvent(ctx context.Context, transactionQueries *queries.Queries, conversationID string, memberIDs []string) error {
+	event, err := outbox.NewConversationCreated(conversationID, memberIDs)
+	if err != nil {
+		return err
+	}
+	return saveEvent(ctx, transactionQueries, event)
+}
+
 // listMemberIDs returns the user ids of a conversation's members, for an
 // event.
 func listMemberIDs(ctx context.Context, transactionQueries *queries.Queries, conversationID string) ([]string, error) {

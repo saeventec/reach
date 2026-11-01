@@ -74,3 +74,24 @@ func TestNewReceiptUpdated(t *testing.T) {
 		t.Errorf("got members %v, want %v", decoded.GetMemberIds(), memberIDs)
 	}
 }
+
+func TestNewConversationCreated(t *testing.T) {
+	memberIDs := []string{"01a00000-0000-7000-8000-00000000000a", "01a00000-0000-7000-8000-00000000000b"}
+
+	event, err := NewConversationCreated("01a19641-0000-7000-8000-0000000000c1", memberIDs)
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if event.Subject != "chat.conversation.created" {
+		t.Errorf("got subject %q, want chat.conversation.created", event.Subject)
+	}
+	decoded := &chatv1.ConversationCreated{}
+	err = proto.Unmarshal(event.Payload, decoded)
+	if err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if decoded.GetConversationId() != "01a19641-0000-7000-8000-0000000000c1" || !slices.Equal(decoded.GetMemberIds(), memberIDs) {
+		t.Errorf("got %v, want the conversation and both members", decoded)
+	}
+}

@@ -17,5 +17,8 @@ message ServerEvent {
     // Someone's delivered or read watermark moved in one of your
     // conversations: update the ✓ and ✓✓ marks.
     chat.v1.ReceiptUpdated receipt_updated = 2;
+    // You are in a new conversation: someone started a chat or a group
+    // with you (or you did, on another device).
+    chat.v1.ConversationCreated conversation_created = 3;
   }
 }
