@@ -167,6 +167,8 @@ These are the current choices. When an agent introduces any of them for the firs
 | Password hashing | argon2id (`golang.org/x/crypto`) | A slow, memory-hungry one-way hash for passwords | OWASP's first choice (ADR 0025) | bcrypt, scrypt |
 | Rate limiting | `golang.org/x/time/rate`, in memory | Caps login and sign-up tries | Simplest; counts are short-lived (ADR 0027) | Valkey, Postgres, a Caddy plugin |
 | Web routing | React Router (declarative mode) | One address per page: `/login`, `/account` | Owner's choice: real addresses, Back button works (ADR 0026) | Plain React state, TanStack Router |
+| WebSocket in Go | coder/websocket | Keeps the open connections to browsers in `realtime` | Maintained, `context` support, checks the Origin header (ADR 0033) | gorilla/websocket, x/net/websocket |
+| End-to-end tests | Playwright | Tests full user flows in a real browser | Two users at once in one test (ADR 0034) | Cypress |
 
 **Planned for later** (explained in full when we get there)
 
@@ -377,7 +379,6 @@ These are ideas only, not part of any milestone yet. An agent must not build the
 | Tool | What it is | Why it could fit | When | Alternatives |
 | --- | --- | --- | --- | --- |
 | TanStack Query | Fetches, caches and refreshes server data in React | Removes lots of hand-written loading and caching code | Later (not needed in milestone 2) | SWR, plain fetch |
-| Playwright | End-to-end tests in a real browser | Tests full user flows across Chrome, Firefox and Safari engines | Milestone 3 | Cypress |
 | Mailpit | A fake email server with a web inbox, for development | Test invite and password-reset emails locally | Milestone 2 | MailHog |
 | Valkey | In-memory key-value store (open-source Redis fork) | Rate limiting, caching, presence, if NATS KV is not enough | Milestone 3+ | Redis, NATS KV |
 | Renovate | Opens pull requests to update dependencies | Keeps everything up to date automatically | Later (not wanted yet) | Dependabot |
