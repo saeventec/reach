@@ -24,7 +24,7 @@ Each step is one small commit that runs. The agent commits each finished step ri
 - [x] 6. Conversations: the first migrations, `StartDirectConversation`, `CreateGroup` and `ListConversations`; usernames from a new internal `auth` API. Built in three commits: all generated Go code moved to `packages/go/gen` first (ADR 0017), then the internal API, then the conversations.
 - [x] 7. Messages: `SendMessage` with sequence numbers and client-made ids, and `ListMessages` (ADR 0032). The last message in `ListConversations` comes with the conversation list page (step 11), where it is first needed.
 - [x] 8. Events: the outbox table and the relay that publishes to NATS JetStream (ADR 0031). Only `chat.message.sent` for now: `chat.receipt.updated` comes with step 10, and `chat.conversation.created` with step 11, where each is first needed.
-- [ ] 9. The `realtime` service: WebSocket connections, subscribing to NATS, pushing events to each member's open connections (ADR 0033)
+- [x] 9. The `realtime` service: WebSocket connections, subscribing to NATS, pushing events to each member's open connections (ADR 0033). Built in two commits: the NATS address and the event subjects moved to `packages/go` first, then the service. The race detector runs in its own `task test:race` and in CI.
 - [ ] 10. Delivered and read: `MarkDelivered`, `MarkRead` and their event (`chat.receipt.updated`)
 - [ ] 11. The web app: the conversation list, new chat and new group forms; the last message in `ListConversations`, and the `chat.conversation.created` event
 - [ ] 12. The web app: the conversation page, live updates, catching up, delivered and read status

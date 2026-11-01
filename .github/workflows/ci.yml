@@ -55,5 +55,8 @@ jobs:
       - name: Test
         run: task test
 
+      - name: Test with the race detector
+        run: task test:race
+
       - name: Build
         run: task build

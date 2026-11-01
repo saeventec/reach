@@ -23,6 +23,8 @@ Every service does the same, so the code is shared: `run()` in each service's `m
 4. `select` waits for whichever comes first: a server error, or the stop signal.
 5. On a stop signal, `server.Shutdown` stops accepting new requests and waits for open ones, but gives up after 5 seconds (`context.WithTimeout`).
 
+**WebSockets** need one more step: `Shutdown` doesn't wait for them. `realtime` closes each one with "going away" and waits for them itself. See [websocket.md](websocket.md#stopping-cleanly).
+
 ## Tiny example
 
 ```go

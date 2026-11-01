@@ -67,6 +67,8 @@ The snippet `(logged_in)` in `gateway/Caddyfile` does it. A route uses it with `
 - **`request_header -X-User-Id`** removes the header if the browser sent one. The services trust `X-User-Id`, so a browser must never be able to set it.
 - **`route { … }`** keeps these two in the written order. Caddy normally runs directives in [its own fixed order](https://caddyserver.com/docs/caddyfile/directives#directive-order), whatever order you write them in, and that order puts `forward_auth` *before* `request_header`. Without `route`, Caddy added auth's header first and then removed it again, so every logged-in request reached the service with no user. We found it by testing; the docs only show it in that order list.
 
+**WebSockets too:** `/realtime` uses the same snippet. Opening a WebSocket starts as a normal HTTP request with the cookie, so the session check works the same way, and `reverse_proxy` passes the WebSocket through on its own. See [websocket.md](websocket.md).
+
 **Why only the gateway can reach `/internal/check-session`:** Caddy forwards only `/auth.v1.*` from the browser to `auth`. A browser asking for `/internal/check-session` gets the web app's page.
 
 **The danger of a trusted header:** if a service ever got a published port, anyone could call it directly with a made-up `X-User-Id`. That's why `chat` and `realtime` have no `ports` in `compose.yaml`.

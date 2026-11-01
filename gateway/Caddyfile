@@ -6,8 +6,8 @@
 # (milestone 11).
 # A "snippet": a named piece of config that a route can reuse with
 # "import logged_in". A route that imports it only lets logged-in users
-# through, and tells the service behind it who they are. The chat service
-# uses it, and realtime will.
+# through, and tells the service behind it who they are. The chat and
+# realtime services use it.
 # Learn more: docs/learn/caddy.md#checking-the-session-at-the-gateway
 (logged_in) {
 	# Caddy normally runs directives in its own fixed order, not in the
@@ -51,6 +51,15 @@
 	handle /chat.v1.* {
 		import logged_in
 		reverse_proxy chat:8080
+	}
+
+	# The WebSocket for live updates. Opening a WebSocket starts as a normal
+	# HTTP request (with the cookie), so the session check works the same
+	# way. reverse_proxy passes WebSockets through on its own.
+	# Learn more: docs/learn/websocket.md
+	handle /realtime {
+		import logged_in
+		reverse_proxy realtime:8080
 	}
 
 	# Everything else goes to the web app. A "handle" without a path is the

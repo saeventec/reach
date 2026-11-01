@@ -58,7 +58,7 @@ err = connection.Publish("chat.message.sent", eventBytes)
 _, err := jetStream.Publish(ctx, "chat.message.sent", payload, jetstream.WithMsgID("42"))
 ```
 
-Core NATS subscribers also get every message published to the stream's subjects. So `realtime` can simply subscribe to `chat.>` (step 9).
+Core NATS subscribers also get every message published to the stream's subjects. So `realtime` simply subscribes to `chat.>`, with a core subscription (see [websocket.md](websocket.md#from-nats-to-the-browser)). The subject names live in [packages/go/chatevents](../../packages/go/chatevents/subjects.go), so `chat` and `realtime` can never disagree on them.
 
 ## Delivery guarantees
 

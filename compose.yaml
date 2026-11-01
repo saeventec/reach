@@ -2,8 +2,8 @@
 # Each entry under "services" becomes one container.
 # Start order: postgres (healthy) → postgres-setup (finished) →
 # hello-migrate, auth-migrate and chat-migrate (finished) → hello, auth
-# and chat. chat also waits for nats (healthy).
-# nats, web and gateway start right away. Open http://localhost:8080.
+# and chat. chat and realtime wait for nats (healthy).
+# web and gateway start right away. Open http://localhost:8080.
 # Learn more: docs/learn/docker-compose.md
 
 services:
@@ -59,7 +59,7 @@ services:
   # NATS: the "post office" between services. A service publishes an event
   # (like "a message was sent") and every service that subscribed gets it.
   # JetStream, built into NATS, also keeps the events on disk. chat
-  # publishes its events here; realtime (next step) will read them.
+  # publishes its events here, and realtime receives them.
   # Learn more: docs/learn/nats.md
   nats:
     # The Alpine variant includes a shell and wget, for the health check.
@@ -214,6 +214,33 @@ services:
       # NATS is ready (chat creates its JetStream stream when it starts).
       chat-migrate:
         condition: service_completed_successfully
+      nats:
+        condition: service_healthy
+
+  # Live updates: keeps the browsers' WebSockets open, and pushes chat's
+  # events to them (milestone 3). Learn more: services/realtime/main.go
+  realtime:
+    build:
+      # Like hello: the whole repo, for packages/go.
+      context: .
+      dockerfile: services/realtime/Dockerfile
+    environment:
+      # realtime receives chat's events from NATS.
+      NATS_URL: nats://nats:4222
+    # No "ports", on purpose, like chat: realtime trusts the X-User-Id
+    # header, which only the gateway may set (ADR 0029).
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/healthz"]
+      start_period: 30s
+      start_interval: 1s
+    develop:
+      watch:
+        - action: rebuild
+          path: ./services/realtime
+        # The shared code is part of this program too.
+        - action: rebuild
+          path: ./packages/go
+    depends_on:
       nats:
         condition: service_healthy
 

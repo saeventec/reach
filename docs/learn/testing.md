@@ -142,7 +142,7 @@ test("shows the greeting once it has loaded", async () => {
 - `vi.spyOn(console, "error")` replaces `console.error` with a stand-in, so a test can check that an error was logged.
 - `cleanup()` after each test removes what it drew.
 
-`task test` runs the Go tests and the web tests.
+`task test` runs the Go tests and the web tests. `task test:race` runs `realtime`'s tests with Go's race detector (it needs a C compiler; see [websocket.md](websocket.md#the-race-detector)).
 
 ## Alternatives
 

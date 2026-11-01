@@ -49,3 +49,4 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [Hexagonal architecture](hexagonal-architecture.md)
 - [Message ordering and idempotency](message-ordering.md)
 - [The transactional outbox](transactional-outbox.md)
+- [WebSocket and the realtime service](websocket.md)

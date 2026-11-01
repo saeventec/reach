@@ -108,6 +108,7 @@ The problem: saving to Postgres and publishing to NATS are two different systems
 - It subscribes to `chat.>` on NATS. For each event, it sends a copy to every open connection of every member.
 - `realtime` has no database. Many goroutines touch the map at once, so a mutex protects it, and tests run with Go's race detector (`go test -race`).
 - **Library:** [coder/websocket](https://github.com/coder/websocket): maintained, small, `context` support, safe for writes from several goroutines, and it refuses requests from other websites by default (it checks the `Origin` header). That stops "cross-site WebSocket hijacking", where another website opens a socket with your cookie.
+- Added while building (step 9): each WebSocket message is a `realtime.v1.ServerEvent` as JSON (a `oneof`, so new kinds of updates become new fields). The hub never waits for a slow browser: each WebSocket has a buffer of 32 events, and a browser whose buffer is full is closed with "try again later", reconnects and catches up. On a stop, each WebSocket is closed with "going away". The race detector needs a C compiler, so it runs in its own `task test:race` (and in CI), not in `task test`.
 - **Catching up:** the WebSocket is only for speed. When a browser connects (or reconnects after being offline), it calls `ListMessages(after: N)` for the conversation it shows. If it receives message 45 but has only up to 42, it fetches 43 and 44. So a lost event is never a lost message.
 
 ### 7. Delivered and read
