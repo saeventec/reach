@@ -32,6 +32,24 @@ All 14 steps, in 25 commits on the branch `milestone-3-chat` (not pushed yet):
   - the race detector (`task test:race`);
   - six Playwright end-to-end tests (`task test:e2e`), including forged headers through the real gateway.
 - **A fix:** generated TypeScript enums broke `task build` from step 6 to step 11 (`erasable_syntax=true`).
+- **At the end, the open suggestions, applied** (the owner asked):
+  - `hello` caps requests at 1 KiB, like `auth` and `chat`;
+  - `task test:race` covers `chat` too;
+  - a limit on sending: 30 messages at once per user, then one per second;
+  - auth's per-address limit is a setting, `RATE_LIMIT_BURST_PER_IP`, which only the e2e test system raises (the suite now passes 5 times in one run);
+  - the token buckets moved to `packages/go/ratelimit`;
+  - published outbox events are deleted after 7 days;
+  - `GetConversation`, so the page doesn't load the whole list;
+  - scrolling to the newest message.
+  - Not done, because not needed: one shared WebSocket. Only one page is open at a time.
+- **A review of the whole branch** (the code-review skill) found 10 points. Fixed:
+  - stale "Read" marks after a reconnect;
+  - a failed mark never tried again;
+  - your own messages marked read;
+  - delivered marked twice on the list;
+  - an empty message hiding an error in the retry path;
+  - rows that could land on the wrong conversation;
+  - a duplicated helper, a misleading comment, and a line doing too much.
 
 ## What was explained
 
@@ -81,18 +99,8 @@ All 14 steps, in 25 commits on the branch `milestone-3-chat` (not pushed yet):
 
 ## Open questions
 
-- **CI:** the new CI steps (the race detector, Playwright) have only run locally. The first push shows whether they pass on GitHub.
-- **auth's rate limit and more e2e tests:** 20 sign-ups and logins per address; today's tests use 16. When more are needed:
-  - (A, recommended) a limit setting that only the test system raises;
-  - (B) reusing logins (Playwright's storage state).
-- **Suggestions, not done:**
-  - a request size limit for `hello` (it has none, unlike `auth` and `chat`);
-  - `chat` in `task test:race` too (it passes today);
-  - deleting old outbox rows;
-  - a `GetConversation` call, instead of the page loading the whole list;
-  - one shared WebSocket for all pages;
-  - scrolling to the newest message;
-  - rate limiting message sending.
+- **For the owner to decide:** every chat call and WebSocket open goes through the gateway's session check, which renews the session (a database write in `auth`). It also keeps the device list's "last used" exact. Fine at our scale. With many users, renewing only when the expiry is close would save most writes, but "last used" would become less exact.
+- **Kept on purpose:** the conversation list reloads on every live message. It's simple and always right. A very busy group would make it costly; then the list could update one preview from the event instead.
 - **Later by design:**
   - the sender's own watermarks (for unread counts);
   - per-device delivered;
@@ -102,4 +110,4 @@ All 14 steps, in 25 commits on the branch `milestone-3-chat` (not pushed yet):
 
 ## Next step
 
-The owner reviews the commits on `milestone-3-chat`, and saves the feedback in `docs/reviews/`. Then push, open a pull request, and check that CI passes before merging. Try it by hand: `task dev`, two browser windows, alice and bob. After that: the design doc for milestone 4, the first release.
+Merged through a pull request once CI passed (the owner had no review notes this time). Try it by hand: `task dev`, two browser windows, alice and bob. Then: the design doc for milestone 4, the first release.

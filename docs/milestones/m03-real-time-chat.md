@@ -1,6 +1,6 @@
 # Milestone 3: Real-time chat
 
-- **Status:** Built (2026-11-01), on the branch `milestone-3-chat`, not pushed yet. It is done when the owner has reviewed it and CI passes on the pull request. Design: [m03-real-time-chat.md](../design/m03-real-time-chat.md). Session: [2026-11-01-milestone-3-real-time-chat.md](../sessions/2026-11-01-milestone-3-real-time-chat.md).
+- **Status:** Done (2026-11-01), built on the branch `milestone-3-chat` and merged through a pull request once CI passes. Design: [m03-real-time-chat.md](../design/m03-real-time-chat.md). Session: [2026-11-01-milestone-3-real-time-chat.md](../sessions/2026-11-01-milestone-3-real-time-chat.md).
 
 ## Goal
 
