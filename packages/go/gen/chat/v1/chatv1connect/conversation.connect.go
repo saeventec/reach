@@ -78,7 +78,7 @@ type ConversationServiceClient interface {
 	// rules (the message says which rule).
 	CreateGroup(context.Context, *v1.CreateGroupRequest) (*v1.CreateGroupResponse, error)
 	// ListConversations returns your conversations, the most recently active
-	// first.
+	// first, each with its newest message.
 	ListConversations(context.Context, *v1.ListConversationsRequest) (*v1.ListConversationsResponse, error)
 }
 
@@ -102,7 +102,7 @@ type ConversationServiceHandler interface {
 	// rules (the message says which rule).
 	CreateGroup(context.Context, *v1.CreateGroupRequest) (*v1.CreateGroupResponse, error)
 	// ListConversations returns your conversations, the most recently active
-	// first.
+	// first, each with its newest message.
 	ListConversations(context.Context, *v1.ListConversationsRequest) (*v1.ListConversationsResponse, error)
 }
 

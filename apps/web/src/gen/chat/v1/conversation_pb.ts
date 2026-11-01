@@ -9,6 +9,8 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Message as Message$1 } from "./message_pb";
+import { file_chat_v1_message } from "./message_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
@@ -17,7 +19,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file chat/v1/conversation.proto.
  */
 export const file_chat_v1_conversation: GenFile = /*@__PURE__*/
-  fileDesc("ChpjaGF0L3YxL2NvbnZlcnNhdGlvbi5wcm90bxIHY2hhdC52MSIyCh5TdGFydERpcmVjdENvbnZlcnNhdGlvblJlcXVlc3QSEAoIdXNlcm5hbWUYASABKAkiTgofU3RhcnREaXJlY3RDb252ZXJzYXRpb25SZXNwb25zZRIrCgxjb252ZXJzYXRpb24YASABKAsyFS5jaGF0LnYxLkNvbnZlcnNhdGlvbiI1ChJDcmVhdGVHcm91cFJlcXVlc3QSDAoEbmFtZRgBIAEoCRIRCgl1c2VybmFtZXMYAiADKAkiQgoTQ3JlYXRlR3JvdXBSZXNwb25zZRIrCgxjb252ZXJzYXRpb24YASABKAsyFS5jaGF0LnYxLkNvbnZlcnNhdGlvbiIaChhMaXN0Q29udmVyc2F0aW9uc1JlcXVlc3QiSQoZTGlzdENvbnZlcnNhdGlvbnNSZXNwb25zZRIsCg1jb252ZXJzYXRpb25zGAEgAygLMhUuY2hhdC52MS5Db252ZXJzYXRpb24i3wEKDENvbnZlcnNhdGlvbhIKCgJpZBgBIAEoCRInCgRraW5kGAIgASgOMhkuY2hhdC52MS5Db252ZXJzYXRpb25LaW5kEhIKCmdyb3VwX25hbWUYAyABKAkSIAoHbWVtYmVycxgEIAMoCzIPLmNoYXQudjEuTWVtYmVyEi4KCmNyZWF0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjQKEGxhc3RfYWN0aXZpdHlfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIlgKBk1lbWJlchIPCgd1c2VyX2lkGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEhcKD2RlbGl2ZXJlZF91cF90bxgDIAEoAxISCgpyZWFkX3VwX3RvGAQgASgDKnAKEENvbnZlcnNhdGlvbktpbmQSIQodQ09OVkVSU0FUSU9OX0tJTkRfVU5TUEVDSUZJRUQQABIcChhDT05WRVJTQVRJT05fS0lORF9ESVJFQ1QQARIbChdDT05WRVJTQVRJT05fS0lORF9HUk9VUBACMq8CChNDb252ZXJzYXRpb25TZXJ2aWNlEm4KF1N0YXJ0RGlyZWN0Q29udmVyc2F0aW9uEicuY2hhdC52MS5TdGFydERpcmVjdENvbnZlcnNhdGlvblJlcXVlc3QaKC5jaGF0LnYxLlN0YXJ0RGlyZWN0Q29udmVyc2F0aW9uUmVzcG9uc2UiABJKCgtDcmVhdGVHcm91cBIbLmNoYXQudjEuQ3JlYXRlR3JvdXBSZXF1ZXN0GhwuY2hhdC52MS5DcmVhdGVHcm91cFJlc3BvbnNlIgASXAoRTGlzdENvbnZlcnNhdGlvbnMSIS5jaGF0LnYxLkxpc3RDb252ZXJzYXRpb25zUmVxdWVzdBoiLmNoYXQudjEuTGlzdENvbnZlcnNhdGlvbnNSZXNwb25zZSIAQpgBCgtjb20uY2hhdC52MUIRQ29udmVyc2F0aW9uUHJvdG9QAVo5Z2l0aHViLmNvbS9zYWV2ZW50ZWMvcmVhY2gvcGFja2FnZXMvZ28vZ2VuL2NoYXQvdjE7Y2hhdHYxogIDQ1hYqgIHQ2hhdC5WMcoCB0NoYXRcVjHiAhNDaGF0XFYxXEdQQk1ldGFkYXRh6gIIQ2hhdDo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
+  fileDesc("ChpjaGF0L3YxL2NvbnZlcnNhdGlvbi5wcm90bxIHY2hhdC52MSIyCh5TdGFydERpcmVjdENvbnZlcnNhdGlvblJlcXVlc3QSEAoIdXNlcm5hbWUYASABKAkiTgofU3RhcnREaXJlY3RDb252ZXJzYXRpb25SZXNwb25zZRIrCgxjb252ZXJzYXRpb24YASABKAsyFS5jaGF0LnYxLkNvbnZlcnNhdGlvbiI1ChJDcmVhdGVHcm91cFJlcXVlc3QSDAoEbmFtZRgBIAEoCRIRCgl1c2VybmFtZXMYAiADKAkiQgoTQ3JlYXRlR3JvdXBSZXNwb25zZRIrCgxjb252ZXJzYXRpb24YASABKAsyFS5jaGF0LnYxLkNvbnZlcnNhdGlvbiIaChhMaXN0Q29udmVyc2F0aW9uc1JlcXVlc3QiSQoZTGlzdENvbnZlcnNhdGlvbnNSZXNwb25zZRIsCg1jb252ZXJzYXRpb25zGAEgAygLMhUuY2hhdC52MS5Db252ZXJzYXRpb24ihwIKDENvbnZlcnNhdGlvbhIKCgJpZBgBIAEoCRInCgRraW5kGAIgASgOMhkuY2hhdC52MS5Db252ZXJzYXRpb25LaW5kEhIKCmdyb3VwX25hbWUYAyABKAkSIAoHbWVtYmVycxgEIAMoCzIPLmNoYXQudjEuTWVtYmVyEi4KCmNyZWF0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjQKEGxhc3RfYWN0aXZpdHlfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiYKDGxhc3RfbWVzc2FnZRgHIAEoCzIQLmNoYXQudjEuTWVzc2FnZSJYCgZNZW1iZXISDwoHdXNlcl9pZBgBIAEoCRIQCgh1c2VybmFtZRgCIAEoCRIXCg9kZWxpdmVyZWRfdXBfdG8YAyABKAMSEgoKcmVhZF91cF90bxgEIAEoAypwChBDb252ZXJzYXRpb25LaW5kEiEKHUNPTlZFUlNBVElPTl9LSU5EX1VOU1BFQ0lGSUVEEAASHAoYQ09OVkVSU0FUSU9OX0tJTkRfRElSRUNUEAESGwoXQ09OVkVSU0FUSU9OX0tJTkRfR1JPVVAQAjKvAgoTQ29udmVyc2F0aW9uU2VydmljZRJuChdTdGFydERpcmVjdENvbnZlcnNhdGlvbhInLmNoYXQudjEuU3RhcnREaXJlY3RDb252ZXJzYXRpb25SZXF1ZXN0GiguY2hhdC52MS5TdGFydERpcmVjdENvbnZlcnNhdGlvblJlc3BvbnNlIgASSgoLQ3JlYXRlR3JvdXASGy5jaGF0LnYxLkNyZWF0ZUdyb3VwUmVxdWVzdBocLmNoYXQudjEuQ3JlYXRlR3JvdXBSZXNwb25zZSIAElwKEUxpc3RDb252ZXJzYXRpb25zEiEuY2hhdC52MS5MaXN0Q29udmVyc2F0aW9uc1JlcXVlc3QaIi5jaGF0LnYxLkxpc3RDb252ZXJzYXRpb25zUmVzcG9uc2UiAEKYAQoLY29tLmNoYXQudjFCEUNvbnZlcnNhdGlvblByb3RvUAFaOWdpdGh1Yi5jb20vc2FldmVudGVjL3JlYWNoL3BhY2thZ2VzL2dvL2dlbi9jaGF0L3YxO2NoYXR2MaICA0NYWKoCB0NoYXQuVjHKAgdDaGF0XFYx4gITQ2hhdFxWMVxHUEJNZXRhZGF0YeoCCENoYXQ6OlYxYgZwcm90bzM", [file_chat_v1_message, file_google_protobuf_timestamp]);
 
 /**
  * StartDirectConversationRequest names the other person.
@@ -180,12 +182,20 @@ export type Conversation = Message<"chat.v1.Conversation"> & {
   createdAt?: Timestamp | undefined;
 
   /**
-   * When something last happened: for now its creation, later the last
-   * message. The list is sorted by it.
+   * When something last happened: its creation, or its newest message.
+   * The list is sorted by it.
    *
    * @generated from field: google.protobuf.Timestamp last_activity_at = 6;
    */
   lastActivityAt?: Timestamp | undefined;
+
+  /**
+   * The newest message, for the conversation list. Not set when there is
+   * no message yet.
+   *
+   * @generated from field: chat.v1.Message last_message = 7;
+   */
+  lastMessage?: Message$1 | undefined;
 };
 
 /**
@@ -303,7 +313,7 @@ export const ConversationService: GenService<{
   },
   /**
    * ListConversations returns your conversations, the most recently active
-   * first.
+   * first, each with its newest message.
    *
    * @generated from rpc chat.v1.ConversationService.ListConversations
    */

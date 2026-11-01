@@ -86,3 +86,15 @@ WHERE members.conversation_id = conversations.id
   AND members.user_id = sqlc.arg(user_id)
   AND LEAST(sqlc.arg(sequence), conversations.last_sequence) > members.read_up_to
 RETURNING members.delivered_up_to, members.read_up_to;
+
+-- name: ListLastMessages :many
+-- The newest message of several conversations at once: for the
+-- conversation list. last_sequence is the number of each conversation's
+-- newest message, so the JOIN finds exactly that one, with the index of
+-- the UNIQUE (conversation_id, sequence) rule. Conversations without
+-- messages (last_sequence 0) have no row.
+SELECT messages.id, messages.conversation_id, messages.sequence, messages.sender_id, messages.text, messages.sent_at
+FROM messages
+JOIN conversations ON conversations.id = messages.conversation_id
+  AND conversations.last_sequence = messages.sequence
+WHERE messages.conversation_id = ANY(sqlc.arg(conversation_ids)::uuid[]);

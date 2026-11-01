@@ -121,6 +121,7 @@ Each member row has two numbers ("watermarks"): `delivered_up_to` and `read_up_t
 - Each change is an event (`chat.receipt.updated`), so the sender's screen updates live.
 - Per person, not per device: "delivered" means any of bob's devices got it. Enough for now; the data model still lets us add per-device later.
 - In a group, "✓✓" means delivered to everyone, and "read" means read by everyone.
+- Added while building (step 11): `ListConversations` finds each newest message with one query, by joining on `last_sequence` (the newest message's number), so the list needs no extra counting or sorting.
 - Added while building (step 10): a number past the newest message is cut down to the newest (`LEAST`), so a buggy app can't mark future messages. Read also moves delivered, and a `CHECK` keeps `read_up_to <= delivered_up_to`. `MarkDelivered` and `MarkRead` are in `MessageService` and answer with an empty response. A call that changes nothing saves no event. `ListConversations` returns each member's watermarks. Sending a message does not move the sender's own watermarks: nothing needs it yet (an unread count would).
 
 ### 8. The `chat` API (Connect, `chat.v1`)

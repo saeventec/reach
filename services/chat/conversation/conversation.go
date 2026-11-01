@@ -26,6 +26,10 @@ type Conversation struct {
 	Members        []Member
 	CreatedAt      time.Time
 	LastActivityAt time.Time
+	// LastMessage is the newest message, or nil if there is none yet. A
+	// pointer (*Message) can be nil, meaning "no value"; a plain Message
+	// can't.
+	LastMessage *Message
 }
 
 // Member is one person in a conversation.

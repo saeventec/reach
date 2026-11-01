@@ -6,6 +6,7 @@ syntax = "proto3";
 
 package chat.v1;
 
+import "chat/v1/message.proto";
 import "google/protobuf/timestamp.proto";
 
 // ConversationService starts conversations and lists them.
@@ -24,7 +25,7 @@ service ConversationService {
   rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse) {}
 
   // ListConversations returns your conversations, the most recently active
-  // first.
+  // first, each with its newest message.
   rpc ListConversations(ListConversationsRequest) returns (ListConversationsResponse) {}
 }
 
@@ -81,9 +82,12 @@ message Conversation {
   // Everyone in the conversation, you included.
   repeated Member members = 4;
   google.protobuf.Timestamp created_at = 5;
-  // When something last happened: for now its creation, later the last
-  // message. The list is sorted by it.
+  // When something last happened: its creation, or its newest message.
+  // The list is sorted by it.
   google.protobuf.Timestamp last_activity_at = 6;
+  // The newest message, for the conversation list. Not set when there is
+  // no message yet.
+  Message last_message = 7;
 }
 
 // Member is one person in a conversation.

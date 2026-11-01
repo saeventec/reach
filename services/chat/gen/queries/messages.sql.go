@@ -89,6 +89,46 @@ func (q *Queries) IsMember(ctx context.Context, arg IsMemberParams) (bool, error
 	return exists, err
 }
 
+const listLastMessages = `-- name: ListLastMessages :many
+SELECT messages.id, messages.conversation_id, messages.sequence, messages.sender_id, messages.text, messages.sent_at
+FROM messages
+JOIN conversations ON conversations.id = messages.conversation_id
+  AND conversations.last_sequence = messages.sequence
+WHERE messages.conversation_id = ANY($1::uuid[])
+`
+
+// The newest message of several conversations at once: for the
+// conversation list. last_sequence is the number of each conversation's
+// newest message, so the JOIN finds exactly that one, with the index of
+// the UNIQUE (conversation_id, sequence) rule. Conversations without
+// messages (last_sequence 0) have no row.
+func (q *Queries) ListLastMessages(ctx context.Context, conversationIds []pgtype.UUID) ([]Message, error) {
+	rows, err := q.db.Query(ctx, listLastMessages, conversationIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Message
+	for rows.Next() {
+		var i Message
+		if err := rows.Scan(
+			&i.ID,
+			&i.ConversationID,
+			&i.Sequence,
+			&i.SenderID,
+			&i.Text,
+			&i.SentAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listMessagesAfter = `-- name: ListMessagesAfter :many
 SELECT id, conversation_id, sequence, sender_id, text, sent_at
 FROM messages

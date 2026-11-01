@@ -63,6 +63,34 @@ func addMembersToList(ctx context.Context, databaseQueries *queries.Queries, con
 	return nil
 }
 
+// addLastMessagesToList reads the newest message of all these
+// conversations with one query, and puts each one in its conversation.
+// conversationIDs are the conversations' ids, in the same order.
+func addLastMessagesToList(ctx context.Context, databaseQueries *queries.Queries, conversations []conversation.Conversation, conversationIDs []pgtype.UUID) error {
+	if len(conversations) == 0 {
+		return nil
+	}
+
+	rows, err := databaseQueries.ListLastMessages(ctx, conversationIDs)
+	if err != nil {
+		return fmt.Errorf("list the last messages: %w", err)
+	}
+
+	indexByID := make(map[string]int, len(conversations))
+	for index, found := range conversations {
+		indexByID[found.ID] = index
+	}
+
+	for _, row := range rows {
+		index := indexByID[row.ConversationID.String()]
+		lastMessage := toMessage(row)
+		// &lastMessage is a pointer to this message. Each turn of the loop
+		// has its own lastMessage variable, so the pointers don't mix.
+		conversations[index].LastMessage = &lastMessage
+	}
+	return nil
+}
+
 // parseUUID turns a UUID in text form into the type the queries use.
 func parseUUID(text string) (pgtype.UUID, error) {
 	var id pgtype.UUID

@@ -87,7 +87,7 @@ func toAPIConversation(found conversation.Conversation) *chatv1.Conversation {
 		members = append(members, apiMember)
 	}
 
-	return &chatv1.Conversation{
+	apiConversation := &chatv1.Conversation{
 		Id:        found.ID,
 		Kind:      toAPIKind(found.Kind),
 		GroupName: found.GroupName,
@@ -96,6 +96,11 @@ func toAPIConversation(found conversation.Conversation) *chatv1.Conversation {
 		CreatedAt:      timestamppb.New(found.CreatedAt),
 		LastActivityAt: timestamppb.New(found.LastActivityAt),
 	}
+	// Left unset (nil) when there is no message yet.
+	if found.LastMessage != nil {
+		apiConversation.LastMessage = toAPIMessage(*found.LastMessage)
+	}
+	return apiConversation
 }
 
 // toAPIKind turns the core's kind into the API's enum value.

@@ -365,11 +365,14 @@ type Conversation struct {
 	// Everyone in the conversation, you included.
 	Members   []*Member              `protobuf:"bytes,4,rep,name=members,proto3" json:"members,omitempty"`
 	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	// When something last happened: for now its creation, later the last
-	// message. The list is sorted by it.
+	// When something last happened: its creation, or its newest message.
+	// The list is sorted by it.
 	LastActivityAt *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=last_activity_at,json=lastActivityAt,proto3" json:"last_activity_at,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// The newest message, for the conversation list. Not set when there is
+	// no message yet.
+	LastMessage   *Message `protobuf:"bytes,7,opt,name=last_message,json=lastMessage,proto3" json:"last_message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Conversation) Reset() {
@@ -440,6 +443,13 @@ func (x *Conversation) GetCreatedAt() *timestamppb.Timestamp {
 func (x *Conversation) GetLastActivityAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.LastActivityAt
+	}
+	return nil
+}
+
+func (x *Conversation) GetLastMessage() *Message {
+	if x != nil {
+		return x.LastMessage
 	}
 	return nil
 }
@@ -524,7 +534,7 @@ var File_chat_v1_conversation_proto protoreflect.FileDescriptor
 
 const file_chat_v1_conversation_proto_rawDesc = "" +
 	"\n" +
-	"\x1achat/v1/conversation.proto\x12\achat.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"<\n" +
+	"\x1achat/v1/conversation.proto\x12\achat.v1\x1a\x15chat/v1/message.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"<\n" +
 	"\x1eStartDirectConversationRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\"\\\n" +
 	"\x1fStartDirectConversationResponse\x129\n" +
@@ -536,7 +546,7 @@ const file_chat_v1_conversation_proto_rawDesc = "" +
 	"\fconversation\x18\x01 \x01(\v2\x15.chat.v1.ConversationR\fconversation\"\x1a\n" +
 	"\x18ListConversationsRequest\"X\n" +
 	"\x19ListConversationsResponse\x12;\n" +
-	"\rconversations\x18\x01 \x03(\v2\x15.chat.v1.ConversationR\rconversations\"\x98\x02\n" +
+	"\rconversations\x18\x01 \x03(\v2\x15.chat.v1.ConversationR\rconversations\"\xcd\x02\n" +
 	"\fConversation\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12-\n" +
 	"\x04kind\x18\x02 \x01(\x0e2\x19.chat.v1.ConversationKindR\x04kind\x12\x1d\n" +
@@ -545,7 +555,8 @@ const file_chat_v1_conversation_proto_rawDesc = "" +
 	"\amembers\x18\x04 \x03(\v2\x0f.chat.v1.MemberR\amembers\x129\n" +
 	"\n" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12D\n" +
-	"\x10last_activity_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x0elastActivityAt\"\x83\x01\n" +
+	"\x10last_activity_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x0elastActivityAt\x123\n" +
+	"\flast_message\x18\a \x01(\v2\x10.chat.v1.MessageR\vlastMessage\"\x83\x01\n" +
 	"\x06Member\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12&\n" +
@@ -587,6 +598,7 @@ var file_chat_v1_conversation_proto_goTypes = []any{
 	(*Conversation)(nil),                    // 7: chat.v1.Conversation
 	(*Member)(nil),                          // 8: chat.v1.Member
 	(*timestamppb.Timestamp)(nil),           // 9: google.protobuf.Timestamp
+	(*Message)(nil),                         // 10: chat.v1.Message
 }
 var file_chat_v1_conversation_proto_depIdxs = []int32{
 	7,  // 0: chat.v1.StartDirectConversationResponse.conversation:type_name -> chat.v1.Conversation
@@ -596,17 +608,18 @@ var file_chat_v1_conversation_proto_depIdxs = []int32{
 	8,  // 4: chat.v1.Conversation.members:type_name -> chat.v1.Member
 	9,  // 5: chat.v1.Conversation.created_at:type_name -> google.protobuf.Timestamp
 	9,  // 6: chat.v1.Conversation.last_activity_at:type_name -> google.protobuf.Timestamp
-	1,  // 7: chat.v1.ConversationService.StartDirectConversation:input_type -> chat.v1.StartDirectConversationRequest
-	3,  // 8: chat.v1.ConversationService.CreateGroup:input_type -> chat.v1.CreateGroupRequest
-	5,  // 9: chat.v1.ConversationService.ListConversations:input_type -> chat.v1.ListConversationsRequest
-	2,  // 10: chat.v1.ConversationService.StartDirectConversation:output_type -> chat.v1.StartDirectConversationResponse
-	4,  // 11: chat.v1.ConversationService.CreateGroup:output_type -> chat.v1.CreateGroupResponse
-	6,  // 12: chat.v1.ConversationService.ListConversations:output_type -> chat.v1.ListConversationsResponse
-	10, // [10:13] is the sub-list for method output_type
-	7,  // [7:10] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	10, // 7: chat.v1.Conversation.last_message:type_name -> chat.v1.Message
+	1,  // 8: chat.v1.ConversationService.StartDirectConversation:input_type -> chat.v1.StartDirectConversationRequest
+	3,  // 9: chat.v1.ConversationService.CreateGroup:input_type -> chat.v1.CreateGroupRequest
+	5,  // 10: chat.v1.ConversationService.ListConversations:input_type -> chat.v1.ListConversationsRequest
+	2,  // 11: chat.v1.ConversationService.StartDirectConversation:output_type -> chat.v1.StartDirectConversationResponse
+	4,  // 12: chat.v1.ConversationService.CreateGroup:output_type -> chat.v1.CreateGroupResponse
+	6,  // 13: chat.v1.ConversationService.ListConversations:output_type -> chat.v1.ListConversationsResponse
+	11, // [11:14] is the sub-list for method output_type
+	8,  // [8:11] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_chat_v1_conversation_proto_init() }
@@ -614,6 +627,7 @@ func file_chat_v1_conversation_proto_init() {
 	if File_chat_v1_conversation_proto != nil {
 		return
 	}
+	file_chat_v1_message_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

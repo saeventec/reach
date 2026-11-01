@@ -72,7 +72,7 @@ func (store *Store) CreateGroupConversation(ctx context.Context, name string, me
 }
 
 // ListConversationsOfUser returns the user's conversations, the most
-// recently active first, with their members.
+// recently active first, with their members and newest messages.
 func (store *Store) ListConversationsOfUser(ctx context.Context, userID string) ([]conversation.Conversation, error) {
 	databaseUserID, err := parseUUID(userID)
 	if err != nil {
@@ -94,6 +94,10 @@ func (store *Store) ListConversationsOfUser(ctx context.Context, userID string) 
 	}
 
 	err = addMembersToList(ctx, databaseQueries, conversations, conversationIDs)
+	if err != nil {
+		return nil, err
+	}
+	err = addLastMessagesToList(ctx, databaseQueries, conversations, conversationIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +170,8 @@ func addMembers(ctx context.Context, transactionQueries *queries.Queries, conver
 	return nil
 }
 
-// findConversation reads one conversation and its members.
+// findConversation reads one conversation, its members and its newest
+// message.
 func findConversation(ctx context.Context, databaseQueries *queries.Queries, conversationID pgtype.UUID) (conversation.Conversation, error) {
 	row, err := databaseQueries.FindConversation(ctx, conversationID)
 	if err != nil {
@@ -177,6 +182,10 @@ func findConversation(ctx context.Context, databaseQueries *queries.Queries, con
 	conversations := []conversation.Conversation{found}
 	conversationIDs := []pgtype.UUID{row.ID}
 	err = addMembersToList(ctx, databaseQueries, conversations, conversationIDs)
+	if err != nil {
+		return conversation.Conversation{}, err
+	}
+	err = addLastMessagesToList(ctx, databaseQueries, conversations, conversationIDs)
 	if err != nil {
 		return conversation.Conversation{}, err
 	}

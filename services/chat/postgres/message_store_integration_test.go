@@ -216,6 +216,40 @@ func TestMessageStore(t *testing.T) {
 			t.Errorf("the first conversation is %q, want %q, which just got a message", conversations[0].GroupName, "Older")
 		}
 	})
+
+	t.Run("the list has each conversation's newest message", func(t *testing.T) {
+		gina := "01a00000-0000-7000-8000-0000000000e2"
+		chatty, err := store.CreateGroupConversation(t.Context(), "Chatty", []string{gina})
+		if err != nil {
+			t.Fatalf("create: %v", err)
+		}
+		_, err = store.CreateGroupConversation(t.Context(), "Quiet", []string{gina})
+		if err != nil {
+			t.Fatalf("create: %v", err)
+		}
+		for number := 1; number <= 3; number++ {
+			text := fmt.Sprintf("message %d", number)
+			newMessage := conversation.NewMessage{ID: testMessageID(6, number), ConversationID: chatty.ID, SenderID: gina, Text: text}
+			_, err := store.SaveMessage(t.Context(), newMessage)
+			if err != nil {
+				t.Fatalf("save: %v", err)
+			}
+		}
+
+		conversations, err := store.ListConversationsOfUser(t.Context(), gina)
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+
+		// Chatty is first (it just got messages), Quiet second.
+		lastMessage := conversations[0].LastMessage
+		if lastMessage == nil || lastMessage.Text != "message 3" || lastMessage.Sequence != 3 {
+			t.Errorf("Chatty's last message: got %+v, want message 3", lastMessage)
+		}
+		if conversations[1].LastMessage != nil {
+			t.Errorf("Quiet's last message: got %+v, want none", conversations[1].LastMessage)
+		}
+	})
 }
 
 // waitUntilWaitingForLocks waits until this many database connections are
