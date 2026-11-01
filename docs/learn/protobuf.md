@@ -161,6 +161,8 @@ import authv1 "github.com/saeventec/reach/packages/go/gen/auth/v1"
 
 A third generator, `protoc-gen-es`, writes TypeScript for the web app: `apps/web/src/gen/hello/v1/greeting_pb.ts` (and `auth/v1/account_pb.ts`). It contains the message types (`GetGreetingResponse`) and the service (`GreetingService`). `int64` fields become `bigint`, JavaScript's type for big whole numbers.
 
+**Enums as objects.** By default, `protoc-gen-es` writes a Protobuf enum as a TypeScript `enum`. Our `tsconfig.json` has `erasableSyntaxOnly`: it allows only TypeScript that can be removed to leave plain JavaScript (types, `as const`), and an `enum` creates real code. So `buf.gen.yaml` sets `erasable_syntax=true`, and the enum becomes an object: `ConversationKind.GROUP` is `2`, as before. (Found in milestone 3, step 11: `ConversationKind` was the first enum, and the type check failed since step 6. `task build` runs that check; we hadn't run it.)
+
 This generator is an npm package of the web app, not a mise tool. That way its version always matches the `@bufbuild/protobuf` library the generated code needs. So `task setup` (which runs `npm ci`) must run before `task generate`.
 
 ## Alternatives

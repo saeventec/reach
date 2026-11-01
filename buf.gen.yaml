@@ -32,4 +32,10 @@ plugins:
   # so its version always matches the @bufbuild/protobuf library it needs.
   - local: apps/web/node_modules/.bin/protoc-gen-es
     out: apps/web/src/gen
-    opt: target=ts # generate .ts files (the default is .js plus type files)
+    opt:
+      - target=ts # generate .ts files (the default is .js plus type files)
+      # Write Protobuf enums as plain objects ("as const") instead of
+      # TypeScript "enum", which our tsconfig forbids (erasableSyntaxOnly:
+      # only TypeScript that can simply be erased, leaving JavaScript).
+      # Marked "experimental" by protoc-gen-es. Learn more: docs/learn/protobuf.md#typescript
+      - erasable_syntax=true
