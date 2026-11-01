@@ -100,6 +100,11 @@ func newRouter(users userStore, sessions sessionStore, limiters *loginLimiters, 
 	router := http.NewServeMux()
 	router.HandleFunc("GET /healthz", health.Handle)
 
+	// The gateway's session check (session_check.go). Caddy only forwards
+	// /auth.v1.* from the browser to this service, so only the gateway can
+	// call it.
+	router.Handle("GET /internal/check-session", &sessionChecker{sessions: sessions})
+
 	// The Connect server answers the API calls defined in proto/. Mount adds
 	// one path per call to our router, like /auth.v1.AccountService/SignUp.
 	accountService := &accountServer{users: users, limiters: limiters}

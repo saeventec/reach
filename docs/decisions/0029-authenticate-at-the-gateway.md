@@ -26,3 +26,4 @@ Caddy's `forward_auth` sends a copy of each `chat` and `realtime` request to a s
 
 - Services trust `X-User-Id`, so only the gateway may reach them. Caddy removes any `X-User-Id` the browser sends, the services have no published ports, and a test sends a forged header and expects a refusal. (Caddy's docs don't say if `forward_auth` removes it by itself, so we remove it ourselves.)
 - One extra call to `auth` and one database read per request. Fine at our scale; caching is a later topic.
+- Found while building: Caddy runs `forward_auth` before `request_header` unless both are inside a `route` block. Without it, the real `X-User-Id` was removed too. The snippet in `gateway/Caddyfile` uses `route`; keep it when editing.

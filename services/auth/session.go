@@ -277,11 +277,19 @@ func (server *sessionServer) LogOutDevice(ctx context.Context, request *authv1.L
 	return &authv1.LogOutDeviceResponse{}, nil
 }
 
-// authenticate finds the valid session of the request's cookie, and renews
+// authenticate finds the valid session of the call's cookie, and renews
 // it for another 30 days. It returns the session and its token, or an
 // UNAUTHENTICATED error.
 func (server *sessionServer) authenticate(ctx context.Context, callInfo *connect.CallInfo) (currentSession, string, error) {
 	cookieHeader := callInfo.RequestHeader().Get("Cookie")
+	return findSession(ctx, server.sessions, cookieHeader)
+}
+
+// findSession finds the valid session of a Cookie header, and renews it for
+// another 30 days. It returns the session and its token, or an
+// UNAUTHENTICATED error. The Connect calls (authenticate) and the gateway's
+// session check (session_check.go) both use it.
+func findSession(ctx context.Context, sessions sessionStore, cookieHeader string) (currentSession, string, error) {
 	token, found := readSessionToken(cookieHeader)
 	if !found {
 		return currentSession{}, "", connect.NewError(connect.CodeUnauthenticated, notLoggedInMessage)
@@ -293,7 +301,7 @@ func (server *sessionServer) authenticate(ctx context.Context, callInfo *connect
 	// RenewSession only finds sessions that haven't expired: the expiry check
 	// is in the SQL ("expires_at > now()" in queries/sessions.sql). So an
 	// unknown token and an expired session both give errNoSession.
-	session, err := server.sessions.RenewSession(ctx, tokenHash, newExpiresAt)
+	session, err := sessions.RenewSession(ctx, tokenHash, newExpiresAt)
 	if errors.Is(err, errNoSession) {
 		return currentSession{}, "", connect.NewError(connect.CodeUnauthenticated, notLoggedInMessage)
 	}

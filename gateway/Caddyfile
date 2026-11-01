@@ -4,6 +4,35 @@
 # ":80" means: any hostname, on port 80, plain HTTP. With no hostname,
 # Caddy does not turn on automatic HTTPS. HTTPS comes with a real server
 # (milestone 11).
+# A "snippet": a named piece of config that a route can reuse with
+# "import logged_in". A route that imports it only lets logged-in users
+# through, and tells the service behind it who they are. The chat and
+# realtime services (milestone 3) will use it.
+# Learn more: docs/learn/caddy.md#checking-the-session-at-the-gateway
+(logged_in) {
+	# Caddy normally runs directives in its own fixed order, not in the
+	# order they are written, and that order puts forward_auth before
+	# request_header. "route" keeps the order written here, which matters:
+	# the browser's header must be removed before auth's is added.
+	route {
+		# First, remove any X-User-Id header the browser sent. The services
+		# trust this header, so only the gateway may set it. Caddy's docs
+		# don't say whether forward_auth removes it by itself, so we remove
+		# it here.
+		request_header -X-User-Id
+
+		# Then send a copy of the request (with its cookie) to the auth
+		# service's session check. A 200 answer lets the request through,
+		# with auth's X-User-Id header copied onto it. Any other answer (401
+		# when not logged in) goes back to the browser, and the request
+		# stops here.
+		forward_auth auth:8080 {
+			uri /internal/check-session
+			copy_headers X-User-Id
+		}
+	}
+}
+
 :80 {
 	# API calls: their paths start with the API package name, like
 	# /hello.v1.GreetingService/GetGreeting. The * at the end means "starts with".
