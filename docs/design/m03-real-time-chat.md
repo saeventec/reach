@@ -1,7 +1,7 @@
 # Design: Real-time chat
 
 - **Milestone:** m03
-- **Status:** Agreed (2026-11-01)
+- **Status:** Built (2026-11-01). Changes made while building are in the "Added while building" notes.
 - **Date:** 2026-11-01
 
 ## Problem

@@ -1,6 +1,6 @@
 # Milestone 3: Real-time chat
 
-- **Status:** In progress (started 2026-11-01), on the branch `milestone-3-chat`. Design: [m03-real-time-chat.md](../design/m03-real-time-chat.md).
+- **Status:** Built (2026-11-01), on the branch `milestone-3-chat`, not pushed yet. It is done when the owner has reviewed it and CI passes on the pull request. Design: [m03-real-time-chat.md](../design/m03-real-time-chat.md). Session: [2026-11-01-milestone-3-real-time-chat.md](../sessions/2026-11-01-milestone-3-real-time-chat.md).
 
 ## Goal
 
@@ -46,7 +46,14 @@ The steps can change as we learn. Any change is written here.
 
 ## Concepts learned
 
-- Filled in as the steps are built, with links to `docs/learn/`.
+- Architecture: [hexagonal architecture](../learn/hexagonal-architecture.md), [authentication at the gateway](../learn/caddy.md#checking-the-session-at-the-gateway), [sharing Go code between modules](../learn/go.md#sharing-code-between-modules)
+- Distributed systems: [the transactional outbox, at-least-once delivery](../learn/transactional-outbox.md), [NATS and JetStream](../learn/nats.md#jetstream-in-chat)
+- Distributed systems: [ordering, idempotency, watermarks, catching up](../learn/message-ordering.md)
+- Databases: [transactions, row locks, ON CONFLICT](../learn/postgresql.md#transactions), [identity columns, bytea, partial indexes](../learn/postgresql.md#identity-columns-bytea-and-partial-indexes)
+- Concurrency: [WebSockets, the hub, mutexes, the race detector, stopping cleanly](../learn/websocket.md), [exponential backoff](../learn/websocket.md#in-the-browser)
+- API: [enums, oneof, int64 in JSON, zero values](../learn/protobuf.md), [internal APIs](../learn/connect-rpc.md#internal-apis)
+- Frontend: [custom hooks and useRef](../learn/react.md#custom-hooks), [URL parameters, key and NavLink](../learn/react-router.md)
+- Testing: [end-to-end tests with Playwright](../learn/playwright.md), proving tests by breaking the code on purpose
 
 ## Done when
 
