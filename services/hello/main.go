@@ -19,10 +19,9 @@ import (
 	// Shared code, from packages/go. Learn more: docs/learn/go.md#sharing-code-between-modules
 	"github.com/saeventec/reach/packages/go/config"
 	"github.com/saeventec/reach/packages/go/database"
+	"github.com/saeventec/reach/packages/go/gen/hello/v1/hellov1connect"
 	"github.com/saeventec/reach/packages/go/health"
 	"github.com/saeventec/reach/packages/go/httpserver"
-
-	"github.com/saeventec/reach/services/hello/gen/hello/v1/hellov1connect"
 )
 
 // main is where every Go program starts. It only sets up logging and

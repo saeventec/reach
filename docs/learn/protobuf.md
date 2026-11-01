@@ -40,8 +40,8 @@ message GetGreetingResponse {
 `task generate` runs `buf lint`, then `buf generate`, and writes:
 
 ```
-services/hello/gen/hello/v1/greeting.pb.go                       # the message types
-services/hello/gen/hello/v1/hellov1connect/greeting.connect.go   # the service interface and client
+packages/go/gen/hello/v1/greeting.pb.go                       # the message types
+packages/go/gen/hello/v1/hellov1connect/greeting.connect.go   # the service interface and client
 ```
 
 Never edit generated files by hand (they say `DO NOT EDIT`). Change the `.proto` file and run `task generate` again.
@@ -93,21 +93,19 @@ message Device {
 - `buf.yaml`: where the `.proto` files are (`proto/`) and which lint rules to use.
 - `buf.gen.yaml`: which generators to run and where their output goes. "Managed mode" sets the Go import path there, so the `.proto` files contain no Go-specific settings.
 
-### One API per service
+### All Go code in one shared place
 
-Each service is its own Go module, so each one gets only its own API's Go code:
+All generated Go code goes into the shared module `packages/go`, in `packages/go/gen/`. Every service imports what it needs from there:
 
-```yaml
-- local: protoc-gen-go
-  out: services/auth/gen/proto
-  types: [auth.v1]   # only the auth.v1 package
+```go
+import authv1 "github.com/saeventec/reach/packages/go/gen/auth/v1"
 ```
 
-- **`types`** keeps only the listed Protobuf packages for that generator. (buf can't limit a generator by file, only by package or type.)
-- **`path: auth`** in the managed-mode `override` gives each folder of `proto/` its own Go import path.
-- `auth`'s Protobuf code goes into `gen/proto/`, not straight into `gen/`, because sqlc writes into `gen/queries/`. `clean: true` empties each generator's `out` folder first, and would otherwise delete sqlc's code.
-- The web app talks to every service, so its generator has no `types`: it gets all APIs.
-- Side effect: with `types`, buf rebuilds the API description that is embedded in the generated Go code, and leaves out empty `{}` options. That is why `hello`'s `greeting.pb.go` changed a little in milestone 2, with no real change.
+- **Why one place:** services use each other's APIs. `chat` calls `auth`'s internal API, and `realtime` reads `chat`'s events. Generated in one place, there is exactly one copy of each API's Go code. ([ADR 0017](../decisions/0017-use-buf-with-local-generators.md) planned this move for when a second service needed it.)
+- **`go_package_prefix`** in managed mode gives every file its Go import path: the prefix plus the file's folder in `proto/`.
+- A service's program only contains the packages it really imports, so `hello` doesn't grow because `chat`'s API exists.
+- sqlc's code is different: it belongs to one service only, so it stays in that service (`services/auth/gen/queries`).
+- Until milestone 3, each service had its own copy, limited with buf's `types` option. That stopped working once one API was needed by two Go modules: a `.proto` file can have only one Go import path.
 
 ## TypeScript
 

@@ -2,7 +2,11 @@ module github.com/saeventec/reach/packages/go
 
 go 1.27.3
 
-require github.com/jackc/pgx/v5 v5.11.0
+require (
+	connectrpc.com/connect/v2 v2.0.2
+	github.com/jackc/pgx/v5 v5.11.0
+	google.golang.org/protobuf v1.36.12
+)
 
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect

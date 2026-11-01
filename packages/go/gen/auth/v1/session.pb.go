@@ -581,14 +581,14 @@ const file_auth_v1_session_proto_rawDesc = "" +
 	"\x0eLogOutResponse\"2\n" +
 	"\x13LogOutDeviceRequest\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x16\n" +
-	"\x14LogOutDeviceResponse2\xed\x02\n" +
-	"\x0eSessionService\x126\n" +
-	"\x05LogIn\x12\x15.auth.v1.LogInRequest\x1a\x16.auth.v1.LogInResponse\x12Q\n" +
-	"\x0eGetCurrentUser\x12\x1e.auth.v1.GetCurrentUserRequest\x1a\x1f.auth.v1.GetCurrentUserResponse\x12H\n" +
-	"\vListDevices\x12\x1b.auth.v1.ListDevicesRequest\x1a\x1c.auth.v1.ListDevicesResponse\x129\n" +
-	"\x06LogOut\x12\x16.auth.v1.LogOutRequest\x1a\x17.auth.v1.LogOutResponse\x12K\n" +
-	"\fLogOutDevice\x12\x1c.auth.v1.LogOutDeviceRequest\x1a\x1d.auth.v1.LogOutDeviceResponseB\x9b\x01\n" +
-	"\vcom.auth.v1B\fSessionProtoP\x01ZAgithub.com/saeventec/reach/services/auth/gen/proto/auth/v1;authv1\xa2\x02\x03AXX\xaa\x02\aAuth.V1\xca\x02\aAuth\\V1\xe2\x02\x13Auth\\V1\\GPBMetadata\xea\x02\bAuth::V1b\x06proto3"
+	"\x14LogOutDeviceResponse2\xf7\x02\n" +
+	"\x0eSessionService\x128\n" +
+	"\x05LogIn\x12\x15.auth.v1.LogInRequest\x1a\x16.auth.v1.LogInResponse\"\x00\x12S\n" +
+	"\x0eGetCurrentUser\x12\x1e.auth.v1.GetCurrentUserRequest\x1a\x1f.auth.v1.GetCurrentUserResponse\"\x00\x12J\n" +
+	"\vListDevices\x12\x1b.auth.v1.ListDevicesRequest\x1a\x1c.auth.v1.ListDevicesResponse\"\x00\x12;\n" +
+	"\x06LogOut\x12\x16.auth.v1.LogOutRequest\x1a\x17.auth.v1.LogOutResponse\"\x00\x12M\n" +
+	"\fLogOutDevice\x12\x1c.auth.v1.LogOutDeviceRequest\x1a\x1d.auth.v1.LogOutDeviceResponse\"\x00B\x93\x01\n" +
+	"\vcom.auth.v1B\fSessionProtoP\x01Z9github.com/saeventec/reach/packages/go/gen/auth/v1;authv1\xa2\x02\x03AXX\xaa\x02\aAuth.V1\xca\x02\aAuth\\V1\xe2\x02\x13Auth\\V1\\GPBMetadata\xea\x02\bAuth::V1b\x06proto3"
 
 var (
 	file_auth_v1_session_proto_rawDescOnce sync.Once

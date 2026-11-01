@@ -6,7 +6,6 @@ require (
 	connectrpc.com/connect/v2 v2.0.2
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/saeventec/reach/packages/go v0.0.0
-	google.golang.org/protobuf v1.36.12
 )
 
 require (
@@ -15,6 +14,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
+	google.golang.org/protobuf v1.36.12 // indirect
 )
 
 // The shared Go code lives in this repo, not on the internet. "replace"

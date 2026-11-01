@@ -8,6 +8,7 @@ Small Go code shared by every Go service: reading settings, the health check, co
 | `health` | The `/healthz` handler |
 | `database` | Connects to Postgres and checks that it answers |
 | `httpserver` | Runs an HTTP server until a stop signal, then shuts it down cleanly |
+| `gen` | Go code generated from `proto/` by `task generate`. Never edit it by hand |
 
 Keep it small: only code that several services really share, with tests. A change here affects every service.
 

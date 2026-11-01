@@ -131,10 +131,10 @@ const file_hello_v1_greeting_proto_rawDesc = "" +
 	"\x12GetGreetingRequest\"?\n" +
 	"\x13GetGreetingResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\x12\x0e\n" +
-	"\x02id\x18\x02 \x01(\x03R\x02id2]\n" +
-	"\x0fGreetingService\x12J\n" +
-	"\vGetGreeting\x12\x1c.hello.v1.GetGreetingRequest\x1a\x1d.hello.v1.GetGreetingResponseB\x9e\x01\n" +
-	"\fcom.hello.v1B\rGreetingProtoP\x01Z>github.com/saeventec/reach/services/hello/gen/hello/v1;hellov1\xa2\x02\x03HXX\xaa\x02\bHello.V1\xca\x02\bHello\\V1\xe2\x02\x14Hello\\V1\\GPBMetadata\xea\x02\tHello::V1b\x06proto3"
+	"\x02id\x18\x02 \x01(\x03R\x02id2_\n" +
+	"\x0fGreetingService\x12L\n" +
+	"\vGetGreeting\x12\x1c.hello.v1.GetGreetingRequest\x1a\x1d.hello.v1.GetGreetingResponse\"\x00B\x9b\x01\n" +
+	"\fcom.hello.v1B\rGreetingProtoP\x01Z;github.com/saeventec/reach/packages/go/gen/hello/v1;hellov1\xa2\x02\x03HXX\xaa\x02\bHello.V1\xca\x02\bHello\\V1\xe2\x02\x14Hello\\V1\\GPBMetadata\xea\x02\tHello::V1b\x06proto3"
 
 var (
 	file_hello_v1_greeting_proto_rawDescOnce sync.Once

@@ -13,7 +13,7 @@ package hellov1connect
 import (
 	connect "connectrpc.com/connect/v2"
 	context "context"
-	v1 "github.com/saeventec/reach/services/hello/gen/hello/v1"
+	v1 "github.com/saeventec/reach/packages/go/gen/hello/v1"
 	sync "sync"
 )
 

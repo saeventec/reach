@@ -10,7 +10,7 @@ import (
 
 	"connectrpc.com/connect/v2"
 
-	authv1 "github.com/saeventec/reach/services/auth/gen/proto/auth/v1"
+	authv1 "github.com/saeventec/reach/packages/go/gen/auth/v1"
 )
 
 // accountServer implements the generated AccountServiceHandler interface.

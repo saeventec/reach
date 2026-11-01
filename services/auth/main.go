@@ -18,10 +18,10 @@ import (
 	// Shared code, from packages/go. Learn more: docs/learn/go.md#sharing-code-between-modules
 	"github.com/saeventec/reach/packages/go/config"
 	"github.com/saeventec/reach/packages/go/database"
+	"github.com/saeventec/reach/packages/go/gen/auth/v1/authv1connect"
 	"github.com/saeventec/reach/packages/go/health"
 	"github.com/saeventec/reach/packages/go/httpserver"
 
-	"github.com/saeventec/reach/services/auth/gen/proto/auth/v1/authv1connect"
 	"github.com/saeventec/reach/services/auth/gen/queries"
 )
 

@@ -12,7 +12,7 @@ package authv1connect
 import (
 	connect "connectrpc.com/connect/v2"
 	context "context"
-	v1 "github.com/saeventec/reach/services/auth/gen/proto/auth/v1"
+	v1 "github.com/saeventec/reach/packages/go/gen/auth/v1"
 	sync "sync"
 )
 

@@ -11,42 +11,25 @@ clean: true
 managed:
   enabled: true
   override:
-    # Each service's Go code lives inside that service's own Go module.
-    # "path" is a folder inside proto/.
+    # All Go code goes into the shared module packages/go, because services
+    # also use each other's APIs: chat calls auth, realtime reads chat's
+    # events (ADR 0017). A folder in proto/, like hello/v1, becomes the Go
+    # package .../packages/go/gen/hello/v1.
     - file_option: go_package_prefix
-      path: hello
-      value: github.com/saeventec/reach/services/hello/gen
-    # auth's Protobuf code goes into gen/proto, because sqlc writes into
-    # gen/queries: "clean" empties each "out" folder, and must not delete
-    # sqlc's code.
-    - file_option: go_package_prefix
-      path: auth
-      value: github.com/saeventec/reach/services/auth/gen/proto
+      value: github.com/saeventec/reach/packages/go/gen
 
 # The generators. "local" means they run on your computer (installed by
-# mise), not on buf's cloud service. Each Go service only gets the code for
-# its own API: "types" keeps only that Protobuf package.
+# mise), not on buf's cloud service.
 plugins:
   - local: protoc-gen-go # Go types for the messages
-    out: services/hello/gen
+    out: packages/go/gen
     opt: paths=source_relative # mirror the folders of proto/
-    types: [hello.v1]
-  - local: protoc-gen-connect-go # Go code for the Connect service
-    out: services/hello/gen
+  - local: protoc-gen-connect-go # Go code for the Connect services
+    out: packages/go/gen
     opt: paths=source_relative
-    types: [hello.v1]
-  - local: protoc-gen-go
-    out: services/auth/gen/proto
-    opt: paths=source_relative
-    types: [auth.v1]
-  - local: protoc-gen-connect-go
-    out: services/auth/gen/proto
-    opt: paths=source_relative
-    types: [auth.v1]
   # TypeScript for the web app: messages and services in one file. This
   # generator is an npm package of the web app (installed by "task setup"),
   # so its version always matches the @bufbuild/protobuf library it needs.
-  # The web app talks to every service, so it gets all the APIs.
   - local: apps/web/node_modules/.bin/protoc-gen-es
     out: apps/web/src/gen
     opt: target=ts # generate .ts files (the default is .js plus type files)

@@ -145,10 +145,10 @@ const file_auth_v1_account_proto_rawDesc = "" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"E\n" +
 	"\x0eSignUpResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername2K\n" +
-	"\x0eAccountService\x129\n" +
-	"\x06SignUp\x12\x16.auth.v1.SignUpRequest\x1a\x17.auth.v1.SignUpResponseB\x9b\x01\n" +
-	"\vcom.auth.v1B\fAccountProtoP\x01ZAgithub.com/saeventec/reach/services/auth/gen/proto/auth/v1;authv1\xa2\x02\x03AXX\xaa\x02\aAuth.V1\xca\x02\aAuth\\V1\xe2\x02\x13Auth\\V1\\GPBMetadata\xea\x02\bAuth::V1b\x06proto3"
+	"\busername\x18\x02 \x01(\tR\busername2M\n" +
+	"\x0eAccountService\x12;\n" +
+	"\x06SignUp\x12\x16.auth.v1.SignUpRequest\x1a\x17.auth.v1.SignUpResponse\"\x00B\x93\x01\n" +
+	"\vcom.auth.v1B\fAccountProtoP\x01Z9github.com/saeventec/reach/packages/go/gen/auth/v1;authv1\xa2\x02\x03AXX\xaa\x02\aAuth.V1\xca\x02\aAuth\\V1\xe2\x02\x13Auth\\V1\\GPBMetadata\xea\x02\bAuth::V1b\x06proto3"
 
 var (
 	file_auth_v1_account_proto_rawDescOnce sync.Once

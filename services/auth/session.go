@@ -14,7 +14,7 @@ import (
 	"connectrpc.com/connect/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	authv1 "github.com/saeventec/reach/services/auth/gen/proto/auth/v1"
+	authv1 "github.com/saeventec/reach/packages/go/gen/auth/v1"
 )
 
 // The messages for failed logins. A wrong username and a wrong password get
