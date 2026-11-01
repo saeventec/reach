@@ -10,6 +10,7 @@ import { LogInPage } from "./auth/LogInPage.tsx";
 import { SignUpPage } from "./auth/SignUpPage.tsx";
 import type { ChatApi } from "./chat/chatClient.ts";
 import { ConversationListPage } from "./chat/ConversationListPage.tsx";
+import type { Subscribe } from "./chat/liveUpdates.ts";
 import type { Greeting } from "./greeting/greetingClient.ts";
 import { NewestGreeting } from "./greeting/NewestGreeting.tsx";
 
@@ -24,10 +25,12 @@ type AppProps = {
   // The API calls. main.tsx passes the real ones; tests pass fakes.
   authApi: AuthApi;
   chatApi: ChatApi;
+  // Opens the live updates (a WebSocket). Tests pass a fake.
+  subscribe: Subscribe;
   loadGreeting: () => Promise<Greeting>;
 };
 
-function App({ authApi, chatApi, loadGreeting }: AppProps) {
+function App({ authApi, chatApi, subscribe, loadGreeting }: AppProps) {
   const [userState, setUserState] = useState<UserState>({ status: "loading" });
 
   // Ask the auth service once, when the app starts, who is logged in. The
@@ -86,6 +89,7 @@ function App({ authApi, chatApi, loadGreeting }: AppProps) {
           user={userState.user}
           authApi={authApi}
           chatApi={chatApi}
+          subscribe={subscribe}
           onLoggedIn={handleLoggedIn}
           onLoggedOut={handleLoggedOut}
         />
@@ -121,6 +125,7 @@ type AppRoutesProps = {
   user: User | null;
   authApi: AuthApi;
   chatApi: ChatApi;
+  subscribe: Subscribe;
   onLoggedIn: (user: User) => void;
   onLoggedOut: () => void;
 };
@@ -132,6 +137,7 @@ function AppRoutes({
   user,
   authApi,
   chatApi,
+  subscribe,
   onLoggedIn,
   onLoggedOut,
 }: AppRoutesProps) {
@@ -156,7 +162,7 @@ function AppRoutes({
   );
 
   const chatsPage = isLoggedIn ? (
-    <ConversationListPage user={user} chatApi={chatApi} />
+    <ConversationListPage user={user} chatApi={chatApi} subscribe={subscribe} />
   ) : (
     <Navigate to="/login" replace />
   );

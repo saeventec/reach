@@ -99,6 +99,19 @@ The browser always says which page opened the WebSocket, in the `Origin` header,
 
 We found one trap while testing. `CloseRead` (which reads in the background, to notice when the browser leaves) takes a context. When that context ends, the library cuts the connection at once, with no goodbye. So the stop signal must not be its context; the loop watches the stop signal separately.
 
+## In the browser
+
+[apps/web/src/chat/liveUpdates.ts](../../apps/web/src/chat/liveUpdates.ts) keeps the WebSocket open for the web app:
+
+- **The address:** `ws://localhost:8080/realtime`, the page's own address with `ws:` instead of `http:` (`wss:` with HTTPS). The browser sends the cookie with it.
+- **Reading:** each message is JSON, read into a `ServerEvent` with `fromJsonString`. `ignoreUnknownFields` makes it skip fields a newer server adds, instead of failing.
+- **Reconnecting:** when the WebSocket closes (the server restarted, the network dropped), it tries again after 1 second, then 2, 4, 8 ... up to 30 seconds. That's **exponential backoff**: when the server is down, a thousand browsers don't all knock every second. A successful connect starts over at 1 second.
+- **Catching up:** every time it connects, also the first time, it calls `onConnected`. The page then loads what it shows again, because events sent while the WebSocket was closed are lost.
+- **The conversation list** ([ConversationListPage.tsx](../../apps/web/src/chat/ConversationListPage.tsx)) loads the list again on `messageSent`, `conversationCreated` and every connect. Simple and always right: the server sorts the list and writes the previews. Its effect's cleanup closes the WebSocket when the page closes.
+- **Tests** use a fake socket and **fake timers** (`vi.useFakeTimers()`): the test moves the clock itself, so "wait 30 seconds" takes no time.
+
+For now, each page that wants live updates opens its own WebSocket. Sharing one between pages is a small later improvement.
+
 ## What we tested
 
 - **Unit tests** with a real local server and a real WebSocket client (`httptest.NewServer` and `websocket.Dial`): events arrive; no `X-User-Id` gives 401; another website's page gives 403; a closed tab leaves the hub; stopping says "going away"; a browser that falls behind is closed.

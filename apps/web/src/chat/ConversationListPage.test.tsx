@@ -1,10 +1,13 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { create } from "@bufbuild/protobuf";
 import { ConnectError, Code } from "@connectrpc/connect";
 import { afterEach, expect, test, vi } from "vitest";
 import type { User } from "../auth/authClient.ts";
+import { ServerEventSchema } from "../gen/realtime/v1/events_pb.ts";
 import type { ChatApi, Conversation } from "./chatClient.ts";
 import { ConversationListPage } from "./ConversationListPage.tsx";
+import type { LiveUpdateHandlers, Subscribe } from "./liveUpdates.ts";
 
 afterEach(() => {
   cleanup();
@@ -55,6 +58,25 @@ function fakeChatApi(changes: Partial<ChatApi> = {}): ChatApi {
   return { ...defaults, ...changes };
 }
 
+// No live updates: subscribing does nothing.
+const noLiveUpdates: Subscribe = () => () => {};
+
+// fakeLiveUpdates lets a test play the server: it keeps the page's
+// handlers, so the test can call them.
+function fakeLiveUpdates() {
+  const live: { handlers: LiveUpdateHandlers | null; stopped: boolean } = {
+    handlers: null,
+    stopped: false,
+  };
+  const subscribe: Subscribe = (handlers) => {
+    live.handlers = handlers;
+    return () => {
+      live.stopped = true;
+    };
+  };
+  return { live, subscribe };
+}
+
 // typeInto types a value into the input with this label.
 function typeInto(label: string, value: string) {
   const input = screen.getByLabelText(label);
@@ -62,7 +84,13 @@ function typeInto(label: string, value: string) {
 }
 
 test("lists the chats with their newest message", async () => {
-  render(<ConversationListPage user={alice} chatApi={fakeChatApi()} />);
+  render(
+    <ConversationListPage
+      user={alice}
+      chatApi={fakeChatApi()}
+      subscribe={noLiveUpdates}
+    />,
+  );
 
   await screen.findByText("bob");
   screen.getByText("bob: see you at 8");
@@ -75,6 +103,7 @@ test("says so when there are no chats yet", async () => {
     <ConversationListPage
       user={alice}
       chatApi={fakeChatApi({ listConversations })}
+      subscribe={noLiveUpdates}
     />,
   );
 
@@ -88,6 +117,7 @@ test("starts a chat and loads the list again", async () => {
     <ConversationListPage
       user={alice}
       chatApi={fakeChatApi({ startDirectConversation, listConversations })}
+      subscribe={noLiveUpdates}
     />,
   );
   await screen.findByText("bob");
@@ -108,6 +138,7 @@ test("creates a group from a name and a list of usernames", async () => {
     <ConversationListPage
       user={alice}
       chatApi={fakeChatApi({ createGroup })}
+      subscribe={noLiveUpdates}
     />,
   );
   await screen.findByText("bob");
@@ -129,6 +160,7 @@ test("shows the service's message when the username is unknown", async () => {
     <ConversationListPage
       user={alice}
       chatApi={fakeChatApi({ startDirectConversation })}
+      subscribe={noLiveUpdates}
     />,
   );
   await screen.findByText("bob");
@@ -149,8 +181,136 @@ test("shows an error when the chats can't be loaded", async () => {
     <ConversationListPage
       user={alice}
       chatApi={fakeChatApi({ listConversations })}
+      subscribe={noLiveUpdates}
     />,
   );
 
   await screen.findByText("Could not load your chats.");
+});
+
+test("loads the list again on a new message, a new chat, and a reconnect", async () => {
+  const listConversations = vi.fn(async () => [chatWithBob]);
+  const { live, subscribe } = fakeLiveUpdates();
+  render(
+    <ConversationListPage
+      user={alice}
+      chatApi={fakeChatApi({ listConversations })}
+      subscribe={subscribe}
+    />,
+  );
+  await screen.findByText("bob");
+  expect(listConversations).toHaveBeenCalledTimes(1);
+
+  // create() builds a Protobuf message from plain values: here, what
+  // realtime sends when bob starts a chat with alice.
+  const conversationCreated = create(ServerEventSchema, {
+    event: {
+      case: "conversationCreated",
+      value: { conversationId: "chat-2", memberIds: [alice.id, bobId] },
+    },
+  });
+  live.handlers?.onEvent(conversationCreated);
+  await vi.waitFor(() => expect(listConversations).toHaveBeenCalledTimes(2));
+});
+
+test("creates a group from a name and a list of usernames", async () => {
+  const createGroup = vi.fn(async () => friends);
+  render(
+    <ConversationListPage
+      user={alice}
+      chatApi={fakeChatApi({ createGroup })}
+      subscribe={noLiveUpdates}
+    />,
+  );
+  await screen.findByText("bob");
+
+  typeInto("Group name", "Friends");
+  typeInto("Members (usernames, separated by commas)", "bob, carol");
+  fireEvent.click(screen.getByRole("button", { name: "Create group" }));
+
+  await vi.waitFor(() =>
+    expect(createGroup).toHaveBeenCalledWith("Friends", ["bob", "carol"]),
+  );
+});
+
+test("shows the service's message when the username is unknown", async () => {
+  const startDirectConversation = async () => {
+    throw new ConnectError("nobody has the username dave", Code.NotFound);
+  };
+  render(
+    <ConversationListPage
+      user={alice}
+      chatApi={fakeChatApi({ startDirectConversation })}
+      subscribe={noLiveUpdates}
+    />,
+  );
+  await screen.findByText("bob");
+
+  typeInto("Username", "dave");
+  fireEvent.click(screen.getByRole("button", { name: "Start chat" }));
+
+  await screen.findByText("Nobody has the username dave");
+});
+
+test("shows an error when the chats can't be loaded", async () => {
+  const listConversations = async () => {
+    throw new Error("network down");
+  };
+  vi.spyOn(console, "error").mockImplementation(() => {});
+
+  render(
+    <ConversationListPage
+      user={alice}
+      chatApi={fakeChatApi({ listConversations })}
+      subscribe={noLiveUpdates}
+    />,
+  );
+
+  await screen.findByText("Could not load your chats.");
+});
+
+test("loads the list again on a new message, a new chat, and a reconnect", async () => {
+  const listConversations = vi.fn(async () => [chatWithBob]);
+  const { live, subscribe } = fakeLiveUpdates();
+  render(
+    <ConversationListPage
+      user={alice}
+      chatApi={fakeChatApi({ listConversations })}
+      subscribe={subscribe}
+    />,
+  );
+  await screen.findByText("bob");
+  expect(listConversations).toHaveBeenCalledTimes(1);
+
+  live.handlers?.onEvent({
+    $typeName: "realtime.v1.ServerEvent",
+    event: {
+      case: "conversationCreated",
+      value: {
+        $typeName: "chat.v1.ConversationCreated",
+        conversationId: "chat-2",
+        memberIds: [alice.id],
+      },
+    },
+  });
+  await vi.waitFor(() => expect(listConversations).toHaveBeenCalledTimes(2));
+
+  live.handlers?.onConnected();
+  await vi.waitFor(() => expect(listConversations).toHaveBeenCalledTimes(3));
+});
+
+test("closes the live updates when the page closes", async () => {
+  const { live, subscribe } = fakeLiveUpdates();
+  const page = render(
+    <ConversationListPage
+      user={alice}
+      chatApi={fakeChatApi()}
+      subscribe={subscribe}
+    />,
+  );
+  await screen.findByText("bob");
+
+  page.unmount();
+
+  expect(live.stopped).toBe(true);
 });

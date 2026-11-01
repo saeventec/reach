@@ -7,6 +7,7 @@ import "./index.css";
 import App from "./App.tsx";
 import { authApi } from "./auth/authClient.ts";
 import { chatApi } from "./chat/chatClient.ts";
+import { subscribeToLiveUpdates } from "./chat/liveUpdates.ts";
 import { fetchNewestGreeting } from "./greeting/greetingClient.ts";
 
 // BrowserRouter connects React Router to the browser's address bar and its
@@ -17,6 +18,7 @@ createRoot(document.getElementById("root")!).render(
       <App
         authApi={authApi}
         chatApi={chatApi}
+        subscribe={subscribeToLiveUpdates}
         loadGreeting={fetchNewestGreeting}
       />
     </BrowserRouter>

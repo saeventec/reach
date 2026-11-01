@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { User } from "../auth/authClient.ts";
 import type { ChatApi, Conversation } from "./chatClient.ts";
 import { conversationTitle, lastMessagePreview } from "./conversationText.ts";
+import type { Subscribe } from "./liveUpdates.ts";
 import { NewChatForm } from "./NewChatForm.tsx";
 import { NewGroupForm } from "./NewGroupForm.tsx";
 
@@ -15,11 +16,13 @@ type ConversationsState =
 type ConversationListPageProps = {
   user: User;
   chatApi: ChatApi;
+  subscribe: Subscribe;
 };
 
 export function ConversationListPage({
   user,
   chatApi,
+  subscribe,
 }: ConversationListPageProps) {
   const [state, setState] = useState<ConversationsState>({
     status: "loading",
@@ -52,6 +55,28 @@ export function ConversationListPage({
       ignore = true;
     };
   }, [chatApi, reloadCount]);
+
+  // Live updates: a new message changes a preview and the order, and a new
+  // conversation (maybe started by someone else) joins the list. The list
+  // simply loads again: one small call, and always right. Delivered and
+  // read don't change the list, so they are ignored here.
+  useEffect(() => {
+    const stop = subscribe({
+      onEvent: (serverEvent) => {
+        const kind = serverEvent.event.case;
+        if (kind === "messageSent" || kind === "conversationCreated") {
+          setReloadCount((count) => count + 1);
+        }
+      },
+      // Connected (again): events may have been missed while it was
+      // closed, so load the list again ("catching up").
+      onConnected: () => {
+        setReloadCount((count) => count + 1);
+      },
+    });
+    // The cleanup: when the page closes, close the WebSocket too.
+    return stop;
+  }, [subscribe]);
 
   // After a new chat or group, load the list again: the server puts it in
   // the right place (the newest first). The old list stays on screen until

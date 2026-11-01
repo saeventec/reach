@@ -46,6 +46,9 @@ const chatApi: ChatApi = {
   },
 };
 
+// No live updates in these tests: subscribing does nothing.
+const subscribe = () => () => {};
+
 const loadGreeting = async () => ({ id: 1n, message: "Hello, test!" });
 
 // renderApp draws the app as if the browser had opened this address.
@@ -53,7 +56,12 @@ const loadGreeting = async () => ({ id: 1n, message: "Hello, test!" });
 function renderApp(authApi: AuthApi, address: string) {
   render(
     <MemoryRouter initialEntries={[address]}>
-      <App authApi={authApi} chatApi={chatApi} loadGreeting={loadGreeting} />
+      <App
+        authApi={authApi}
+        chatApi={chatApi}
+        subscribe={subscribe}
+        loadGreeting={loadGreeting}
+      />
     </MemoryRouter>,
   );
 }

@@ -26,7 +26,7 @@ Each step is one small commit that runs. The agent commits each finished step ri
 - [x] 8. Events: the outbox table and the relay that publishes to NATS JetStream (ADR 0031). Only `chat.message.sent` for now: `chat.receipt.updated` comes with step 10, and `chat.conversation.created` with step 11, where each is first needed.
 - [x] 9. The `realtime` service: WebSocket connections, subscribing to NATS, pushing events to each member's open connections (ADR 0033). Built in two commits: the NATS address and the event subjects moved to `packages/go` first, then the service. The race detector runs in its own `task test:race` and in CI.
 - [x] 10. Delivered and read: `MarkDelivered`, `MarkRead` and their event (`chat.receipt.updated`). Built in two commits: chat first, then realtime forwarding the event.
-- [ ] 11. The web app: the conversation list, new chat and new group forms; the last message in `ListConversations`, and the `chat.conversation.created` event
+- [x] 11. The web app: the conversation list, new chat and new group forms; the last message in `ListConversations`, and the `chat.conversation.created` event. Built in five commits: the last message, the event, a fix for generated TypeScript enums (`task build` had failed since step 6), the list page, and live updates. The list items link nowhere yet: the conversation page comes in step 12.
 - [ ] 12. The web app: the conversation page, live updates, catching up, delivered and read status
 - [ ] 13. End-to-end tests with Playwright: alice and bob chat live, locally and in CI (ADR 0034)
 - [ ] 14. Security and tests: a message size limit, the forged-header test, integration tests with Postgres and NATS, the race detector on `realtime`
