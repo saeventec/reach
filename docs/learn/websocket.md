@@ -44,7 +44,7 @@ The code is in [services/realtime/](../../services/realtime/). It is a small ser
 
 1. `realtime` subscribes to `chat.>` with a plain ("core") NATS subscription. Each copy of `realtime` gets every event.
 2. For `chat.message.sent`, `events.go` reads the Protobuf event. It contains the conversation's member ids (see [the transactional outbox](transactional-outbox.md)), so `realtime` never asks `chat` who is in a conversation.
-3. It wraps the event in a `realtime.v1.ServerEvent` ([proto/realtime/v1/events.proto](../../proto/realtime/v1/events.proto)) and turns it into JSON, the same JSON the Connect APIs use. Each WebSocket message is one `ServerEvent`: `{"messageSent": {"message": {...}, "memberIds": [...]}}`. A `oneof` says which kind of update it is, so new kinds become new fields.
+3. It wraps the event (`MessageSent` or `ReceiptUpdated`) in a `realtime.v1.ServerEvent` ([proto/realtime/v1/events.proto](../../proto/realtime/v1/events.proto)) and turns it into JSON, the same JSON the Connect APIs use. Each WebSocket message is one `ServerEvent`: `{"messageSent": {"message": {...}, "memberIds": [...]}}`. A `oneof` says which kind of update it is, so new kinds become new fields.
 4. The hub hands the JSON to every open WebSocket of every member.
 
 Events published while `realtime` was down are simply missed. That's fine: the WebSocket is only for speed. The browser catches up with `ListMessages(after: N)` when it (re)connects, so a lost event is never a lost message.

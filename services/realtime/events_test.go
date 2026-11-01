@@ -55,6 +55,38 @@ func TestEventHandler(t *testing.T) {
 		}
 	})
 
+	t.Run("sends new watermarks to the members, as JSON", func(t *testing.T) {
+		hub := NewHub()
+		alice := newClient("alice")
+		carol := newClient("carol")
+		hub.add(alice)
+		hub.add(carol)
+		handler := NewEventHandler(hub)
+		receiptUpdated := &chatv1.ReceiptUpdated{UserId: "bob", DeliveredUpTo: 7, ReadUpTo: 7, MemberIds: []string{"alice", "bob"}}
+		payload, err := proto.Marshal(receiptUpdated)
+		if err != nil {
+			t.Fatalf("encode: %v", err)
+		}
+
+		err = handler.handle(chatevents.ReceiptUpdated, payload)
+		if err != nil {
+			t.Fatalf("got error %v, want none", err)
+		}
+
+		if receivedCount(carol) != 0 {
+			t.Error("carol got the receipt, but she is not a member")
+		}
+		frame := <-alice.frames
+		decoded := &realtimev1.ServerEvent{}
+		err = protojson.Unmarshal(frame, decoded)
+		if err != nil {
+			t.Fatalf("decode %s: %v", frame, err)
+		}
+		if decoded.GetReceiptUpdated().GetReadUpTo() != 7 {
+			t.Errorf("got %s, want bob's read watermark 7", frame)
+		}
+	})
+
 	t.Run("skips an event it doesn't know", func(t *testing.T) {
 		handler := NewEventHandler(NewHub())
 

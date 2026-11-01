@@ -14,5 +14,8 @@ message ServerEvent {
   oneof event {
     // A message was sent in one of your conversations.
     chat.v1.MessageSent message_sent = 1;
+    // Someone's delivered or read watermark moved in one of your
+    // conversations: update the ✓ and ✓✓ marks.
+    chat.v1.ReceiptUpdated receipt_updated = 2;
   }
 }

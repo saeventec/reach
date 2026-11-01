@@ -9,7 +9,7 @@
 
 import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import type { MessageSent } from "../../chat/v1/events_pb";
+import type { MessageSent, ReceiptUpdated } from "../../chat/v1/events_pb";
 import { file_chat_v1_events } from "../../chat/v1/events_pb";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file realtime/v1/events.proto.
  */
 export const file_realtime_v1_events: GenFile = /*@__PURE__*/
-  fileDesc("ChhyZWFsdGltZS92MS9ldmVudHMucHJvdG8SC3JlYWx0aW1lLnYxIkQKC1NlcnZlckV2ZW50EiwKDG1lc3NhZ2Vfc2VudBgBIAEoCzIULmNoYXQudjEuTWVzc2FnZVNlbnRIAEIHCgVldmVudEKuAQoPY29tLnJlYWx0aW1lLnYxQgtFdmVudHNQcm90b1ABWkFnaXRodWIuY29tL3NhZXZlbnRlYy9yZWFjaC9wYWNrYWdlcy9nby9nZW4vcmVhbHRpbWUvdjE7cmVhbHRpbWV2MaICA1JYWKoCC1JlYWx0aW1lLlYxygILUmVhbHRpbWVcVjHiAhdSZWFsdGltZVxWMVxHUEJNZXRhZGF0YeoCDFJlYWx0aW1lOjpWMWIGcHJvdG8z", [file_chat_v1_events]);
+  fileDesc("ChhyZWFsdGltZS92MS9ldmVudHMucHJvdG8SC3JlYWx0aW1lLnYxIngKC1NlcnZlckV2ZW50EiwKDG1lc3NhZ2Vfc2VudBgBIAEoCzIULmNoYXQudjEuTWVzc2FnZVNlbnRIABIyCg9yZWNlaXB0X3VwZGF0ZWQYAiABKAsyFy5jaGF0LnYxLlJlY2VpcHRVcGRhdGVkSABCBwoFZXZlbnRCrgEKD2NvbS5yZWFsdGltZS52MUILRXZlbnRzUHJvdG9QAVpBZ2l0aHViLmNvbS9zYWV2ZW50ZWMvcmVhY2gvcGFja2FnZXMvZ28vZ2VuL3JlYWx0aW1lL3YxO3JlYWx0aW1ldjGiAgNSWFiqAgtSZWFsdGltZS5WMcoCC1JlYWx0aW1lXFYx4gIXUmVhbHRpbWVcVjFcR1BCTWV0YWRhdGHqAgxSZWFsdGltZTo6VjFiBnByb3RvMw", [file_chat_v1_events]);
 
 /**
  * ServerEvent is one live update. Exactly one field of "event" is set; the
@@ -37,6 +37,15 @@ export type ServerEvent = Message<"realtime.v1.ServerEvent"> & {
      */
     value: MessageSent;
     case: "messageSent";
+  } | {
+    /**
+     * Someone's delivered or read watermark moved in one of your
+     * conversations: update the ✓ and ✓✓ marks.
+     *
+     * @generated from field: chat.v1.ReceiptUpdated receipt_updated = 2;
+     */
+    value: ReceiptUpdated;
+    case: "receiptUpdated";
   } | { case: undefined; value?: undefined };
 };
 

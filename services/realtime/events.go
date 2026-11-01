@@ -40,6 +40,8 @@ func (handler *EventHandler) handle(subject string, payload []byte) error {
 	switch subject {
 	case chatevents.MessageSent:
 		return handler.handleMessageSent(payload)
+	case chatevents.ReceiptUpdated:
+		return handler.handleReceiptUpdated(payload)
 	default:
 		// An event this version doesn't know yet (chat may be newer). It
 		// is fine to skip: the browser catches up through chat's API.
@@ -58,11 +60,31 @@ func (handler *EventHandler) handleMessageSent(payload []byte) error {
 	serverEvent := &realtimev1.ServerEvent{
 		Event: &realtimev1.ServerEvent_MessageSent{MessageSent: messageSent},
 	}
+	return handler.deliver(messageSent.GetMemberIds(), serverEvent)
+}
+
+// handleReceiptUpdated sends someone's new watermarks to every member's
+// WebSockets.
+func (handler *EventHandler) handleReceiptUpdated(payload []byte) error {
+	receiptUpdated := &chatv1.ReceiptUpdated{}
+	err := proto.Unmarshal(payload, receiptUpdated)
+	if err != nil {
+		return fmt.Errorf("decode the receipt updated event: %w", err)
+	}
+
+	serverEvent := &realtimev1.ServerEvent{
+		Event: &realtimev1.ServerEvent_ReceiptUpdated{ReceiptUpdated: receiptUpdated},
+	}
+	return handler.deliver(receiptUpdated.GetMemberIds(), serverEvent)
+}
+
+// deliver turns the event into JSON and hands it to the hub.
+func (handler *EventHandler) deliver(userIDs []string, serverEvent *realtimev1.ServerEvent) error {
 	frame, err := protojson.Marshal(serverEvent)
 	if err != nil {
 		return fmt.Errorf("encode the websocket message: %w", err)
 	}
 
-	handler.hub.Deliver(messageSent.GetMemberIds(), frame)
+	handler.hub.Deliver(userIDs, frame)
 	return nil
 }

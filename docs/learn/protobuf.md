@@ -118,6 +118,10 @@ case *chatv1.ListMessagesRequest_AfterSequence:
 
 A Protobuf `int64` is sent as **text** in JSON: `"sequence": "42"`, not `42`. JavaScript numbers are exact only up to about 9 million billion (2^53), and an int64 goes higher. In the web app's generated TypeScript, an int64 is a `bigint`, JavaScript's type for big whole numbers (`42n`).
 
+### Zero values are left out
+
+In proto3, a field set to its zero value (0, "", false, an empty list) is not sent at all, neither in binary nor in JSON. The receiver reads a missing field as the zero value. For example, a member who has read nothing yet comes as `{"userId": "…", "username": "alice"}`, with no `readUpTo`. The generated code fills in 0 for you; code that reads the raw JSON must do the same.
+
 ### Enums
 
 An **enum** is a fixed list of named values. From [proto/chat/v1/conversation.proto](../../proto/chat/v1/conversation.proto):
