@@ -7,6 +7,7 @@ import type { User } from "../auth/authClient.ts";
 import { ServerEventSchema } from "../gen/realtime/v1/events_pb.ts";
 import type { ChatApi, Conversation } from "./chatClient.ts";
 import { ConversationListPage } from "./ConversationListPage.tsx";
+import { fakeChatApi } from "./fakeChatApi.ts";
 import type { LiveUpdateHandlers, Subscribe } from "./liveUpdates.ts";
 
 afterEach(() => {
@@ -47,15 +48,15 @@ const friends: Conversation = {
   lastMessage: null,
 };
 
-// fakeChatApi returns a ChatApi with the chat with bob. A test replaces
-// the calls it cares about.
-function fakeChatApi(changes: Partial<ChatApi> = {}): ChatApi {
-  const defaults: ChatApi = {
+// chatApi returns a ChatApi with the chat with bob. A test replaces the
+// calls it cares about.
+function chatApi(changes: Partial<ChatApi> = {}): ChatApi {
+  return fakeChatApi({
     listConversations: async () => [chatWithBob],
     startDirectConversation: async () => chatWithBob,
     createGroup: async () => friends,
-  };
-  return { ...defaults, ...changes };
+    ...changes,
+  });
 }
 
 // No live updates: subscribing does nothing.
@@ -87,7 +88,7 @@ test("lists the chats with their newest message", async () => {
   render(
     <ConversationListPage
       user={alice}
-      chatApi={fakeChatApi()}
+      chatApi={chatApi()}
       subscribe={noLiveUpdates}
     />,
   );
@@ -102,7 +103,7 @@ test("says so when there are no chats yet", async () => {
   render(
     <ConversationListPage
       user={alice}
-      chatApi={fakeChatApi({ listConversations })}
+      chatApi={chatApi({ listConversations })}
       subscribe={noLiveUpdates}
     />,
   );
@@ -116,7 +117,7 @@ test("starts a chat and loads the list again", async () => {
   render(
     <ConversationListPage
       user={alice}
-      chatApi={fakeChatApi({ startDirectConversation, listConversations })}
+      chatApi={chatApi({ startDirectConversation, listConversations })}
       subscribe={noLiveUpdates}
     />,
   );
@@ -137,7 +138,7 @@ test("creates a group from a name and a list of usernames", async () => {
   render(
     <ConversationListPage
       user={alice}
-      chatApi={fakeChatApi({ createGroup })}
+      chatApi={chatApi({ createGroup })}
       subscribe={noLiveUpdates}
     />,
   );
@@ -159,7 +160,7 @@ test("shows the service's message when the username is unknown", async () => {
   render(
     <ConversationListPage
       user={alice}
-      chatApi={fakeChatApi({ startDirectConversation })}
+      chatApi={chatApi({ startDirectConversation })}
       subscribe={noLiveUpdates}
     />,
   );
@@ -180,7 +181,7 @@ test("shows an error when the chats can't be loaded", async () => {
   render(
     <ConversationListPage
       user={alice}
-      chatApi={fakeChatApi({ listConversations })}
+      chatApi={chatApi({ listConversations })}
       subscribe={noLiveUpdates}
     />,
   );
@@ -194,7 +195,7 @@ test("loads the list again on a new message, a new chat, and a reconnect", async
   render(
     <ConversationListPage
       user={alice}
-      chatApi={fakeChatApi({ listConversations })}
+      chatApi={chatApi({ listConversations })}
       subscribe={subscribe}
     />,
   );
@@ -218,7 +219,7 @@ test("creates a group from a name and a list of usernames", async () => {
   render(
     <ConversationListPage
       user={alice}
-      chatApi={fakeChatApi({ createGroup })}
+      chatApi={chatApi({ createGroup })}
       subscribe={noLiveUpdates}
     />,
   );
@@ -240,7 +241,7 @@ test("shows the service's message when the username is unknown", async () => {
   render(
     <ConversationListPage
       user={alice}
-      chatApi={fakeChatApi({ startDirectConversation })}
+      chatApi={chatApi({ startDirectConversation })}
       subscribe={noLiveUpdates}
     />,
   );
@@ -261,7 +262,7 @@ test("shows an error when the chats can't be loaded", async () => {
   render(
     <ConversationListPage
       user={alice}
-      chatApi={fakeChatApi({ listConversations })}
+      chatApi={chatApi({ listConversations })}
       subscribe={noLiveUpdates}
     />,
   );
@@ -275,7 +276,7 @@ test("loads the list again on a new message, a new chat, and a reconnect", async
   render(
     <ConversationListPage
       user={alice}
-      chatApi={fakeChatApi({ listConversations })}
+      chatApi={chatApi({ listConversations })}
       subscribe={subscribe}
     />,
   );
@@ -304,7 +305,7 @@ test("closes the live updates when the page closes", async () => {
   const page = render(
     <ConversationListPage
       user={alice}
-      chatApi={fakeChatApi()}
+      chatApi={chatApi()}
       subscribe={subscribe}
     />,
   );

@@ -47,6 +47,8 @@ The server also checks that a found id belongs to the same sender, conversation 
 
 **UUIDv7** starts with the time it was made, so newer ids sort after older ones, and an index on them stays in order. The server checks the version: the 13th digit of a UUIDv7 is `7`.
 
+The browser's own `crypto.randomUUID()` makes version 4 (all random), so the web app makes its v7 ids itself, in [apps/web/src/chat/uuidv7.ts](../../apps/web/src/chat/uuidv7.ts): 6 bytes of time in milliseconds, 10 random bytes from `crypto.getRandomValues` (the browser's secure random generator), and two small markers for the version and variant. About 25 lines, so no library is needed. (Alternatives: the `uuid` npm package has `v7()`; newer browsers may add it one day.)
+
 ## When two retries collide
 
 Usually the second try comes after the first is stored, and a simple lookup finds it. But two tries can arrive at the same moment:

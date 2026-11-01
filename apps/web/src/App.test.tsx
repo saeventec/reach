@@ -7,7 +7,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
 import App from "./App.tsx";
 import type { AuthApi, User } from "./auth/authClient.ts";
-import type { ChatApi } from "./chat/chatClient.ts";
+import { fakeChatApi } from "./chat/fakeChatApi.ts";
 
 afterEach(() => {
   cleanup();
@@ -36,15 +36,7 @@ function fakeAuthApi(changes: Partial<AuthApi> = {}): AuthApi {
 
 // A chat API where you have no conversations yet. The chat pages have
 // their own tests (chat/ConversationListPage.test.tsx).
-const chatApi: ChatApi = {
-  listConversations: async () => [],
-  startDirectConversation: async () => {
-    throw new Error("not used in this test");
-  },
-  createGroup: async () => {
-    throw new Error("not used in this test");
-  },
-};
+const chatApi = fakeChatApi({ listConversations: async () => [] });
 
 // No live updates in these tests: subscribing does nothing.
 const subscribe = () => () => {};

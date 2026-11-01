@@ -1,4 +1,4 @@
-// Talks to the chat service (ConversationService), with code generated
+// Talks to the chat service (ConversationService and MessageService), with code generated
 // from proto/chat/v1/. The gateway checks the session cookie first, and
 // tells chat who you are (ADR 0029). Learn more: docs/learn/connect-rpc.md
 import { timestampDate } from "@bufbuild/protobuf/wkt";
@@ -13,7 +13,11 @@ import type {
   Conversation as ConversationMessage,
   Member as MemberMessage,
 } from "../gen/chat/v1/conversation_pb.ts";
-import type { Message as MessageMessage } from "../gen/chat/v1/message_pb.ts";
+import { MessageService } from "../gen/chat/v1/message_pb.ts";
+import type {
+  ListMessagesRequest,
+  Message as MessageMessage,
+} from "../gen/chat/v1/message_pb.ts";
 
 // A message, as the rest of the web app sees it.
 export type Message = {
@@ -47,16 +51,45 @@ export type Conversation = {
   lastMessage: Message | null;
 };
 
+// Which messages ListMessages returns: the newest ones (to open a
+// conversation), the ones after a sequence number (to catch up), or the
+// ones before it (to scroll back).
+export type MessagePosition =
+  | { kind: "newest" }
+  | { kind: "after"; sequence: bigint }
+  | { kind: "before"; sequence: bigint };
+
+// One page of messages, the oldest first. hasMore: there are more in the
+// same direction.
+export type MessagePage = {
+  messages: Message[];
+  hasMore: boolean;
+};
+
 // All the calls the pages need. The app passes the real ones (chatApi
 // below); tests pass fakes. Learn more: docs/learn/testing.md#fakes
 export type ChatApi = {
   listConversations: () => Promise<Conversation[]>;
   startDirectConversation: (username: string) => Promise<Conversation>;
   createGroup: (name: string, usernames: string[]) => Promise<Conversation>;
+  // messageId is made by the app (newUUIDv7), so a retry sends the same
+  // one, and the server stores the message once.
+  sendMessage: (
+    conversationId: string,
+    messageId: string,
+    text: string,
+  ) => Promise<Message>;
+  listMessages: (
+    conversationId: string,
+    position: MessagePosition,
+  ) => Promise<MessagePage>;
+  markDelivered: (conversationId: string, sequence: bigint) => Promise<void>;
+  markRead: (conversationId: string, sequence: bigint) => Promise<void>;
 };
 
 const transport = createConnectTransport({ baseUrl: window.location.origin });
 const conversationClient = createClient(ConversationService, transport);
+const messageClient = createClient(MessageService, transport);
 
 async function listConversations(): Promise<Conversation[]> {
   const response = await conversationClient.listConversations({});
@@ -81,12 +114,74 @@ async function createGroup(
   return toConversation(required(response.conversation));
 }
 
+async function sendMessage(
+  conversationId: string,
+  messageId: string,
+  text: string,
+): Promise<Message> {
+  const response = await messageClient.sendMessage({
+    conversationId,
+    messageId,
+    text,
+  });
+  if (response.message === undefined) {
+    throw new Error("the chat service sent no message");
+  }
+  return toMessage(response.message);
+}
+
+async function listMessages(
+  conversationId: string,
+  position: MessagePosition,
+): Promise<MessagePage> {
+  const response = await messageClient.listMessages({
+    conversationId,
+    position: toPositionField(position),
+  });
+  const messages = response.messages.map(toMessage);
+  return { messages, hasMore: response.hasMore };
+}
+
+async function markDelivered(
+  conversationId: string,
+  sequence: bigint,
+): Promise<void> {
+  await messageClient.markDelivered({ conversationId, sequence });
+}
+
+async function markRead(
+  conversationId: string,
+  sequence: bigint,
+): Promise<void> {
+  await messageClient.markRead({ conversationId, sequence });
+}
+
 // The real API calls, for the app.
 export const chatApi: ChatApi = {
   listConversations,
   startDirectConversation,
   createGroup,
+  sendMessage,
+  listMessages,
+  markDelivered,
+  markRead,
 };
+
+// toPositionField turns a MessagePosition into the request's "position"
+// oneof. In the generated TypeScript, a oneof is an object with "case"
+// (which field is set) and "value". No case means: the newest messages.
+function toPositionField(
+  position: MessagePosition,
+): ListMessagesRequest["position"] {
+  switch (position.kind) {
+    case "after":
+      return { case: "afterSequence", value: position.sequence };
+    case "before":
+      return { case: "beforeSequence", value: position.sequence };
+    case "newest":
+      return { case: undefined };
+  }
+}
 
 // toConversation turns a Conversation message from the API into the app's
 // Conversation type.
