@@ -24,6 +24,12 @@ import (
 	"github.com/saeventec/reach/packages/go/httpserver"
 )
 
+// maximumRequestBytes is the largest API message the service reads. Its
+// only call, GetGreeting, has an empty request, so 1 KiB is plenty.
+// Without a limit, a client could send huge messages that use up memory
+// and time. Bigger messages get a RESOURCE_EXHAUSTED error.
+const maximumRequestBytes = 1024
+
 // main is where every Go program starts. It only sets up logging and
 // reports the error from run, so the real work stays easy to test.
 func main() {
@@ -85,7 +91,7 @@ func newRouter(greetings greetingStore) *http.ServeMux {
 	greetingService := &greetingServer{greetings: greetings}
 	connectServer := connect.NewServer()
 	hellov1connect.RegisterGreetingServiceHandler(connectServer, greetingService)
-	connecthttp.Mount(router, connectServer)
+	connecthttp.Mount(router, connectServer, connecthttp.WithReadMaxBytes(maximumRequestBytes))
 
 	return router
 }

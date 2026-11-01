@@ -77,7 +77,7 @@ The work inside the lock is tiny (a map lookup, a channel send that never waits)
 A data race is hard to see: the program works most of the time, and fails rarely and randomly. Go's **race detector** watches every memory access while the tests run, and reports two goroutines touching the same memory without a lock between them.
 
 ```
-task test:race     # runs: go test -race ./...  in services/realtime
+task test:race     # runs: go test -race ./...  in services/realtime and services/chat
 ```
 
 `TestHubIsSafeForManyGoroutines` in [hub_test.go](../../services/realtime/hub_test.go) adds, removes and delivers from 100 goroutines at once. We checked it: with the lock taken out of `Deliver`, the race detector reports 9 data races and the test fails.

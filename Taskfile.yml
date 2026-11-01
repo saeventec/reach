@@ -152,10 +152,12 @@ tasks:
       - npm run test:e2e --prefix apps/web
 
   test:race:
-    desc: Run realtime's tests with Go's race detector. Needs a C compiler (on WSL2, "sudo apt install gcc").
+    desc: Run the tests of realtime and chat with Go's race detector. Needs a C compiler (on WSL2, "sudo apt install gcc").
     cmds:
       # -race watches for two goroutines touching the same memory without a
-      # lock. realtime's hub is used by many goroutines at once. It is not
-      # part of "task test", because it needs a C compiler, which a new WSL2
-      # computer doesn't have. CI runs it. Learn more: docs/learn/websocket.md#the-race-detector
+      # lock. realtime's hub is used by many goroutines at once, and chat's
+      # relay and store share a channel. It is not part of "task test",
+      # because it needs a C compiler, which a new WSL2 computer doesn't
+      # have. CI runs it. Learn more: docs/learn/websocket.md#the-race-detector
       - go -C services/realtime test -race ./...
+      - go -C services/chat test -race ./...
