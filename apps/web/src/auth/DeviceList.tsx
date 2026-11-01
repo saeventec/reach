@@ -2,7 +2,7 @@
 // each of the other ones (for example, a lost phone).
 // Learn more: docs/learn/sessions.md#devices
 import { useEffect, useState } from "react";
-import { errorMessage } from "./authClient.ts";
+import { errorMessage } from "../shared/errorMessage.ts";
 import type { AuthApi, Device } from "./authClient.ts";
 
 type DevicesState =

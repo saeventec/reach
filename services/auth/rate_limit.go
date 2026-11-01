@@ -6,130 +6,48 @@ package main
 
 import (
 	"context"
-	"sync"
 	"time"
 
-	"golang.org/x/time/rate"
+	// The token buckets, shared with chat. Learn more: docs/learn/rate-limiting.md
+	"github.com/saeventec/reach/packages/go/ratelimit"
 )
 
 // The limits (the owner chose to count both by IP address and by username).
 const (
-	// Per IP address: 20 tries at once, then one more every 3 seconds
-	// (20 per minute). Counts every login and sign-up.
-	ipLimitBurst    = 20
-	ipLimitInterval = 3 * time.Second
+	// Per IP address: 20 tries at once (the default of the
+	// RATE_LIMIT_BURST_PER_IP setting, see config.go), then one more every
+	// 3 seconds. Counts every login and sign-up.
+	defaultIPLimitBurst = 20
+	ipLimitInterval     = 3 * time.Second
 
 	// Per username: 5 failed logins at once, then one more every 3 minutes
 	// (5 per 15 minutes). Counts only failed logins, so a person who types
 	// the right password is never slowed down.
 	usernameLimitBurst    = 5
 	usernameLimitInterval = 3 * time.Minute
-
-	// How often idle buckets are removed from memory.
-	cleanupInterval = time.Minute
 )
 
 // tooManyAttemptsMessage is the error message when a limit is reached.
 const tooManyAttemptsMessage = "too many attempts, please try again later"
 
-// rateLimiter keeps one token bucket per key (an IP address or a username).
-// Each try takes a token out of the bucket; tokens drip back in at a fixed
-// speed. An empty bucket means: wait.
-//
-// The buckets live in memory. They are lost on a restart, and each copy of
-// the service has its own. That is fine for short-lived counts (ADR 0027).
-type rateLimiter struct {
-	// Many requests run at the same time, each in its own goroutine. A
-	// mutex ("mutual exclusion") lets only one of them use the map at a
-	// time, because Go maps break when changed by two goroutines at once.
-	mutex   sync.Mutex
-	buckets map[string]*rate.Limiter
-
-	burst    int
-	interval time.Duration
-}
-
-func newRateLimiter(burst int, interval time.Duration) *rateLimiter {
-	return &rateLimiter{
-		buckets:  make(map[string]*rate.Limiter),
-		burst:    burst,
-		interval: interval,
-	}
-}
-
-// take takes one token from the key's bucket. It returns false if the
-// bucket is empty: the key has reached its limit.
-func (limiter *rateLimiter) take(key string) bool {
-	limiter.mutex.Lock()
-	// defer: unlock when this function returns, whatever happens.
-	defer limiter.mutex.Unlock()
-
-	bucket := limiter.bucketFor(key)
-	return bucket.Allow()
-}
-
-// isEmpty reports whether the key's bucket is empty, without taking a token.
-func (limiter *rateLimiter) isEmpty(key string) bool {
-	limiter.mutex.Lock()
-	defer limiter.mutex.Unlock()
-
-	bucket := limiter.bucketFor(key)
-	return bucket.Tokens() < 1
-}
-
-// bucketFor returns the key's bucket, and makes a full one if there is none.
-// The mutex must be locked.
-func (limiter *rateLimiter) bucketFor(key string) *rate.Limiter {
-	bucket, found := limiter.buckets[key]
-	if !found {
-		tokensPerSecond := rate.Every(limiter.interval)
-		bucket = rate.NewLimiter(tokensPerSecond, limiter.burst)
-		limiter.buckets[key] = bucket
-	}
-	return bucket
-}
-
-// removeFullBuckets forgets buckets that are full again. A full bucket
-// behaves exactly like a new one, so nothing is lost, and the map doesn't
-// keep growing with every IP address and username ever seen.
-func (limiter *rateLimiter) removeFullBuckets() {
-	limiter.mutex.Lock()
-	defer limiter.mutex.Unlock()
-
-	for key, bucket := range limiter.buckets {
-		if bucket.Tokens() >= float64(limiter.burst) {
-			delete(limiter.buckets, key)
-		}
-	}
-}
-
 // loginLimiters are the two limits on logins and sign-ups.
 type loginLimiters struct {
-	byIP       *rateLimiter
-	byUsername *rateLimiter
+	byIP       *ratelimit.Limiter
+	byUsername *ratelimit.Limiter
 }
 
-func newLoginLimiters() *loginLimiters {
+// newLoginLimiters creates both limits. ipLimitBurst is how many tries one
+// address may make at once.
+func newLoginLimiters(ipLimitBurst int) *loginLimiters {
 	return &loginLimiters{
-		byIP:       newRateLimiter(ipLimitBurst, ipLimitInterval),
-		byUsername: newRateLimiter(usernameLimitBurst, usernameLimitInterval),
+		byIP:       ratelimit.New(ipLimitBurst, ipLimitInterval),
+		byUsername: ratelimit.New(usernameLimitBurst, usernameLimitInterval),
 	}
 }
 
 // removeFullBucketsRegularly cleans up both limiters every minute, until
 // the context is done (when the service stops).
 func (limiters *loginLimiters) removeFullBucketsRegularly(ctx context.Context) {
-	// A ticker sends a signal on its channel at a fixed interval.
-	ticker := time.NewTicker(cleanupInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			limiters.byIP.removeFullBuckets()
-			limiters.byUsername.removeFullBuckets()
-		}
-	}
+	go limiters.byIP.RemoveFullBucketsRegularly(ctx)
+	limiters.byUsername.RemoveFullBucketsRegularly(ctx)
 }

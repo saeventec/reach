@@ -3,3 +3,6 @@
 src/gen
 # Build output.
 dist
+# Playwright's output (traces of failed end-to-end tests, its report).
+test-results
+playwright-report

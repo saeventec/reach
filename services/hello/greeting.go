@@ -10,7 +10,7 @@ import (
 
 	"connectrpc.com/connect/v2"
 
-	hellov1 "github.com/saeventec/reach/services/hello/gen/hello/v1"
+	hellov1 "github.com/saeventec/reach/packages/go/gen/hello/v1"
 )
 
 // greeting is one row of the greetings table.

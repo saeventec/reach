@@ -14,7 +14,7 @@ import (
 	"connectrpc.com/connect/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	authv1 "github.com/saeventec/reach/services/auth/gen/proto/auth/v1"
+	authv1 "github.com/saeventec/reach/packages/go/gen/auth/v1"
 )
 
 // The messages for failed logins. A wrong username and a wrong password get
@@ -59,7 +59,7 @@ func (server *sessionServer) LogIn(ctx context.Context, request *authv1.LogInReq
 	user, err := server.checkLogin(ctx, username, password)
 	if connect.CodeOf(err) == connect.CodeUnauthenticated {
 		// A wrong username or password: count it against this username.
-		server.limiters.byUsername.take(username)
+		server.limiters.byUsername.Take(username)
 		return nil, err
 	}
 	if err != nil {
@@ -85,11 +85,11 @@ func (server *sessionServer) LogIn(ctx context.Context, request *authv1.LogInReq
 // LogIn). It returns a RESOURCE_EXHAUSTED error when a limit is reached.
 // Learn more: docs/learn/rate-limiting.md
 func (server *sessionServer) checkLoginLimits(ip string, username string) error {
-	if !server.limiters.byIP.take(ip) {
+	if !server.limiters.byIP.Take(ip) {
 		slog.Warn("too many login tries from one address", "ip", ip)
 		return connect.NewError(connect.CodeResourceExhausted, tooManyAttemptsMessage)
 	}
-	if server.limiters.byUsername.isEmpty(username) {
+	if server.limiters.byUsername.IsEmpty(username) {
 		slog.Warn("too many failed logins for one username", "ip", ip)
 		return connect.NewError(connect.CodeResourceExhausted, tooManyAttemptsMessage)
 	}
@@ -277,11 +277,19 @@ func (server *sessionServer) LogOutDevice(ctx context.Context, request *authv1.L
 	return &authv1.LogOutDeviceResponse{}, nil
 }
 
-// authenticate finds the valid session of the request's cookie, and renews
+// authenticate finds the valid session of the call's cookie, and renews
 // it for another 30 days. It returns the session and its token, or an
 // UNAUTHENTICATED error.
 func (server *sessionServer) authenticate(ctx context.Context, callInfo *connect.CallInfo) (currentSession, string, error) {
 	cookieHeader := callInfo.RequestHeader().Get("Cookie")
+	return findSession(ctx, server.sessions, cookieHeader)
+}
+
+// findSession finds the valid session of a Cookie header, and renews it for
+// another 30 days. It returns the session and its token, or an
+// UNAUTHENTICATED error. The Connect calls (authenticate) and the gateway's
+// session check (session_check.go) both use it.
+func findSession(ctx context.Context, sessions sessionStore, cookieHeader string) (currentSession, string, error) {
 	token, found := readSessionToken(cookieHeader)
 	if !found {
 		return currentSession{}, "", connect.NewError(connect.CodeUnauthenticated, notLoggedInMessage)
@@ -293,7 +301,7 @@ func (server *sessionServer) authenticate(ctx context.Context, callInfo *connect
 	// RenewSession only finds sessions that haven't expired: the expiry check
 	// is in the SQL ("expires_at > now()" in queries/sessions.sql). So an
 	// unknown token and an expired session both give errNoSession.
-	session, err := server.sessions.RenewSession(ctx, tokenHash, newExpiresAt)
+	session, err := sessions.RenewSession(ctx, tokenHash, newExpiresAt)
 	if errors.Is(err, errNoSession) {
 		return currentSession{}, "", connect.NewError(connect.CodeUnauthenticated, notLoggedInMessage)
 	}

@@ -24,7 +24,9 @@ It is built into GitHub and free for public repos. Lefthook can be skipped, and 
 3. **`task setup`**, **`task lint`**: the same commands you run.
 4. **Generated code up to date:** run `task generate`, then `git diff --exit-code` fails if anything changed.
 5. **Breaking API changes:** `buf breaking` compares the `.proto` files with the commit before this change.
-6. **`task test`** and **`task build`** (the web app and all container images).
+6. **`task test`**, then **`task test:race`** (realtime with Go's race detector).
+7. **End-to-end tests:** install Chromium with the Linux libraries it needs, then **`task test:e2e`** ([playwright.md](playwright.md)). If any step failed, **`actions/upload-artifact`** keeps the traces of failed end-to-end tests for 7 days: download them from the run's page ("Artifacts"), and open them with `npx playwright show-trace`.
+8. **`task build`** (the web app and all container images).
 
 Because CI uses the same Task commands, you can always reproduce a CI failure on your own computer.
 

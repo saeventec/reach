@@ -2,9 +2,9 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router";
-import { errorMessage } from "./authClient.ts";
+import { errorMessage } from "../shared/errorMessage.ts";
 import type { AuthApi, User } from "./authClient.ts";
-import { PasswordField, TextField } from "./FormFields.tsx";
+import { PasswordField, TextField } from "../shared/FormFields.tsx";
 
 type LogInPageProps = {
   authApi: AuthApi;

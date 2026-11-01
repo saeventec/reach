@@ -15,6 +15,7 @@
 -- Read the passwords from the environment variables that compose.yaml sets.
 \getenv hello_password HELLO_DATABASE_PASSWORD
 \getenv auth_password AUTH_DATABASE_PASSWORD
+\getenv chat_password CHAT_DATABASE_PASSWORD
 
 -- Postgres has no "CREATE ROLE IF NOT EXISTS" or "CREATE DATABASE IF NOT
 -- EXISTS". So each SELECT below builds the CREATE command only when the
@@ -51,6 +52,18 @@ SELECT 'CREATE DATABASE auth OWNER auth'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'auth') \gexec
 
 REVOKE CONNECT ON DATABASE auth FROM PUBLIC;
+
+-- The chat service ---------------------------------------------------------
+
+SELECT 'CREATE ROLE chat LOGIN'
+WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'chat') \gexec
+
+SELECT format('ALTER ROLE chat PASSWORD %L', :'chat_password') \gexec
+
+SELECT 'CREATE DATABASE chat OWNER chat'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'chat') \gexec
+
+REVOKE CONNECT ON DATABASE chat FROM PUBLIC;
 
 -- Tables created before milestone 2 -----------------------------------------
 

@@ -13,7 +13,7 @@ func TestHealthAnswersOK(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	recorder := httptest.NewRecorder()
 
-	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 	router.ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusOK {
@@ -29,7 +29,7 @@ func TestHealthRejectsOtherMethods(t *testing.T) {
 	request := httptest.NewRequest(http.MethodPost, "/healthz", nil)
 	recorder := httptest.NewRecorder()
 
-	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, newLoginLimiters(), true)
+	router := newRouter(&fakeUserStore{}, &fakeSessionStore{}, newLoginLimiters(defaultIPLimitBurst), true)
 	router.ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusMethodNotAllowed {

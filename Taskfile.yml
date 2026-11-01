@@ -51,6 +51,7 @@ tasks:
       - buf lint
       - buf generate
       - cd services/auth && sqlc generate
+      - cd services/chat && sqlc generate
 
   lint:
     desc: Check all code for likely bugs and formatting (changes nothing)
@@ -65,8 +66,11 @@ tasks:
       # Each service is its own Go module, so it is checked from its own
       # folder. Each command runs on its own, so a "cd" doesn't carry over
       # to the next line.
+      - cd packages/go && golangci-lint run ./...
       - cd services/hello && golangci-lint run ./...
       - cd services/auth && golangci-lint run ./...
+      - cd services/chat && golangci-lint run ./...
+      - cd services/realtime && golangci-lint run ./...
 
   lint:web:
     desc: Check the web app's code (Oxlint) and formatting (Prettier)
@@ -92,8 +96,11 @@ tasks:
   format:go:
     desc: Format the Go code
     cmds:
+      - cd packages/go && golangci-lint fmt ./...
       - cd services/hello && golangci-lint fmt ./...
       - cd services/auth && golangci-lint fmt ./...
+      - cd services/chat && golangci-lint fmt ./...
+      - cd services/realtime && golangci-lint fmt ./...
 
   format:web:
     desc: Format the web app's code (Prettier)
@@ -114,11 +121,43 @@ tasks:
       - docker compose build
 
   test:
-    desc: Run all tests (the Go services and the web app). Needs Docker running.
+    desc: Run all tests (the shared Go code, the Go services and the web app). Needs Docker running.
     cmds:
       # The auth service's integration tests start a Postgres in Docker
       # (docs/learn/testing.md#integration-tests).
       # -C and --prefix run each command inside the given folder.
+      - go -C packages/go test ./...
       - go -C services/hello test ./...
       - go -C services/auth test ./...
+      - go -C services/chat test ./...
+      - go -C services/realtime test ./...
       - npm test --prefix apps/web
+
+  test:e2e:
+    desc: Run the end-to-end tests in a real browser, against a fresh copy of the whole system. Needs Docker running.
+    vars:
+      # The test system: its own Compose project, with the changes in
+      # compose.e2e.yaml (an empty database, the gateway on port 8180).
+      # Learn more: docs/learn/playwright.md#the-test-system
+      E2E_COMPOSE: docker compose -p reach-e2e -f compose.yaml -f apps/web/e2e/compose.e2e.yaml
+    cmds:
+      # Download the browser Playwright drives, if it isn't there yet.
+      - npx --prefix apps/web playwright install chromium
+      # "defer" runs this at the end, also when a test fails: stop the
+      # test system and delete its volumes, so the next run starts empty.
+      - defer: "{{.E2E_COMPOSE}} down --volumes"
+      # --wait: return only when every service is running and healthy
+      # (and the migrations have finished).
+      - "{{.E2E_COMPOSE}} up --build --wait"
+      - npm run test:e2e --prefix apps/web
+
+  test:race:
+    desc: Run the tests of realtime and chat with Go's race detector. Needs a C compiler (on WSL2, "sudo apt install gcc").
+    cmds:
+      # -race watches for two goroutines touching the same memory without a
+      # lock. realtime's hub is used by many goroutines at once, and chat's
+      # relay and store share a channel. It is not part of "task test",
+      # because it needs a C compiler, which a new WSL2 computer doesn't
+      # have. CI runs it. Learn more: docs/learn/websocket.md#the-race-detector
+      - go -C services/realtime test -race ./...
+      - go -C services/chat test -race ./...

@@ -18,3 +18,8 @@ Thumbs.db
 bin/
 dist/
 node_modules/
+
+# Playwright's output: traces and screenshots of failed end-to-end tests,
+# and its HTML report. Learn more: docs/learn/playwright.md
+test-results/
+playwright-report/

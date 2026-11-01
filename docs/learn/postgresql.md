@@ -63,13 +63,13 @@ Connect with any Postgres tool. The recommended one is the **PostgreSQL** extens
 | --- | --- |
 | Host | `localhost` |
 | Port | `5432` |
-| Database | `auth` or `hello` |
+| Database | `auth`, `chat` or `hello` |
 | User and password | see below; the passwords are in your `.env` |
 | SSL | off (disable): fine on your own computer, not on a real server |
 
 Which user:
 
-- **`auth` or `hello`** (`AUTH_DATABASE_PASSWORD`, `HELLO_DATABASE_PASSWORD`): you see exactly what that service sees, and nothing else. A good habit for everyday browsing.
+- **`auth`, `chat` or `hello`** (`AUTH_DATABASE_PASSWORD`, `CHAT_DATABASE_PASSWORD`, `HELLO_DATABASE_PASSWORD`): you see exactly what that service sees, and nothing else. A good habit for everyday browsing.
 - **`postgres`** (`POSTGRES_PASSWORD`): the superuser. It sees and can change everything, in every database. Use it carefully.
 
 If port 5432 is already taken (for example, by another Postgres installed on your computer), `task dev` fails with "port is already allocated". Stop the other Postgres, or change the first number, for example `"127.0.0.1:5433:5432"`, and connect to port 5433.
@@ -82,8 +82,9 @@ If port 5432 is already taken (for example, by another Postgres installed on you
 | --- | --- | --- |
 | hello | `hello` | `hello` |
 | auth | `auth` | `auth` |
+| chat | `chat` | `chat` |
 
-This is the **principle of least privilege**: give each part only the rights it needs. Each service's password is in `.env` (`HELLO_DATABASE_PASSWORD`, `AUTH_DATABASE_PASSWORD`).
+This is the **principle of least privilege**: give each part only the rights it needs. Each service's password is in `.env` (`HELLO_DATABASE_PASSWORD`, `AUTH_DATABASE_PASSWORD`, `CHAT_DATABASE_PASSWORD`).
 
 The `postgres-setup` container creates the roles and databases. It runs [postgres/setup.sql](../../postgres/setup.sql) with `psql` on every `task dev`, before the migrations. ([ADR 0024](../decisions/0024-create-databases-with-a-setup-container.md) explains why.) Because it runs every time, each step must be **idempotent**: safe to repeat, with the same result as running it once. Postgres has no `CREATE DATABASE IF NOT EXISTS`, so the file uses a psql pattern:
 
@@ -144,6 +145,43 @@ The username rule uses a **regular expression** (a small pattern language for te
 | `.sadra`, `sadra.` | refused: starts or ends with a separator |
 | `sa..dra`, `sa._dra` | refused: two separators in a row |
 | `ab` | refused: too short |
+
+### Identity columns, bytea and partial indexes
+
+The `outbox` table ([services/chat/migrations/00003_create_outbox.sql](../../services/chat/migrations/00003_create_outbox.sql)) uses three more ideas:
+
+- **`bigint GENERATED ALWAYS AS IDENTITY`:** the database numbers the rows 1, 2, 3 ... on its own. Here a plain number is right: nobody outside the database makes these ids, and the order matters. (`SERIAL` is the older way to do the same.)
+- **`bytea`:** raw bytes, for the event's Protobuf data. It isn't text, so a `text` column would refuse some of the bytes.
+- **A partial index:** `CREATE INDEX ... ON outbox (id) WHERE published_at IS NULL` only covers the rows that still wait. The relay asks for exactly those every second, so the question stays fast, even with millions of published rows in the table.
+
+## Transactions
+
+A **transaction** is a group of changes that is saved all together, or not at all. Creating a group writes several rows: one in `conversations`, and one in `members` per person. If the program crashes after the second member, a transaction makes sure no half-made group stays behind.
+
+```sql
+BEGIN;                                              -- start
+INSERT INTO conversations (kind, group_name) VALUES ('group', 'Friends') RETURNING id;
+INSERT INTO members (conversation_id, user_id) VALUES (…, alice);
+INSERT INTO members (conversation_id, user_id) VALUES (…, bob);
+COMMIT;                                             -- save everything (or ROLLBACK: undo everything)
+```
+
+In Go, `inTransaction` in [services/chat/postgres/store.go](../../services/chat/postgres/store.go) does it: `pool.Begin`, then the work, then `Commit`. A `defer`red `Rollback` undoes everything if the work returns an error first. sqlc's `WithTx` makes the generated queries run inside the transaction.
+
+Other people don't see the changes until `COMMIT`. How much transactions see of each other is called the **isolation level**. Postgres's default, "read committed", means: each query sees what others have committed so far.
+
+### Races and ON CONFLICT
+
+A **race** is when the result depends on which of two things happens first. Two people start the same 1:1 chat at the same moment:
+
+- "Ask first, then insert" has a gap: both ask "does it exist?", both hear "no", both insert. Two chats for one pair.
+- So we let the database decide. `direct_pair_key` is `UNIQUE`, and the insert says `ON CONFLICT (direct_pair_key) DO NOTHING`: if the key is taken, insert nothing and return no row. The code then reads the existing one. The second insert even waits until the first transaction commits.
+
+A test in [services/chat/postgres/store_integration_test.go](../../services/chat/postgres/store_integration_test.go) starts ten requests at once and checks that they all get the same conversation. Without `ON CONFLICT`, it fails with "duplicate key value violates unique constraint".
+
+### Composite keys
+
+`members` has a primary key made of two columns: `PRIMARY KEY (conversation_id, user_id)`. Each pair is unique, so a person is in a conversation at most once. An index on two columns is used from the left, so it answers "the members of conversation X" fast, but not "the conversations of user Y". That's why there is a second index, `members_user_id_index`.
 
 ## Alternatives
 

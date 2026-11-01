@@ -187,6 +187,54 @@ func TestPostgresStores(t *testing.T) {
 			t.Errorf("got %v, want %v", err, errNoSession)
 		}
 	})
+
+	t.Run("finds users by username, and leaves out unknown ones", func(t *testing.T) {
+		judy := createTestUser(t, users, "judy")
+		karl := createTestUser(t, users, "karl")
+
+		found, err := users.FindUsersByUsernames(t.Context(), []string{"judy", "karl", "nobody-has-this"})
+
+		if err != nil {
+			t.Fatalf("find: %v", err)
+		}
+		if !containsUser(found, judy) || !containsUser(found, karl) || len(found) != 2 {
+			t.Errorf("got %+v, want only judy and karl", found)
+		}
+	})
+
+	t.Run("finds users by id", func(t *testing.T) {
+		lena := createTestUser(t, users, "lena")
+		// A valid UUID that belongs to nobody.
+		unknownID := "019a3f2c-0000-7000-8000-00000000dead"
+
+		found, err := users.FindUsersByIDs(t.Context(), []string{lena.id, unknownID})
+
+		if err != nil {
+			t.Fatalf("find: %v", err)
+		}
+		if !containsUser(found, lena) || len(found) != 1 {
+			t.Errorf("got %+v, want only lena", found)
+		}
+	})
+
+	t.Run("an id that is not a UUID is the caller's mistake", func(t *testing.T) {
+		_, err := users.FindUsersByIDs(t.Context(), []string{"not-a-uuid"})
+
+		if !errors.Is(err, errInvalidUUID) {
+			t.Errorf("got %v, want %v", err, errInvalidUUID)
+		}
+	})
+}
+
+// containsUser reports whether the list has a user with the created
+// user's id and username.
+func containsUser(users []publicUser, created createdUser) bool {
+	for _, user := range users {
+		if user.id == created.id && user.username == created.username {
+			return true
+		}
+	}
+	return false
 }
 
 // startTestDatabase starts a new, empty Postgres in Docker, applies the

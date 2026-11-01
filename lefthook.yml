@@ -14,7 +14,9 @@ rc: ./.lefthookrc
 pre-commit:
   jobs:
     - name: go
-      glob: "services/**/*.go"
+      glob:
+        - "services/**/*.go"
+        - "packages/**/*.go"
       run: task lint:go
 
     - name: web

@@ -1,7 +1,8 @@
 # Starts the whole Reach system with Docker Compose. Run it with "task dev".
 # Each entry under "services" becomes one container.
 # Start order: postgres (healthy) → postgres-setup (finished) →
-# hello-migrate and auth-migrate (finished) → hello and auth.
+# hello-migrate, auth-migrate and chat-migrate (finished) → hello, auth
+# and chat. chat and realtime wait for nats (healthy).
 # web and gateway start right away. Open http://localhost:8080.
 # Learn more: docs/learn/docker-compose.md
 
@@ -44,15 +45,44 @@ services:
     environment:
       # psql reads the superuser's password from PGPASSWORD.
       PGPASSWORD: ${POSTGRES_PASSWORD}
-      # setup.sql gives these passwords to the hello and auth users.
+      # setup.sql gives these passwords to the hello, auth and chat users.
       HELLO_DATABASE_PASSWORD: ${HELLO_DATABASE_PASSWORD:?Set HELLO_DATABASE_PASSWORD in .env (see .env.example)}
       AUTH_DATABASE_PASSWORD: ${AUTH_DATABASE_PASSWORD:?Set AUTH_DATABASE_PASSWORD in .env (see .env.example)}
+      CHAT_DATABASE_PASSWORD: ${CHAT_DATABASE_PASSWORD:?Set CHAT_DATABASE_PASSWORD in .env (see .env.example)}
     volumes:
       # Share the postgres/ folder (with setup.sql), read-only.
       - ./postgres:/setup:ro
     depends_on:
       postgres:
         condition: service_healthy
+
+  # NATS: the "post office" between services. A service publishes an event
+  # (like "a message was sent") and every service that subscribed gets it.
+  # JetStream, built into NATS, also keeps the events on disk. chat
+  # publishes its events here, and realtime receives them.
+  # Learn more: docs/learn/nats.md
+  nats:
+    # The Alpine variant includes a shell and wget, for the health check.
+    # The default "nats" image contains only the server program.
+    image: nats:2.15.2-alpine3.22
+    # Arguments for nats-server. They replace the image's default
+    # configuration file, which doesn't turn JetStream on.
+    # -js: turn JetStream on. -sd: keep its data in /data.
+    # -m: serve the monitoring pages (and /healthz) on port 8222.
+    command: ["-js", "-sd", "/data", "-m", "8222"]
+    ports:
+      # The monitoring pages, for you to look at in the browser:
+      # http://localhost:8222. Only your own computer can reach them.
+      # Services connect on port 4222, inside Compose only.
+      - "127.0.0.1:8222:8222"
+    volumes:
+      # Keep JetStream's events between restarts, like postgres-data.
+      - nats-data:/data
+    healthcheck:
+      # /healthz answers 200 once the server (and JetStream) is ready.
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8222/healthz"]
+      start_period: 30s
+      start_interval: 1s
 
   # Applies the hello database migrations once, then exits.
   hello-migrate:
@@ -68,8 +98,11 @@ services:
         condition: service_completed_successfully
 
   hello:
-    # Build the image from services/hello/Dockerfile.
-    build: ./services/hello
+    build:
+      # The whole repo is the build context, so the Dockerfile can also copy
+      # the shared code in packages/go. Learn more: docs/learn/docker.md#the-build-context
+      context: .
+      dockerfile: services/hello/Dockerfile
     environment:
       # The same database address as hello-migrate uses.
       DATABASE_URL: postgres://hello:${HELLO_DATABASE_PASSWORD}@postgres:5432/hello?sslmode=disable
@@ -90,6 +123,9 @@ services:
           path: ./services/hello
           ignore:
             - migrations/ # applied by hello-migrate, not part of this image's program
+        # The shared code is part of this program too.
+        - action: rebuild
+          path: ./packages/go
     depends_on:
       # Start only after the migrations finished without an error.
       hello-migrate:
@@ -107,7 +143,10 @@ services:
 
   # Accounts, login, sessions and devices. Learn more: services/auth/main.go
   auth:
-    build: ./services/auth
+    build:
+      # Like hello: the whole repo, for packages/go.
+      context: .
+      dockerfile: services/auth/Dockerfile
     environment:
       DATABASE_URL: postgres://auth:${AUTH_DATABASE_PASSWORD}@postgres:5432/auth?sslmode=disable
       # ":-true" means: use true if .env doesn't set it.
@@ -123,10 +162,87 @@ services:
           path: ./services/auth
           ignore:
             - migrations/ # applied by auth-migrate, not part of this image's program
+        # The shared code is part of this program too.
+        - action: rebuild
+          path: ./packages/go
     depends_on:
       # Start only after the migrations finished without an error.
       auth-migrate:
         condition: service_completed_successfully
+
+  # Applies the chat database migrations once, then exits. Like hello-migrate.
+  chat-migrate:
+    build: ./services/chat/migrations
+    environment:
+      GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: postgres://chat:${CHAT_DATABASE_PASSWORD}@postgres:5432/chat?sslmode=disable
+    depends_on:
+      postgres-setup:
+        condition: service_completed_successfully
+
+  # Conversations and messages (milestone 3). Learn more: services/chat/main.go
+  chat:
+    build:
+      # Like hello: the whole repo, for packages/go.
+      context: .
+      dockerfile: services/chat/Dockerfile
+    environment:
+      DATABASE_URL: postgres://chat:${CHAT_DATABASE_PASSWORD}@postgres:5432/chat?sslmode=disable
+      # chat asks auth for usernames (its internal API), by its Compose name.
+      AUTH_URL: http://auth:8080
+      # chat publishes its events to NATS, by its Compose name. 4222 is
+      # NATS's port for programs.
+      NATS_URL: nats://nats:4222
+    # No "ports", on purpose: chat trusts the X-User-Id header, which only
+    # the gateway may set (ADR 0029). With a published port, anyone could
+    # call chat directly and pretend to be any user.
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/healthz"]
+      start_period: 30s
+      start_interval: 1s
+    develop:
+      watch:
+        - action: rebuild
+          path: ./services/chat
+          ignore:
+            - migrations/ # applied by chat-migrate, not part of this image's program
+        # The shared code is part of this program too.
+        - action: rebuild
+          path: ./packages/go
+    depends_on:
+      # Start only after the migrations finished without an error, and
+      # NATS is ready (chat creates its JetStream stream when it starts).
+      chat-migrate:
+        condition: service_completed_successfully
+      nats:
+        condition: service_healthy
+
+  # Live updates: keeps the browsers' WebSockets open, and pushes chat's
+  # events to them (milestone 3). Learn more: services/realtime/main.go
+  realtime:
+    build:
+      # Like hello: the whole repo, for packages/go.
+      context: .
+      dockerfile: services/realtime/Dockerfile
+    environment:
+      # realtime receives chat's events from NATS.
+      NATS_URL: nats://nats:4222
+    # No "ports", on purpose, like chat: realtime trusts the X-User-Id
+    # header, which only the gateway may set (ADR 0029).
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/healthz"]
+      start_period: 30s
+      start_interval: 1s
+    develop:
+      watch:
+        - action: rebuild
+          path: ./services/realtime
+        # The shared code is part of this program too.
+        - action: rebuild
+          path: ./packages/go
+    depends_on:
+      nats:
+        condition: service_healthy
 
   # The web app's development server (Vite). Reached through the gateway.
   web:
@@ -163,3 +279,4 @@ services:
 # Named volumes: storage that Docker manages, kept between restarts.
 volumes:
   postgres-data:
+  nats-data:

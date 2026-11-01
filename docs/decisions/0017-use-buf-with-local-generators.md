@@ -26,3 +26,5 @@ Use buf. Run the generators locally (`local:` in `buf.gen.yaml`), installed by m
 ## Consequences
 
 After changing a `.proto` file, always run `task generate` and commit the result. CI (step 8) will check that the generated code is up to date. The generated Go code lives in `services/hello/gen` for now. When a second service needs it, it moves to shared code in `packages/go`.
+
+**Done in milestone 3:** `chat` needs `auth`'s internal API, so all generated Go code moved to `packages/go/gen`.

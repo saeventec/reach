@@ -25,12 +25,16 @@ username bucket: holds 5, one token back every 3 minutes
 
 ## Our limits
 
-From [services/auth/rate_limit.go](../../services/auth/rate_limit.go):
+The token buckets are in [packages/go/ratelimit](../../packages/go/ratelimit/ratelimit.go), shared by two services. The limits are set in [services/auth/rate_limit.go](../../services/auth/rate_limit.go) and [services/chat/api/message_server.go](../../services/chat/api/message_server.go):
 
-| Limit | Burst | Refill | Counts |
-| --- | --- | --- | --- |
-| Per IP address | 20 | one every 3 s (20/min) | every login and every sign-up |
-| Per username | 5 | one every 3 min (5 per 15 min) | only **failed** logins |
+| Service | Limit | Burst | Refill | Counts |
+| --- | --- | --- | --- | --- |
+| auth | Per IP address | 20 (setting: `RATE_LIMIT_BURST_PER_IP`) | one every 3 s (20/min) | every login and every sign-up |
+| auth | Per username | 5 | one every 3 min (5 per 15 min) | only **failed** logins |
+| chat | Per user | 30 | one every second | every `SendMessage`, also refused and retried ones |
+
+- **The per-address burst is a setting** with a safe default: not set means 20. Only the end-to-end test system sets it higher ([compose.e2e.yaml](../../apps/web/e2e/compose.e2e.yaml)), because all its browser windows share one address, and every test person signs up and logs in. A value that isn't a whole number of 1 or more stops auth at start, with a clear message.
+- **Per user in chat** stops a script, or a bug in an app, from flooding a conversation. The gateway has already checked the session, so the key is the user id, not the address. It sits in chat's API adapter, not the core: it protects the service; it isn't a rule about conversations ([hexagonal architecture](hexagonal-architecture.md)).
 
 - **Per address** slows one computer trying many accounts, or signing up in bulk.
 - **Per username** slows guessing one account's password from many computers. It only counts failures, so a person who types the right password is never slowed down.

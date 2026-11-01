@@ -40,8 +40,8 @@ message GetGreetingResponse {
 `task generate` runs `buf lint`, then `buf generate`, and writes:
 
 ```
-services/hello/gen/hello/v1/greeting.pb.go                       # the message types
-services/hello/gen/hello/v1/hellov1connect/greeting.connect.go   # the service interface and client
+packages/go/gen/hello/v1/greeting.pb.go                       # the message types
+packages/go/gen/hello/v1/hellov1connect/greeting.connect.go   # the service interface and client
 ```
 
 Never edit generated files by hand (they say `DO NOT EDIT`). Change the `.proto` file and run `task generate` again.
@@ -88,30 +88,80 @@ message Device {
 - **Well-known types** are standard messages that come with Protobuf, like `google.protobuf.Timestamp`. Each language maps them to its own type: `timestamppb.Timestamp` in Go (`timestamppb.New(time)` makes one), and `Timestamp` from `@bufbuild/protobuf/wkt` in TypeScript. In JSON, a Timestamp is text in the RFC 3339 format, always in UTC: `"2026-10-31T09:00:00Z"`.
 - **Default values are left out of JSON.** A `bool` that is `false`, a number that is `0` or an empty text is not sent at all. So a device that isn't the current one has no `isCurrentDevice` in the JSON. The generated code fills in the default again, so your code always sees `false`.
 
+### oneof
+
+A **oneof** is a group of fields where at most one is set, and the receiver can tell which one, or none. From [proto/chat/v1/message.proto](../../proto/chat/v1/message.proto):
+
+```protobuf
+message ListMessagesRequest {
+  oneof position {
+    int64 after_sequence = 2;    // catch up
+    int64 before_sequence = 3;   // scroll back
+  }
+}
+```
+
+- **Why not two plain fields:** a plain `int64` that is 0 looks exactly like one that isn't set (default values aren't sent). But "after 0" is a real request: "from the first message". In a oneof, setting `after_sequence` to 0 still says "this field was chosen".
+- **In Go,** the oneof is one field holding one of two small types. A **type switch** finds out which (`toPosition` in [services/chat/api/message_server.go](../../services/chat/api/message_server.go)):
+
+```go
+switch position := request.GetPosition().(type) {
+case *chatv1.ListMessagesRequest_AfterSequence:
+	return conversation.PositionAfter, position.AfterSequence
+...
+}
+```
+
+- **In JSON,** you just send the one field: `{"afterSequence": "0"}`.
+
+### int64 in JSON
+
+A Protobuf `int64` is sent as **text** in JSON: `"sequence": "42"`, not `42`. JavaScript numbers are exact only up to about 9 million billion (2^53), and an int64 goes higher. In the web app's generated TypeScript, an int64 is a `bigint`, JavaScript's type for big whole numbers (`42n`).
+
+### Zero values are left out
+
+In proto3, a field set to its zero value (0, "", false, an empty list) is not sent at all, neither in binary nor in JSON. The receiver reads a missing field as the zero value. For example, a member who has read nothing yet comes as `{"userId": "…", "username": "alice"}`, with no `readUpTo`. The generated code fills in 0 for you; code that reads the raw JSON must do the same.
+
+### Enums
+
+An **enum** is a fixed list of named values. From [proto/chat/v1/conversation.proto](../../proto/chat/v1/conversation.proto):
+
+```protobuf
+enum ConversationKind {
+  CONVERSATION_KIND_UNSPECIFIED = 0;   // "not set"
+  CONVERSATION_KIND_DIRECT = 1;
+  CONVERSATION_KIND_GROUP = 2;
+}
+```
+
+- **Value 0 means "not set".** A missing field has the default value 0, like a missing number. If 0 were `DIRECT`, a message that forgot the field would silently be a 1:1 chat. buf's lint rules ask for a `_UNSPECIFIED` value 0 for this reason.
+- **The prefix** (`CONVERSATION_KIND_`) is another lint rule: in Protobuf, enum values share one namespace per package, so two enums can't both have a value called `DIRECT`.
+- In Go they are constants (`chatv1.ConversationKind_CONVERSATION_KIND_GROUP`), in JSON their names as text (`"CONVERSATION_KIND_GROUP"`).
+
 ## Our config files
 
 - `buf.yaml`: where the `.proto` files are (`proto/`) and which lint rules to use.
 - `buf.gen.yaml`: which generators to run and where their output goes. "Managed mode" sets the Go import path there, so the `.proto` files contain no Go-specific settings.
 
-### One API per service
+### All Go code in one shared place
 
-Each service is its own Go module, so each one gets only its own API's Go code:
+All generated Go code goes into the shared module `packages/go`, in `packages/go/gen/`. Every service imports what it needs from there:
 
-```yaml
-- local: protoc-gen-go
-  out: services/auth/gen/proto
-  types: [auth.v1]   # only the auth.v1 package
+```go
+import authv1 "github.com/saeventec/reach/packages/go/gen/auth/v1"
 ```
 
-- **`types`** keeps only the listed Protobuf packages for that generator. (buf can't limit a generator by file, only by package or type.)
-- **`path: auth`** in the managed-mode `override` gives each folder of `proto/` its own Go import path.
-- `auth`'s Protobuf code goes into `gen/proto/`, not straight into `gen/`, because sqlc writes into `gen/queries/`. `clean: true` empties each generator's `out` folder first, and would otherwise delete sqlc's code.
-- The web app talks to every service, so its generator has no `types`: it gets all APIs.
-- Side effect: with `types`, buf rebuilds the API description that is embedded in the generated Go code, and leaves out empty `{}` options. That is why `hello`'s `greeting.pb.go` changed a little in milestone 2, with no real change.
+- **Why one place:** services use each other's APIs. `chat` calls `auth`'s internal API, and `realtime` reads `chat`'s events. Generated in one place, there is exactly one copy of each API's Go code. ([ADR 0017](../decisions/0017-use-buf-with-local-generators.md) planned this move for when a second service needed it.)
+- **`go_package_prefix`** in managed mode gives every file its Go import path: the prefix plus the file's folder in `proto/`.
+- A service's program only contains the packages it really imports, so `hello` doesn't grow because `chat`'s API exists.
+- sqlc's code is different: it belongs to one service only, so it stays in that service (`services/auth/gen/queries`).
+- Until milestone 3, each service had its own copy, limited with buf's `types` option. That stopped working once one API was needed by two Go modules: a `.proto` file can have only one Go import path.
 
 ## TypeScript
 
 A third generator, `protoc-gen-es`, writes TypeScript for the web app: `apps/web/src/gen/hello/v1/greeting_pb.ts` (and `auth/v1/account_pb.ts`). It contains the message types (`GetGreetingResponse`) and the service (`GreetingService`). `int64` fields become `bigint`, JavaScript's type for big whole numbers.
+
+**Enums as objects.** By default, `protoc-gen-es` writes a Protobuf enum as a TypeScript `enum`. Our `tsconfig.json` has `erasableSyntaxOnly`: it allows only TypeScript that can be removed to leave plain JavaScript (types, `as const`), and an `enum` creates real code. So `buf.gen.yaml` sets `erasable_syntax=true`, and the enum becomes an object: `ConversationKind.GROUP` is `2`, as before. (Found in milestone 3, step 11: `ConversationKind` was the first enum, and the type check failed since step 6. `task build` runs that check; we hadn't run it.)
 
 This generator is an npm package of the web app, not a mise tool. That way its version always matches the `@bufbuild/protobuf` library the generated code needs. So `task setup` (which runs `npm ci`) must run before `task generate`.
 

@@ -82,7 +82,20 @@ useEffect(() => {
 - `LoadState` is a **union type**: the state is either loading, loaded (with a greeting), or failed. TypeScript only lets you use `state.greeting` after checking that `state.status === "loaded"`.
 - Functions whose names start with `use` are called **hooks**. Call them only at the top of a component, never inside an `if`.
 
+**Loading again.** The list in the effect's last line (`[loadGreeting]`) says when to run it again: whenever one of its values changes. The conversation list ([apps/web/src/chat/ConversationListPage.tsx](../../apps/web/src/chat/ConversationListPage.tsx)) uses this to reload: it keeps a number, `reloadCount`, in that list, and adds 1 to it after a new chat. React runs the effect again, which loads the list again. The old list stays on screen until the new one arrives.
+
 Later, TanStack Query can do this loading for us, with caching and retries. Writing it by hand first shows what such a library saves (the owner chose "later" in milestone 2).
+
+## Custom hooks
+
+A **custom hook** is your own function whose name starts with `use`, and that calls React's hooks inside. It packs a piece of page behavior into one line. [apps/web/src/chat/useMarkAsSeen.ts](../../apps/web/src/chat/useMarkAsSeen.ts) is one: the conversation page calls `useMarkAsSeen(chatApi, conversationId, newest)`, and the hook does the rest:
+
+- **`useRef`** keeps a value between renders, like state, but changing it doesn't draw the page again. Here: what we already told the server, so a call isn't repeated.
+- **An effect with an event listener:** `document.addEventListener("visibilitychange", mark)` runs `mark` when you switch tabs. `document.visibilityState` is `"visible"` when the tab is in front. The effect's cleanup removes the listener, so an old page never reacts.
+
+Tests pretend the tab is hidden with `vi.spyOn(document, "visibilityState", "get")`.
+
+Another way to keep a page small is a plain class, like [conversationSync.ts](../../apps/web/src/chat/conversationSync.ts): no React inside, so its rules can be tested without drawing anything. The page creates one with `useState(() => new ConversationSync(...))`: the function runs only once, so the page keeps the same object.
 
 ## Forms
 

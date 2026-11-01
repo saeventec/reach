@@ -60,6 +60,26 @@ Common codes: `not_found`, `invalid_argument` (bad input), `already_exists` (for
 
 The auth service reads at most 16 KiB per message (`connecthttp.WithReadMaxBytes` in [services/auth/main.go](../../services/auth/main.go)). Without a limit, a client could send a message of many megabytes, and the service would read it all into memory before our own rules (like "at most 128 characters") ever run. A bigger message gets the code `resource_exhausted`. The real messages are far smaller: a sign-up is under 1 KiB.
 
+## Internal APIs
+
+Some APIs are for other services only, never for browsers. `auth`'s `UserDirectoryService` ([proto/authinternal/v1/user_directory.proto](../../proto/authinternal/v1/user_directory.proto)) turns usernames into user ids and back, for `chat`. Each service owns its data, so `chat` stores only user ids and asks `auth` for names.
+
+- **Who can call it:** the gateway forwards only `/auth.v1.*` to `auth`. A browser asking for `/authinternal.v1.…` gets a 404 from the web app's server. Inside Compose, every container can call `http://auth:8080/authinternal.v1.…`.
+- **Why a separate package (`authinternal.v1`, not `auth.v1`):** the path decides who can reach it, so internal calls can never end up in the public routes by accident.
+- **Not `auth.internal.v1`:** that would put the Go code in a folder named `internal`. Go has a rule for such folders: only code next to them may import them. `chat` couldn't use it.
+- **The trust model:** like `X-User-Id` ([caddy.md](caddy.md#checking-the-session-at-the-gateway)), it relies on a closed network. Real companies add service-to-service authentication (mutual TLS, or signed service tokens). A good topic once there is a real server or Kubernetes.
+
+Example: what `chat` sends, and what it gets back:
+
+```
+POST http://auth:8080/authinternal.v1.UserDirectoryService/FindUsersByUsername
+{"usernames": [" Bob ", "nobody"]}
+
+{"users": [{"id": "01a1…", "username": "bob"}]}
+```
+
+A username with no account is just missing from the answer, so the caller can say "nobody has the username nobody".
+
 ## The TypeScript client
 
 The web app calls the same API with generated TypeScript code (`apps/web/src/gen/`) and two libraries: `@connectrpc/connect` and `@connectrpc/connect-web` (which sends the calls with the browser's `fetch`).

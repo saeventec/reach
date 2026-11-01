@@ -11,7 +11,7 @@ import (
 
 	"connectrpc.com/connect/v2"
 
-	hellov1 "github.com/saeventec/reach/services/hello/gen/hello/v1"
+	hellov1 "github.com/saeventec/reach/packages/go/gen/hello/v1"
 )
 
 // fakeGreetingStore stands in for the database in tests. It returns
@@ -104,5 +104,25 @@ func TestGetGreetingOverHTTP(t *testing.T) {
 	}
 	if responseBody.ID != testGreeting.id {
 		t.Errorf("id: got %d, want %d", responseBody.ID, testGreeting.id)
+	}
+}
+
+func TestGetGreetingRefusesAHugeRequest(t *testing.T) {
+	store := &fakeGreetingStore{greeting: testGreeting}
+	router := newRouter(store)
+
+	// A JSON object with one unknown field holding 2 KiB of text: over
+	// maximumRequestBytes (1 KiB).
+	padding := strings.Repeat("x", 2*1024)
+	requestBody := strings.NewReader(`{"padding":"` + padding + `"}`)
+	request := httptest.NewRequest(http.MethodPost, "/hello.v1.GreetingService/GetGreeting", requestBody)
+	request.Header.Set("Content-Type", "application/json")
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, request)
+
+	// Connect answers RESOURCE_EXHAUSTED as HTTP 429.
+	if recorder.Code != http.StatusTooManyRequests {
+		t.Errorf("status code: got %d, want %d", recorder.Code, http.StatusTooManyRequests)
 	}
 }

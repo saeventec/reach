@@ -6,7 +6,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -17,13 +16,19 @@ import (
 	"connectrpc.com/connect/v2"
 	"connectrpc.com/connect/v2/connecthttp"
 
-	"github.com/saeventec/reach/services/hello/gen/hello/v1/hellov1connect"
+	// Shared code, from packages/go. Learn more: docs/learn/go.md#sharing-code-between-modules
+	"github.com/saeventec/reach/packages/go/config"
+	"github.com/saeventec/reach/packages/go/database"
+	"github.com/saeventec/reach/packages/go/gen/hello/v1/hellov1connect"
+	"github.com/saeventec/reach/packages/go/health"
+	"github.com/saeventec/reach/packages/go/httpserver"
 )
 
-// shutdownTimeout is how long open requests get to finish when the service
-// is asked to stop. It is shorter than the 10 seconds Docker waits before
-// it kills a container.
-const shutdownTimeout = 5 * time.Second
+// maximumRequestBytes is the largest API message the service reads. Its
+// only call, GetGreeting, has an empty request, so 1 KiB is plenty.
+// Without a limit, a client could send huge messages that use up memory
+// and time. Bigger messages get a RESOURCE_EXHAUSTED error.
+const maximumRequestBytes = 1024
 
 // main is where every Go program starts. It only sets up logging and
 // reports the error from run, so the real work stays easy to test.
@@ -39,8 +44,8 @@ func main() {
 	}
 }
 
-// run connects to the database, starts the HTTP server, and waits until
-// the server fails or is asked to stop.
+// run connects to the database, then runs the HTTP server until it fails or
+// is asked to stop.
 // Learn more: docs/learn/graceful-shutdown.md
 func run() error {
 	// stopSignal is "done" when the operating system asks us to stop:
@@ -48,12 +53,12 @@ func run() error {
 	stopSignal, stopListening := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopListening()
 
-	databaseURL, err := readDatabaseURL()
+	databaseURL, err := config.DatabaseURL()
 	if err != nil {
 		return err
 	}
 
-	pool, err := connectToDatabase(stopSignal, databaseURL)
+	pool, err := database.Connect(stopSignal, databaseURL)
 	if err != nil {
 		return err
 	}
@@ -62,7 +67,7 @@ func run() error {
 
 	greetings := &postgresGreetingStore{pool: pool}
 
-	port := readPort()
+	port := config.Port()
 	address := ":" + port
 
 	server := &http.Server{
@@ -73,55 +78,20 @@ func run() error {
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
-	// The server runs in a goroutine (a function running at the same time as
-	// this one), so run can wait for a stop signal meanwhile. The channel
-	// carries the server's error back to us. It has room for one error, so
-	// the goroutine can always send it and finish, even if nobody reads it.
-	serverErrors := make(chan error, 1)
-	go func() {
-		slog.Info("starting the hello service", "address", address)
-		err := server.ListenAndServe()
-		serverErrors <- err
-	}()
-
-	// Wait for whichever comes first.
-	select {
-	case err := <-serverErrors:
-		return fmt.Errorf("serve http on %s: %w", address, err)
-	case <-stopSignal.Done():
-		slog.Info("stop signal received, shutting down")
-	}
-
-	return shutDown(server)
-}
-
-// shutDown stops accepting new requests, lets open requests finish, and
-// gives up after shutdownTimeout.
-func shutDown(server *http.Server) error {
-	// A context with a deadline: Shutdown gives up when the time runs out.
-	shutdownContext, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-	defer cancel()
-
-	err := server.Shutdown(shutdownContext)
-	if err != nil {
-		return fmt.Errorf("shut down the http server: %w", err)
-	}
-
-	slog.Info("the hello service stopped cleanly")
-	return nil
+	return httpserver.Run(stopSignal, "hello", server)
 }
 
 // newRouter connects each URL path to the code that handles it.
 func newRouter(greetings greetingStore) *http.ServeMux {
 	router := http.NewServeMux()
-	router.HandleFunc("GET /healthz", handleHealth)
+	router.HandleFunc("GET /healthz", health.Handle)
 
 	// The Connect server answers the API calls defined in proto/. Mount adds
 	// one path per call to our router, like /hello.v1.GreetingService/GetGreeting.
 	greetingService := &greetingServer{greetings: greetings}
 	connectServer := connect.NewServer()
 	hellov1connect.RegisterGreetingServiceHandler(connectServer, greetingService)
-	connecthttp.Mount(router, connectServer)
+	connecthttp.Mount(router, connectServer, connecthttp.WithReadMaxBytes(maximumRequestBytes))
 
 	return router
 }

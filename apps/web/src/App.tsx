@@ -3,11 +3,15 @@
 // and docs/learn/react-router.md
 // The class names are Tailwind CSS. Learn more: docs/learn/tailwind.md
 import { useEffect, useState } from "react";
-import { Navigate, Route, Routes } from "react-router";
+import { NavLink, Navigate, Route, Routes, useParams } from "react-router";
 import { AccountPage } from "./auth/AccountPage.tsx";
 import type { AuthApi, User } from "./auth/authClient.ts";
 import { LogInPage } from "./auth/LogInPage.tsx";
 import { SignUpPage } from "./auth/SignUpPage.tsx";
+import type { ChatApi } from "./chat/chatClient.ts";
+import { ConversationListPage } from "./chat/ConversationListPage.tsx";
+import { ConversationPage } from "./chat/ConversationPage.tsx";
+import type { Subscribe } from "./chat/liveUpdates.ts";
 import type { Greeting } from "./greeting/greetingClient.ts";
 import { NewestGreeting } from "./greeting/NewestGreeting.tsx";
 
@@ -21,10 +25,13 @@ type UserState =
 type AppProps = {
   // The API calls. main.tsx passes the real ones; tests pass fakes.
   authApi: AuthApi;
+  chatApi: ChatApi;
+  // Opens the live updates (a WebSocket). Tests pass a fake.
+  subscribe: Subscribe;
   loadGreeting: () => Promise<Greeting>;
 };
 
-function App({ authApi, loadGreeting }: AppProps) {
+function App({ authApi, chatApi, subscribe, loadGreeting }: AppProps) {
   const [userState, setUserState] = useState<UserState>({ status: "loading" });
 
   // Ask the auth service once, when the app starts, who is logged in. The
@@ -76,10 +83,14 @@ function App({ authApi, loadGreeting }: AppProps) {
         </p>
       )}
 
+      {userState.status === "loaded" && userState.user !== null && <MainMenu />}
+
       {userState.status === "loaded" && (
         <AppRoutes
           user={userState.user}
           authApi={authApi}
+          chatApi={chatApi}
+          subscribe={subscribe}
           onLoggedIn={handleLoggedIn}
           onLoggedOut={handleLoggedOut}
         />
@@ -92,9 +103,30 @@ function App({ authApi, loadGreeting }: AppProps) {
   );
 }
 
+// MainMenu links the pages of a logged-in user. NavLink is a Link that
+// knows whether its page is the one showing ("isActive"), to highlight it.
+function MainMenu() {
+  function linkClass({ isActive }: { isActive: boolean }): string {
+    return isActive ? "font-semibold text-slate-900" : "text-blue-600";
+  }
+
+  return (
+    <nav className="flex gap-6">
+      <NavLink to="/chats" className={linkClass}>
+        Chats
+      </NavLink>
+      <NavLink to="/account" className={linkClass}>
+        Account
+      </NavLink>
+    </nav>
+  );
+}
+
 type AppRoutesProps = {
   user: User | null;
   authApi: AuthApi;
+  chatApi: ChatApi;
+  subscribe: Subscribe;
   onLoggedIn: (user: User) => void;
   onLoggedOut: () => void;
 };
@@ -102,17 +134,24 @@ type AppRoutesProps = {
 // The pages, one per address. Each one checks whether someone is logged
 // in, and sends you to the right page if not. <Navigate> changes the
 // address; "replace" means the Back button skips the page that redirected.
-function AppRoutes({ user, authApi, onLoggedIn, onLoggedOut }: AppRoutesProps) {
+function AppRoutes({
+  user,
+  authApi,
+  chatApi,
+  subscribe,
+  onLoggedIn,
+  onLoggedOut,
+}: AppRoutesProps) {
   const isLoggedIn = user !== null;
 
   const logInPage = isLoggedIn ? (
-    <Navigate to="/account" replace />
+    <Navigate to="/chats" replace />
   ) : (
     <LogInPage authApi={authApi} onLoggedIn={onLoggedIn} />
   );
 
   const signUpPage = isLoggedIn ? (
-    <Navigate to="/account" replace />
+    <Navigate to="/chats" replace />
   ) : (
     <SignUpPage authApi={authApi} onLoggedIn={onLoggedIn} />
   );
@@ -123,16 +162,59 @@ function AppRoutes({ user, authApi, onLoggedIn, onLoggedOut }: AppRoutesProps) {
     <Navigate to="/login" replace />
   );
 
+  const chatsPage = isLoggedIn ? (
+    <ConversationListPage user={user} chatApi={chatApi} subscribe={subscribe} />
+  ) : (
+    <Navigate to="/login" replace />
+  );
+
+  const conversationPage = isLoggedIn ? (
+    <ConversationRoute user={user} chatApi={chatApi} subscribe={subscribe} />
+  ) : (
+    <Navigate to="/login" replace />
+  );
+
   // Any other address, like "/", goes to the page that fits.
-  const startPage = isLoggedIn ? "/account" : "/login";
+  const startPage = isLoggedIn ? "/chats" : "/login";
 
   return (
     <Routes>
       <Route path="/login" element={logInPage} />
       <Route path="/signup" element={signUpPage} />
       <Route path="/account" element={accountPage} />
+      <Route path="/chats" element={chatsPage} />
+      {/* ":conversationId" is a URL parameter: any value in that place,
+          like /chats/01a19641-…, opens this page with that id. */}
+      <Route path="/chats/:conversationId" element={conversationPage} />
       <Route path="*" element={<Navigate to={startPage} replace />} />
     </Routes>
+  );
+}
+
+type ConversationRouteProps = {
+  user: User;
+  chatApi: ChatApi;
+  subscribe: Subscribe;
+};
+
+// ConversationRoute reads the id from the address, like /chats/01a19641-….
+function ConversationRoute({
+  user,
+  chatApi,
+  subscribe,
+}: ConversationRouteProps) {
+  const { conversationId = "" } = useParams();
+
+  // "key": when the id changes (another chat is opened), React throws the
+  // old page away and starts a new one, so no messages carry over.
+  return (
+    <ConversationPage
+      key={conversationId}
+      conversationId={conversationId}
+      user={user}
+      chatApi={chatApi}
+      subscribe={subscribe}
+    />
   );
 }
 

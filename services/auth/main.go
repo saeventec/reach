@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -16,14 +15,16 @@ import (
 	"connectrpc.com/connect/v2"
 	"connectrpc.com/connect/v2/connecthttp"
 
-	"github.com/saeventec/reach/services/auth/gen/proto/auth/v1/authv1connect"
+	// Shared code, from packages/go. Learn more: docs/learn/go.md#sharing-code-between-modules
+	"github.com/saeventec/reach/packages/go/config"
+	"github.com/saeventec/reach/packages/go/database"
+	"github.com/saeventec/reach/packages/go/gen/auth/v1/authv1connect"
+	"github.com/saeventec/reach/packages/go/gen/authinternal/v1/authinternalv1connect"
+	"github.com/saeventec/reach/packages/go/health"
+	"github.com/saeventec/reach/packages/go/httpserver"
+
 	"github.com/saeventec/reach/services/auth/gen/queries"
 )
-
-// shutdownTimeout is how long open requests get to finish when the service
-// is asked to stop. It is shorter than the 10 seconds Docker waits before
-// it kills a container.
-const shutdownTimeout = 5 * time.Second
 
 // maximumRequestBytes is the largest API message the service reads. The
 // biggest real one, a sign-up, is under 1 KiB. Without a limit, a client
@@ -45,8 +46,8 @@ func main() {
 	}
 }
 
-// run connects to the database, starts the HTTP server, and waits until
-// the server fails or is asked to stop.
+// run connects to the database, then runs the HTTP server until it fails or
+// is asked to stop.
 // Learn more: docs/learn/graceful-shutdown.md
 func run() error {
 	// stopSignal is "done" when the operating system asks us to stop:
@@ -54,7 +55,7 @@ func run() error {
 	stopSignal, stopListening := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopListening()
 
-	databaseURL, err := readDatabaseURL()
+	databaseURL, err := config.DatabaseURL()
 	if err != nil {
 		return err
 	}
@@ -64,7 +65,7 @@ func run() error {
 		return err
 	}
 
-	pool, err := connectToDatabase(stopSignal, databaseURL)
+	pool, err := database.Connect(stopSignal, databaseURL)
 	if err != nil {
 		return err
 	}
@@ -78,10 +79,14 @@ func run() error {
 
 	// The rate limits keep their counts in memory. A goroutine forgets old
 	// counts every minute, until the stop signal arrives.
-	limiters := newLoginLimiters()
+	ipLimitBurst, err := readIPRateLimitBurst()
+	if err != nil {
+		return err
+	}
+	limiters := newLoginLimiters(ipLimitBurst)
 	go limiters.removeFullBucketsRegularly(stopSignal)
 
-	port := readPort()
+	port := config.Port()
 	address := ":" + port
 
 	server := &http.Server{
@@ -92,48 +97,18 @@ func run() error {
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
-	// The server runs in a goroutine (a function running at the same time as
-	// this one), so run can wait for a stop signal meanwhile. The channel
-	// carries the server's error back to us. It has room for one error, so
-	// the goroutine can always send it and finish, even if nobody reads it.
-	serverErrors := make(chan error, 1)
-	go func() {
-		slog.Info("starting the auth service", "address", address)
-		err := server.ListenAndServe()
-		serverErrors <- err
-	}()
-
-	// Wait for whichever comes first.
-	select {
-	case err := <-serverErrors:
-		return fmt.Errorf("serve http on %s: %w", address, err)
-	case <-stopSignal.Done():
-		slog.Info("stop signal received, shutting down")
-	}
-
-	return shutDown(server)
-}
-
-// shutDown stops accepting new requests, lets open requests finish, and
-// gives up after shutdownTimeout.
-func shutDown(server *http.Server) error {
-	// A context with a deadline: Shutdown gives up when the time runs out.
-	shutdownContext, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-	defer cancel()
-
-	err := server.Shutdown(shutdownContext)
-	if err != nil {
-		return fmt.Errorf("shut down the http server: %w", err)
-	}
-
-	slog.Info("the auth service stopped cleanly")
-	return nil
+	return httpserver.Run(stopSignal, "auth", server)
 }
 
 // newRouter connects each URL path to the code that handles it.
 func newRouter(users userStore, sessions sessionStore, limiters *loginLimiters, secureCookies bool) *http.ServeMux {
 	router := http.NewServeMux()
-	router.HandleFunc("GET /healthz", handleHealth)
+	router.HandleFunc("GET /healthz", health.Handle)
+
+	// The gateway's session check (session_check.go). Caddy only forwards
+	// /auth.v1.* from the browser to this service, so only the gateway can
+	// call it.
+	router.Handle("GET /internal/check-session", &sessionChecker{sessions: sessions})
 
 	// The Connect server answers the API calls defined in proto/. Mount adds
 	// one path per call to our router, like /auth.v1.AccountService/SignUp.
@@ -143,6 +118,10 @@ func newRouter(users userStore, sessions sessionStore, limiters *loginLimiters, 
 
 	sessionService := &sessionServer{users: users, sessions: sessions, limiters: limiters, secureCookies: secureCookies}
 	authv1connect.RegisterSessionServiceHandler(connectServer, sessionService)
+	// The internal API, for other services (user_directory.go).
+	directoryService := &userDirectoryServer{users: users}
+	authinternalv1connect.RegisterUserDirectoryServiceHandler(connectServer, directoryService)
+
 	connecthttp.Mount(router, connectServer, connecthttp.WithReadMaxBytes(maximumRequestBytes))
 
 	return router

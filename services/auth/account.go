@@ -10,7 +10,7 @@ import (
 
 	"connectrpc.com/connect/v2"
 
-	authv1 "github.com/saeventec/reach/services/auth/gen/proto/auth/v1"
+	authv1 "github.com/saeventec/reach/packages/go/gen/auth/v1"
 )
 
 // accountServer implements the generated AccountServiceHandler interface.
@@ -30,7 +30,7 @@ func (server *accountServer) SignUp(ctx context.Context, request *authv1.SignUpR
 	// Sign-ups count toward the same per-address limit as logins, so one
 	// computer can't create accounts in bulk.
 	ip := clientIP(callInfo)
-	if !server.limiters.byIP.take(ip) {
+	if !server.limiters.byIP.Take(ip) {
 		slog.Warn("too many sign-ups from one address", "ip", ip)
 		return nil, connect.NewError(connect.CodeResourceExhausted, tooManyAttemptsMessage)
 	}

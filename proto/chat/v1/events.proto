@@ -1,0 +1,45 @@
+// Events the chat service publishes on NATS, for other services (like
+// realtime, step 9). They are not called by anyone: they are announcements,
+// "this happened". Each event type has its own NATS subject.
+// Learn more: docs/learn/transactional-outbox.md
+syntax = "proto3";
+
+package chat.v1;
+
+import "chat/v1/message.proto";
+
+// MessageSent is published on the subject "chat.message.sent" after a
+// message was stored. It can arrive twice (ADR 0031): a receiver ignores a
+// message id or sequence number it already has.
+message MessageSent {
+  Message message = 1;
+  // The user ids of all the conversation's members, the sender too (so
+  // the sender's other devices show it as well). With them, realtime knows
+  // who to deliver the event to, without asking chat.
+  repeated string member_ids = 2;
+}
+
+// ReceiptUpdated is published on the subject "chat.receipt.updated" when a
+// member's watermarks moved up (see Member in conversation.proto). It
+// carries both watermarks, as they are now, so a receiver that missed an
+// earlier one is right again after this one.
+message ReceiptUpdated {
+  string conversation_id = 1;
+  // Whose watermarks moved.
+  string user_id = 2;
+  int64 delivered_up_to = 3;
+  int64 read_up_to = 4;
+  // All the conversation's members, as in MessageSent: in a group,
+  // everyone sees who has read what.
+  repeated string member_ids = 5;
+}
+
+// ConversationCreated is published on the subject
+// "chat.conversation.created" when a group or a 1:1 chat is created. It
+// only says that it happened, not everything about it: a receiver that
+// wants the details (like the usernames) asks chat's API.
+message ConversationCreated {
+  string conversation_id = 1;
+  // All the new conversation's members, the creator too.
+  repeated string member_ids = 2;
+}

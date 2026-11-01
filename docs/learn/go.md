@@ -18,6 +18,24 @@ It is small enough to learn fully, fast, and very good at handling many connecti
 - **Pointer** (`*` and `&`): `&value` is the address of a value, and `*Type` is "an address of a Type". A function that gets a pointer can change the original value, and big values aren't copied.
 - **Standard library:** Go comes with many ready-made packages, such as `net/http` for web servers and `log/slog` for logs. We prefer them over outside libraries.
 
+## Sharing code between modules
+
+Every service needs the same small things: read its settings, answer `/healthz`, connect to Postgres, stop cleanly. Instead of a copy in each service, they live once in the module `packages/go` ([ADR 0035](../decisions/0035-share-go-code-in-packages-go.md)).
+
+- **Import path:** a package is imported by its module path plus its folder: `github.com/saeventec/reach/packages/go/config`. In the code, you then use the last part as the name: `config.Port()`.
+- **Exported names:** only names that start with a **capital letter** can be used from another package. `config.Port` works; a lowercase `config.defaultPort` doesn't. Inside `package main` we kept everything lowercase, because nothing else imports it.
+- **`replace`:** Go normally downloads a module from the internet, using its path. Our shared module isn't published, so each service's `go.mod` says "use this folder instead":
+
+```
+require github.com/saeventec/reach/packages/go v0.0.0   // v0.0.0: there are no versions, only the folder
+
+replace github.com/saeventec/reach/packages/go => ../../packages/go
+```
+
+A change in `packages/go` reaches every service on its next build, so the code there stays small and tested.
+
+**Alternatives:** a `go.work` file (Go "workspaces": one file lists all modules, nice for editors, awkward in Docker builds), publishing the module with versions (the normal way between separate repos), or copying (fine for two copies, not four).
+
 ## Tiny example
 
 `services/hello/go.mod`:

@@ -1,37 +1,14 @@
 package main
 
-// Configuration comes from environment variables, so the same program runs
-// anywhere. Learn more: docs/learn/environment-variables.md
+// Settings only the auth service has. The ones several services have (the
+// port, the database address) are in packages/go/config.
+// Learn more: docs/learn/environment-variables.md
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
 )
-
-// defaultPort is used when the PORT environment variable is empty.
-const defaultPort = "8080"
-
-// readPort returns the port to listen on, from the PORT environment variable.
-func readPort() string {
-	port := os.Getenv("PORT")
-	if port == "" {
-		return defaultPort
-	}
-	return port
-}
-
-// readDatabaseURL returns the database address, from the DATABASE_URL
-// environment variable. It has no default: it contains a password, so it
-// must always be set on purpose.
-func readDatabaseURL() (string, error) {
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		return "", errors.New("the DATABASE_URL environment variable is not set")
-	}
-	return databaseURL, nil
-}
 
 // readCookieSecure says whether cookies get the Secure flag, which tells the
 // browser to send them only over HTTPS. It comes from the COOKIE_SECURE
@@ -51,4 +28,22 @@ func readCookieSecure() (bool, error) {
 		return false, fmt.Errorf("COOKIE_SECURE must be true or false, not %q", value)
 	}
 	return secure, nil
+}
+
+// readIPRateLimitBurst returns how many logins and sign-ups one address
+// may try at once, from RATE_LIMIT_BURST_PER_IP. Not set: the safe
+// default, 20. Only the end-to-end test system raises it (all its browsers
+// share one address). Learn more: docs/learn/rate-limiting.md#our-limits
+func readIPRateLimitBurst() (int, error) {
+	value := os.Getenv("RATE_LIMIT_BURST_PER_IP")
+	if value == "" {
+		return defaultIPLimitBurst, nil
+	}
+
+	// Atoi ("ASCII to integer") reads a whole number from text.
+	burst, err := strconv.Atoi(value)
+	if err != nil || burst < 1 {
+		return 0, fmt.Errorf("RATE_LIMIT_BURST_PER_IP must be a whole number of 1 or more, not %q", value)
+	}
+	return burst, nil
 }

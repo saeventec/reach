@@ -1,0 +1,113 @@
+// The chat service's API for messages: sending, and reading the history.
+// Learn more: docs/design/m03-real-time-chat.md#3-order-a-sequence-number-per-conversation
+syntax = "proto3";
+
+package chat.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// MessageService sends and lists messages. Every call checks that you are
+// a member of the conversation. If you are not, it fails with NOT_FOUND,
+// the same as for a conversation that doesn't exist, so nobody can find
+// out which conversations exist.
+service MessageService {
+  // SendMessage stores a message and gives it the next sequence number in
+  // its conversation. The app makes the message's id (a UUIDv7) before
+  // sending. Sending the same id again returns the stored message instead
+  // of a copy, so a retry after a network error is safe ("idempotent").
+  // It fails with INVALID_ARGUMENT for an empty text, a text over 4000
+  // characters, or an id that isn't a UUIDv7.
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse) {}
+
+  // ListMessages returns some of a conversation's messages, the oldest
+  // first. Which ones depends on the position (see ListMessagesRequest).
+  rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse) {}
+
+  // MarkDelivered says that your device has received the conversation's
+  // messages up to this sequence number. MarkRead says that you have seen
+  // them on screen (and so also received them). Each moves one of your two
+  // "watermarks" in the conversation (see Member). They only go up: a
+  // smaller number than before changes nothing, so a late or repeated call
+  // is safe. A number past the newest message counts as the newest
+  // message. Both fail with INVALID_ARGUMENT for a sequence below 1.
+  rpc MarkDelivered(MarkDeliveredRequest) returns (MarkDeliveredResponse) {}
+  rpc MarkRead(MarkReadRequest) returns (MarkReadResponse) {}
+}
+
+// SendMessageRequest is one new message.
+message SendMessageRequest {
+  string conversation_id = 1;
+  // Made by the app: a UUIDv7, as text.
+  string message_id = 2;
+  // Spaces and empty lines around it are removed. 1 to 4000 characters.
+  string text = 3;
+}
+
+// SendMessageResponse is the stored message, with its sequence number.
+message SendMessageResponse {
+  Message message = 1;
+}
+
+// ListMessagesRequest says which messages to list.
+message ListMessagesRequest {
+  string conversation_id = 1;
+
+  // "oneof" means at most one of these fields is set, and the receiver
+  // can tell which one (or none). None set: the newest messages, to open
+  // a conversation.
+  oneof position {
+    // The messages after this sequence number: to catch up on what was
+    // missed. 0 means from the first message.
+    int64 after_sequence = 2;
+    // The messages just before this sequence number: to scroll back to
+    // older messages.
+    int64 before_sequence = 3;
+  }
+
+  // How many messages at most: 1 to 100. 0 means the default, 50.
+  int32 limit = 4;
+}
+
+// ListMessagesResponse is one page of messages.
+message ListMessagesResponse {
+  // The oldest first, by sequence number.
+  repeated Message messages = 1;
+  // True if there are more messages in the same direction: newer ones
+  // after an after_sequence, older ones otherwise. Ask again from the
+  // last (or first) message to get them.
+  bool has_more = 2;
+}
+
+// MarkDeliveredRequest: "I received everything up to this message".
+message MarkDeliveredRequest {
+  string conversation_id = 1;
+  int64 sequence = 2;
+}
+
+// MarkDeliveredResponse is empty: the call either worked or failed.
+message MarkDeliveredResponse {}
+
+// MarkReadRequest: "I have seen everything up to this message".
+message MarkReadRequest {
+  string conversation_id = 1;
+  int64 sequence = 2;
+}
+
+// MarkReadResponse is empty, like MarkDeliveredResponse.
+message MarkReadResponse {}
+
+// Message is one message in a conversation.
+message Message {
+  // The id the app made: a UUIDv7, as text.
+  string id = 1;
+  string conversation_id = 2;
+  // The message's place in its conversation: 1, 2, 3 ... Everyone sees the
+  // messages in this order. int64 is a 64-bit whole number; in JSON it is
+  // sent as text ("42"), because JavaScript numbers can't hold every int64.
+  int64 sequence = 3;
+  // The sender's user id. The conversation's members have the usernames.
+  string sender_id = 4;
+  string text = 5;
+  // When the server stored it.
+  google.protobuf.Timestamp sent_at = 6;
+}
