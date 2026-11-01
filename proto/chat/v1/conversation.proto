@@ -27,6 +27,11 @@ service ConversationService {
   // ListConversations returns your conversations, the most recently active
   // first, each with its newest message.
   rpc ListConversations(ListConversationsRequest) returns (ListConversationsResponse) {}
+
+  // GetConversation returns one of your conversations, like an item of
+  // ListConversations: to open its page. It fails with NOT_FOUND for a
+  // conversation you are not in, the same as for one that doesn't exist.
+  rpc GetConversation(GetConversationRequest) returns (GetConversationResponse) {}
 }
 
 // StartDirectConversationRequest names the other person.
@@ -60,6 +65,16 @@ message ListConversationsRequest {}
 // ListConversationsResponse lists your conversations.
 message ListConversationsResponse {
   repeated Conversation conversations = 1;
+}
+
+// GetConversationRequest names the conversation.
+message GetConversationRequest {
+  string conversation_id = 1;
+}
+
+// GetConversationResponse is the conversation.
+message GetConversationResponse {
+  Conversation conversation = 1;
 }
 
 // ConversationKind says whether a conversation is a 1:1 chat or a group.

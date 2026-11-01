@@ -52,6 +52,22 @@ func (server *ConversationServer) CreateGroup(ctx context.Context, request *chat
 	return response, nil
 }
 
+// GetConversation returns one of the caller's conversations.
+func (server *ConversationServer) GetConversation(ctx context.Context, request *chatv1.GetConversationRequest) (*chatv1.GetConversationResponse, error) {
+	userID, err := callerID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	found, err := server.conversations.GetConversation(ctx, userID, request.GetConversationId())
+	if err != nil {
+		return nil, toConnectError(err, "could not get the conversation")
+	}
+
+	response := &chatv1.GetConversationResponse{Conversation: toAPIConversation(found)}
+	return response, nil
+}
+
 // ListConversations returns the caller's conversations.
 func (server *ConversationServer) ListConversations(ctx context.Context, request *chatv1.ListConversationsRequest) (*chatv1.ListConversationsResponse, error) {
 	userID, err := callerID(ctx)

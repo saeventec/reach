@@ -95,6 +95,17 @@ func (store *Store) CreateGroupConversation(ctx context.Context, name string, me
 	return created, nil
 }
 
+// FindConversation returns one conversation, with its members and its
+// newest message.
+func (store *Store) FindConversation(ctx context.Context, conversationID string) (conversation.Conversation, error) {
+	databaseConversationID, err := parseUUID(conversationID)
+	if err != nil {
+		return conversation.Conversation{}, err
+	}
+	databaseQueries := queries.New(store.pool)
+	return findConversation(ctx, databaseQueries, databaseConversationID)
+}
+
 // ListConversationsOfUser returns the user's conversations, the most
 // recently active first, with their members and newest messages.
 func (store *Store) ListConversationsOfUser(ctx context.Context, userID string) ([]conversation.Conversation, error) {

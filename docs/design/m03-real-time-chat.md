@@ -131,6 +131,7 @@ Each member row has two numbers ("watermarks"): `delivered_up_to` and `read_up_t
 | `StartDirectConversation(username)` | Finds or creates the 1:1 with that person |
 | `CreateGroup(name, usernames)` | Creates a group with you and them |
 | `ListConversations()` | Your conversations, newest activity first, with the last message |
+| `GetConversation(conversation_id)` | One of them, to open its page (added at the end of the milestone) |
 | `SendMessage(conversation_id, message_id, text)` | Stores a message (idempotent) |
 | `ListMessages(conversation_id, after or before, limit)` | History: newer than N (catching up) or older than N (scrolling up) |
 | `MarkDelivered(conversation_id, sequence)` / `MarkRead(…)` | Moves your watermarks |

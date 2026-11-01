@@ -24,6 +24,11 @@ type Store interface {
 	// recently active first.
 	ListConversationsOfUser(ctx context.Context, userID string) ([]Conversation, error)
 
+	// FindConversation returns one conversation, with its members and its
+	// newest message. The core calls it only after checking that the
+	// caller is a member, so the conversation exists.
+	FindConversation(ctx context.Context, conversationID string) (Conversation, error)
+
 	// IsMember reports whether the user is a member of the conversation.
 	IsMember(ctx context.Context, conversationID string, userID string) (bool, error)
 

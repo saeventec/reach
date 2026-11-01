@@ -97,6 +97,21 @@ func (service *Service) findGroupMembers(ctx context.Context, callerID string, u
 	return memberIDs, nil
 }
 
+// GetConversation returns one of the caller's conversations.
+func (service *Service) GetConversation(ctx context.Context, callerID string, conversationID string) (Conversation, error) {
+	// Not a member: "not found", like for a conversation that doesn't exist.
+	err := service.checkMember(ctx, callerID, conversationID)
+	if err != nil {
+		return Conversation{}, err
+	}
+
+	found, err := service.store.FindConversation(ctx, conversationID)
+	if err != nil {
+		return Conversation{}, fmt.Errorf("find the conversation: %w", err)
+	}
+	return service.withUsernames(ctx, found)
+}
+
 // ListConversations returns the caller's conversations, the most recently
 // active first.
 func (service *Service) ListConversations(ctx context.Context, callerID string) ([]Conversation, error) {

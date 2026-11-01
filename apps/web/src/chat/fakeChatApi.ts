@@ -9,6 +9,7 @@ export function fakeChatApi(changes: Partial<ChatApi> = {}): ChatApi {
   };
   const defaults: ChatApi = {
     listConversations: notUsedHere,
+    getConversation: notUsedHere,
     startDirectConversation: notUsedHere,
     createGroup: notUsedHere,
     sendMessage: notUsedHere,

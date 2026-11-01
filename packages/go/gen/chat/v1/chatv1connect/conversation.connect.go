@@ -38,6 +38,9 @@ const (
 	// ConversationServiceListConversationsProcedure is the procedure name of the ConversationService's
 	// ListConversations RPC.
 	ConversationServiceListConversationsProcedure = "/chat.v1.ConversationService/ListConversations"
+	// ConversationServiceGetConversationProcedure is the procedure name of the ConversationService's
+	// GetConversation RPC.
+	ConversationServiceGetConversationProcedure = "/chat.v1.ConversationService/GetConversation"
 )
 
 var (
@@ -62,6 +65,13 @@ var (
 			Procedure:  ConversationServiceListConversationsProcedure,
 		}
 	})
+	conversationServiceGetConversationSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_chat_v1_conversation_proto.Services().ByName("ConversationService").Methods().ByName("GetConversation"),
+			Procedure:  ConversationServiceGetConversationProcedure,
+		}
+	})
 )
 
 // ConversationServiceClient is a client for the chat.v1.ConversationService service.
@@ -80,6 +90,10 @@ type ConversationServiceClient interface {
 	// ListConversations returns your conversations, the most recently active
 	// first, each with its newest message.
 	ListConversations(context.Context, *v1.ListConversationsRequest) (*v1.ListConversationsResponse, error)
+	// GetConversation returns one of your conversations, like an item of
+	// ListConversations: to open its page. It fails with NOT_FOUND for a
+	// conversation you are not in, the same as for one that doesn't exist.
+	GetConversation(context.Context, *v1.GetConversationRequest) (*v1.GetConversationResponse, error)
 }
 
 // NewConversationServiceClient constructs a client for the chat.v1.ConversationService service.
@@ -104,6 +118,10 @@ type ConversationServiceHandler interface {
 	// ListConversations returns your conversations, the most recently active
 	// first, each with its newest message.
 	ListConversations(context.Context, *v1.ListConversationsRequest) (*v1.ListConversationsResponse, error)
+	// GetConversation returns one of your conversations, like an item of
+	// ListConversations: to open its page. It fails with NOT_FOUND for a
+	// conversation you are not in, the same as for one that doesn't exist.
+	GetConversation(context.Context, *v1.GetConversationRequest) (*v1.GetConversationResponse, error)
 }
 
 // RegisterConversationServiceHandler registers svc as the chat.v1.ConversationService
@@ -114,6 +132,7 @@ func RegisterConversationServiceHandler(server *connect.Server, svc Conversation
 		connect.Method{Spec: conversationServiceStartDirectConversationSpec(), Handler: adapter.startDirectConversation},
 		connect.Method{Spec: conversationServiceCreateGroupSpec(), Handler: adapter.createGroup},
 		connect.Method{Spec: conversationServiceListConversationsSpec(), Handler: adapter.listConversations},
+		connect.Method{Spec: conversationServiceGetConversationSpec(), Handler: adapter.getConversation},
 	)
 }
 
@@ -130,6 +149,10 @@ func (UnimplementedConversationServiceHandler) CreateGroup(context.Context, *v1.
 
 func (UnimplementedConversationServiceHandler) ListConversations(context.Context, *v1.ListConversationsRequest) (*v1.ListConversationsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "chat.v1.ConversationService.ListConversations is not implemented")
+}
+
+func (UnimplementedConversationServiceHandler) GetConversation(context.Context, *v1.GetConversationRequest) (*v1.GetConversationResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "chat.v1.ConversationService.GetConversation is not implemented")
 }
 
 type conversationServiceClient struct {
@@ -155,6 +178,14 @@ func (c *conversationServiceClient) CreateGroup(ctx context.Context, req *v1.Cre
 func (c *conversationServiceClient) ListConversations(ctx context.Context, req *v1.ListConversationsRequest) (*v1.ListConversationsResponse, error) {
 	var res v1.ListConversationsResponse
 	if err := c.client.CallUnary(ctx, conversationServiceListConversationsSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *conversationServiceClient) GetConversation(ctx context.Context, req *v1.GetConversationRequest) (*v1.GetConversationResponse, error) {
+	var res v1.GetConversationResponse
+	if err := c.client.CallUnary(ctx, conversationServiceGetConversationSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -192,6 +223,18 @@ func (h conversationServiceHandler) listConversations(ctx context.Context, _ con
 		return err
 	}
 	res, err := h.svc.ListConversations(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h conversationServiceHandler) getConversation(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.GetConversationRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.GetConversation(ctx, &req)
 	if err != nil {
 		return err
 	}

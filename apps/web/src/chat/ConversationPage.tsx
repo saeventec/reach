@@ -65,13 +65,8 @@ export function ConversationPage({
 
     async function load() {
       try {
-        // The conversation's name and members come from the list: chat has
-        // no "get one conversation" call yet, and the list is small.
-        const conversations = await chatApi.listConversations();
-        const found = conversations.find(
-          (conversation) => conversation.id === conversationId,
-        );
-        if (found === undefined) {
+        const found = await chatApi.getConversation(conversationId);
+        if (found === null) {
           if (!ignore) {
             setPageState({ status: "notFound" });
           }

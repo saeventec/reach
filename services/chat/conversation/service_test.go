@@ -171,3 +171,36 @@ func memberUsernames(conversation Conversation) []string {
 	}
 	return usernames
 }
+
+func TestGetConversation(t *testing.T) {
+	t.Run("returns a member's conversation, with usernames", func(t *testing.T) {
+		service := NewService(newFakeStore(), newFakeDirectory())
+		chat, err := service.StartDirectConversation(t.Context(), alice.ID, "bob")
+		if err != nil {
+			t.Fatalf("start: %v", err)
+		}
+
+		found, err := service.GetConversation(t.Context(), bob.ID, chat.ID)
+
+		if err != nil {
+			t.Fatalf("got error %v, want none", err)
+		}
+		if found.ID != chat.ID || found.Members[0].Username == "" {
+			t.Errorf("got %+v, want the chat with usernames", found)
+		}
+	})
+
+	t.Run("answers not found to someone who isn't a member", func(t *testing.T) {
+		service := NewService(newFakeStore(), newFakeDirectory())
+		chat, err := service.StartDirectConversation(t.Context(), alice.ID, "bob")
+		if err != nil {
+			t.Fatalf("start: %v", err)
+		}
+
+		_, err = service.GetConversation(t.Context(), carol.ID, chat.ID)
+
+		if !errors.Is(err, ErrNotFound) {
+			t.Errorf("got error %v, want not found", err)
+		}
+	})
+}

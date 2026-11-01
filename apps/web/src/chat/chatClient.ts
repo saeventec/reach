@@ -3,7 +3,7 @@
 // tells chat who you are (ADR 0029). Learn more: docs/learn/connect-rpc.md
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
-import { createClient } from "@connectrpc/connect";
+import { Code, ConnectError, createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import {
   ConversationKind,
@@ -70,6 +70,8 @@ export type MessagePage = {
 // below); tests pass fakes. Learn more: docs/learn/testing.md#fakes
 export type ChatApi = {
   listConversations: () => Promise<Conversation[]>;
+  // Returns null for a conversation you are not in (or that doesn't exist).
+  getConversation: (conversationId: string) => Promise<Conversation | null>;
   startDirectConversation: (username: string) => Promise<Conversation>;
   createGroup: (name: string, usernames: string[]) => Promise<Conversation>;
   // messageId is made by the app (newUUIDv7), so a retry sends the same
@@ -95,6 +97,24 @@ async function listConversations(): Promise<Conversation[]> {
   const response = await conversationClient.listConversations({});
   const conversations = response.conversations.map(toConversation);
   return conversations;
+}
+
+async function getConversation(
+  conversationId: string,
+): Promise<Conversation | null> {
+  try {
+    const response = await conversationClient.getConversation({
+      conversationId,
+    });
+    return toConversation(required(response.conversation));
+  } catch (error) {
+    // "Not found" is a normal answer here, not a failure.
+    const connectError = ConnectError.from(error);
+    if (connectError.code === Code.NotFound) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 async function startDirectConversation(
@@ -159,6 +179,7 @@ async function markRead(
 // The real API calls, for the app.
 export const chatApi: ChatApi = {
   listConversations,
+  getConversation,
   startDirectConversation,
   createGroup,
   sendMessage,

@@ -52,7 +52,7 @@ function message(sequence: bigint, senderId: string, text: string): Message {
 // replaces the calls it cares about.
 function chatApi(changes: Partial<ChatApi> = {}): ChatApi {
   return fakeChatApi({
-    listConversations: async () => [chatWithBob],
+    getConversation: async () => chatWithBob,
     listMessages: async () => ({
       messages: [message(1n, bobId, "hi alice"), message(2n, alice.id, "hey")],
       hasMore: false,
@@ -117,7 +117,7 @@ test("shows the chat's name and its messages", async () => {
 });
 
 test("says so for a chat you are not in", async () => {
-  renderPage(chatApi({ listConversations: async () => [] }));
+  renderPage(chatApi({ getConversation: async () => null }));
 
   await screen.findByText("You have no chat with this address.");
 });
@@ -281,7 +281,7 @@ test("shows delivered, then read, as bob's watermarks move", async () => {
   };
   const { live, subscribe } = fakeLiveUpdates();
   renderPage(
-    chatApi({ listConversations: async () => [withBobsWatermarks] }),
+    chatApi({ getConversation: async () => withBobsWatermarks }),
     subscribe,
   );
   await screen.findByLabelText("Delivered");

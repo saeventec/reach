@@ -19,7 +19,7 @@ import type { Message, UnknownEnum } from "@bufbuild/protobuf";
  * Describes the file chat/v1/conversation.proto.
  */
 export const file_chat_v1_conversation: GenFile = /*@__PURE__*/
-  fileDesc("ChpjaGF0L3YxL2NvbnZlcnNhdGlvbi5wcm90bxIHY2hhdC52MSIyCh5TdGFydERpcmVjdENvbnZlcnNhdGlvblJlcXVlc3QSEAoIdXNlcm5hbWUYASABKAkiTgofU3RhcnREaXJlY3RDb252ZXJzYXRpb25SZXNwb25zZRIrCgxjb252ZXJzYXRpb24YASABKAsyFS5jaGF0LnYxLkNvbnZlcnNhdGlvbiI1ChJDcmVhdGVHcm91cFJlcXVlc3QSDAoEbmFtZRgBIAEoCRIRCgl1c2VybmFtZXMYAiADKAkiQgoTQ3JlYXRlR3JvdXBSZXNwb25zZRIrCgxjb252ZXJzYXRpb24YASABKAsyFS5jaGF0LnYxLkNvbnZlcnNhdGlvbiIaChhMaXN0Q29udmVyc2F0aW9uc1JlcXVlc3QiSQoZTGlzdENvbnZlcnNhdGlvbnNSZXNwb25zZRIsCg1jb252ZXJzYXRpb25zGAEgAygLMhUuY2hhdC52MS5Db252ZXJzYXRpb24ihwIKDENvbnZlcnNhdGlvbhIKCgJpZBgBIAEoCRInCgRraW5kGAIgASgOMhkuY2hhdC52MS5Db252ZXJzYXRpb25LaW5kEhIKCmdyb3VwX25hbWUYAyABKAkSIAoHbWVtYmVycxgEIAMoCzIPLmNoYXQudjEuTWVtYmVyEi4KCmNyZWF0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjQKEGxhc3RfYWN0aXZpdHlfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiYKDGxhc3RfbWVzc2FnZRgHIAEoCzIQLmNoYXQudjEuTWVzc2FnZSJYCgZNZW1iZXISDwoHdXNlcl9pZBgBIAEoCRIQCgh1c2VybmFtZRgCIAEoCRIXCg9kZWxpdmVyZWRfdXBfdG8YAyABKAMSEgoKcmVhZF91cF90bxgEIAEoAypwChBDb252ZXJzYXRpb25LaW5kEiEKHUNPTlZFUlNBVElPTl9LSU5EX1VOU1BFQ0lGSUVEEAASHAoYQ09OVkVSU0FUSU9OX0tJTkRfRElSRUNUEAESGwoXQ09OVkVSU0FUSU9OX0tJTkRfR1JPVVAQAjKvAgoTQ29udmVyc2F0aW9uU2VydmljZRJuChdTdGFydERpcmVjdENvbnZlcnNhdGlvbhInLmNoYXQudjEuU3RhcnREaXJlY3RDb252ZXJzYXRpb25SZXF1ZXN0GiguY2hhdC52MS5TdGFydERpcmVjdENvbnZlcnNhdGlvblJlc3BvbnNlIgASSgoLQ3JlYXRlR3JvdXASGy5jaGF0LnYxLkNyZWF0ZUdyb3VwUmVxdWVzdBocLmNoYXQudjEuQ3JlYXRlR3JvdXBSZXNwb25zZSIAElwKEUxpc3RDb252ZXJzYXRpb25zEiEuY2hhdC52MS5MaXN0Q29udmVyc2F0aW9uc1JlcXVlc3QaIi5jaGF0LnYxLkxpc3RDb252ZXJzYXRpb25zUmVzcG9uc2UiAEKYAQoLY29tLmNoYXQudjFCEUNvbnZlcnNhdGlvblByb3RvUAFaOWdpdGh1Yi5jb20vc2FldmVudGVjL3JlYWNoL3BhY2thZ2VzL2dvL2dlbi9jaGF0L3YxO2NoYXR2MaICA0NYWKoCB0NoYXQuVjHKAgdDaGF0XFYx4gITQ2hhdFxWMVxHUEJNZXRhZGF0YeoCCENoYXQ6OlYxYgZwcm90bzM", [file_chat_v1_message, file_google_protobuf_timestamp]);
+  fileDesc("ChpjaGF0L3YxL2NvbnZlcnNhdGlvbi5wcm90bxIHY2hhdC52MSIyCh5TdGFydERpcmVjdENvbnZlcnNhdGlvblJlcXVlc3QSEAoIdXNlcm5hbWUYASABKAkiTgofU3RhcnREaXJlY3RDb252ZXJzYXRpb25SZXNwb25zZRIrCgxjb252ZXJzYXRpb24YASABKAsyFS5jaGF0LnYxLkNvbnZlcnNhdGlvbiI1ChJDcmVhdGVHcm91cFJlcXVlc3QSDAoEbmFtZRgBIAEoCRIRCgl1c2VybmFtZXMYAiADKAkiQgoTQ3JlYXRlR3JvdXBSZXNwb25zZRIrCgxjb252ZXJzYXRpb24YASABKAsyFS5jaGF0LnYxLkNvbnZlcnNhdGlvbiIaChhMaXN0Q29udmVyc2F0aW9uc1JlcXVlc3QiSQoZTGlzdENvbnZlcnNhdGlvbnNSZXNwb25zZRIsCg1jb252ZXJzYXRpb25zGAEgAygLMhUuY2hhdC52MS5Db252ZXJzYXRpb24iMQoWR2V0Q29udmVyc2F0aW9uUmVxdWVzdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkiRgoXR2V0Q29udmVyc2F0aW9uUmVzcG9uc2USKwoMY29udmVyc2F0aW9uGAEgASgLMhUuY2hhdC52MS5Db252ZXJzYXRpb24ihwIKDENvbnZlcnNhdGlvbhIKCgJpZBgBIAEoCRInCgRraW5kGAIgASgOMhkuY2hhdC52MS5Db252ZXJzYXRpb25LaW5kEhIKCmdyb3VwX25hbWUYAyABKAkSIAoHbWVtYmVycxgEIAMoCzIPLmNoYXQudjEuTWVtYmVyEi4KCmNyZWF0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjQKEGxhc3RfYWN0aXZpdHlfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiYKDGxhc3RfbWVzc2FnZRgHIAEoCzIQLmNoYXQudjEuTWVzc2FnZSJYCgZNZW1iZXISDwoHdXNlcl9pZBgBIAEoCRIQCgh1c2VybmFtZRgCIAEoCRIXCg9kZWxpdmVyZWRfdXBfdG8YAyABKAMSEgoKcmVhZF91cF90bxgEIAEoAypwChBDb252ZXJzYXRpb25LaW5kEiEKHUNPTlZFUlNBVElPTl9LSU5EX1VOU1BFQ0lGSUVEEAASHAoYQ09OVkVSU0FUSU9OX0tJTkRfRElSRUNUEAESGwoXQ09OVkVSU0FUSU9OX0tJTkRfR1JPVVAQAjKHAwoTQ29udmVyc2F0aW9uU2VydmljZRJuChdTdGFydERpcmVjdENvbnZlcnNhdGlvbhInLmNoYXQudjEuU3RhcnREaXJlY3RDb252ZXJzYXRpb25SZXF1ZXN0GiguY2hhdC52MS5TdGFydERpcmVjdENvbnZlcnNhdGlvblJlc3BvbnNlIgASSgoLQ3JlYXRlR3JvdXASGy5jaGF0LnYxLkNyZWF0ZUdyb3VwUmVxdWVzdBocLmNoYXQudjEuQ3JlYXRlR3JvdXBSZXNwb25zZSIAElwKEUxpc3RDb252ZXJzYXRpb25zEiEuY2hhdC52MS5MaXN0Q29udmVyc2F0aW9uc1JlcXVlc3QaIi5jaGF0LnYxLkxpc3RDb252ZXJzYXRpb25zUmVzcG9uc2UiABJWCg9HZXRDb252ZXJzYXRpb24SHy5jaGF0LnYxLkdldENvbnZlcnNhdGlvblJlcXVlc3QaIC5jaGF0LnYxLkdldENvbnZlcnNhdGlvblJlc3BvbnNlIgBCmAEKC2NvbS5jaGF0LnYxQhFDb252ZXJzYXRpb25Qcm90b1ABWjlnaXRodWIuY29tL3NhZXZlbnRlYy9yZWFjaC9wYWNrYWdlcy9nby9nZW4vY2hhdC92MTtjaGF0djGiAgNDWFiqAgdDaGF0LlYxygIHQ2hhdFxWMeICE0NoYXRcVjFcR1BCTWV0YWRhdGHqAghDaGF0OjpWMWIGcHJvdG8z", [file_chat_v1_message, file_google_protobuf_timestamp]);
 
 /**
  * StartDirectConversationRequest names the other person.
@@ -144,6 +144,44 @@ export const ListConversationsResponseSchema: GenMessage<ListConversationsRespon
   messageDesc(file_chat_v1_conversation, 5);
 
 /**
+ * GetConversationRequest names the conversation.
+ *
+ * @generated from message chat.v1.GetConversationRequest
+ */
+export type GetConversationRequest = Message<"chat.v1.GetConversationRequest"> & {
+  /**
+   * @generated from field: string conversation_id = 1;
+   */
+  conversationId: string;
+};
+
+/**
+ * Describes the message chat.v1.GetConversationRequest.
+ * Use `create(GetConversationRequestSchema)` to create a new message.
+ */
+export const GetConversationRequestSchema: GenMessage<GetConversationRequest> = /*@__PURE__*/
+  messageDesc(file_chat_v1_conversation, 6);
+
+/**
+ * GetConversationResponse is the conversation.
+ *
+ * @generated from message chat.v1.GetConversationResponse
+ */
+export type GetConversationResponse = Message<"chat.v1.GetConversationResponse"> & {
+  /**
+   * @generated from field: chat.v1.Conversation conversation = 1;
+   */
+  conversation?: Conversation | undefined;
+};
+
+/**
+ * Describes the message chat.v1.GetConversationResponse.
+ * Use `create(GetConversationResponseSchema)` to create a new message.
+ */
+export const GetConversationResponseSchema: GenMessage<GetConversationResponse> = /*@__PURE__*/
+  messageDesc(file_chat_v1_conversation, 7);
+
+/**
  * Conversation is a 1:1 chat or a group.
  *
  * @generated from message chat.v1.Conversation
@@ -203,7 +241,7 @@ export type Conversation = Message<"chat.v1.Conversation"> & {
  * Use `create(ConversationSchema)` to create a new message.
  */
 export const ConversationSchema: GenMessage<Conversation> = /*@__PURE__*/
-  messageDesc(file_chat_v1_conversation, 6);
+  messageDesc(file_chat_v1_conversation, 8);
 
 /**
  * Member is one person in a conversation.
@@ -246,7 +284,7 @@ export type Member = Message<"chat.v1.Member"> & {
  * Use `create(MemberSchema)` to create a new message.
  */
 export const MemberSchema: GenMessage<Member> = /*@__PURE__*/
-  messageDesc(file_chat_v1_conversation, 7);
+  messageDesc(file_chat_v1_conversation, 9);
 
 /**
  * ConversationKind says whether a conversation is a 1:1 chat or a group.
@@ -330,6 +368,18 @@ export const ConversationService: GenService<{
     methodKind: "unary";
     input: typeof ListConversationsRequestSchema;
     output: typeof ListConversationsResponseSchema;
+  },
+  /**
+   * GetConversation returns one of your conversations, like an item of
+   * ListConversations: to open its page. It fails with NOT_FOUND for a
+   * conversation you are not in, the same as for one that doesn't exist.
+   *
+   * @generated from rpc chat.v1.ConversationService.GetConversation
+   */
+  getConversation: {
+    methodKind: "unary";
+    input: typeof GetConversationRequestSchema;
+    output: typeof GetConversationResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_chat_v1_conversation, 0);

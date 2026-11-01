@@ -132,6 +132,15 @@ func copyConversation(conversation Conversation) Conversation {
 	return conversation
 }
 
+func (store *fakeStore) FindConversation(ctx context.Context, conversationID string) (Conversation, error) {
+	for _, conversation := range store.conversations {
+		if conversation.ID == conversationID {
+			return copyConversation(conversation), nil
+		}
+	}
+	return Conversation{}, fmt.Errorf("no conversation %s", conversationID)
+}
+
 func (store *fakeStore) IsMember(ctx context.Context, conversationID string, userID string) (bool, error) {
 	for _, conversation := range store.conversations {
 		if conversation.ID != conversationID {

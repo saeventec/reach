@@ -104,6 +104,22 @@ func TestStore(t *testing.T) {
 		}
 	})
 
+	t.Run("finds one conversation by its id", func(t *testing.T) {
+		group, err := store.CreateGroupConversation(t.Context(), "Found", []string{aliceID, carolID})
+		if err != nil {
+			t.Fatalf("create: %v", err)
+		}
+
+		found, err := store.FindConversation(t.Context(), group.ID)
+
+		if err != nil {
+			t.Fatalf("find: %v", err)
+		}
+		if found.GroupName != "Found" || len(found.Members) != 2 {
+			t.Errorf("got %+v, want the group Found with 2 members", found)
+		}
+	})
+
 	t.Run("lists only a user's own conversations, the newest first", func(t *testing.T) {
 		erin := "01a00000-0000-7000-8000-00000000000e"
 		frank := "01a00000-0000-7000-8000-00000000000f"
