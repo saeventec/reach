@@ -26,7 +26,7 @@ func TestMessageStore(t *testing.T) {
 	}
 
 	pool := startTestDatabase(t)
-	store := NewStore(pool)
+	store := NewStore(pool, nil)
 
 	// newGroup creates a conversation for alice and bob.
 	newGroup := func(t *testing.T, name string) conversation.Conversation {

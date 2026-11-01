@@ -48,3 +48,4 @@ Your personal textbook. One short note per concept or tool, written the first ti
 - [NATS and JetStream](nats.md)
 - [Hexagonal architecture](hexagonal-architecture.md)
 - [Message ordering and idempotency](message-ordering.md)
+- [The transactional outbox](transactional-outbox.md)

@@ -50,3 +50,11 @@ SELECT conversation_id, user_id
 FROM members
 WHERE conversation_id = ANY(sqlc.arg(conversation_ids)::uuid[])
 ORDER BY conversation_id, joined_at, user_id;
+
+-- name: ListMemberIDs :many
+-- The user ids of one conversation's members: for the events, which say
+-- who to deliver them to.
+SELECT user_id
+FROM members
+WHERE conversation_id = sqlc.arg(conversation_id)
+ORDER BY joined_at, user_id;

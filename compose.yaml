@@ -2,7 +2,7 @@
 # Each entry under "services" becomes one container.
 # Start order: postgres (healthy) → postgres-setup (finished) →
 # hello-migrate, auth-migrate and chat-migrate (finished) → hello, auth
-# and chat.
+# and chat. chat also waits for nats (healthy).
 # nats, web and gateway start right away. Open http://localhost:8080.
 # Learn more: docs/learn/docker-compose.md
 
@@ -58,8 +58,9 @@ services:
 
   # NATS: the "post office" between services. A service publishes an event
   # (like "a message was sent") and every service that subscribed gets it.
-  # JetStream, built into NATS, also keeps the events on disk. Nothing uses
-  # it yet: chat and realtime come next. Learn more: docs/learn/nats.md
+  # JetStream, built into NATS, also keeps the events on disk. chat
+  # publishes its events here; realtime (next step) will read them.
+  # Learn more: docs/learn/nats.md
   nats:
     # The Alpine variant includes a shell and wget, for the health check.
     # The default "nats" image contains only the server program.
@@ -189,6 +190,9 @@ services:
       DATABASE_URL: postgres://chat:${CHAT_DATABASE_PASSWORD}@postgres:5432/chat?sslmode=disable
       # chat asks auth for usernames (its internal API), by its Compose name.
       AUTH_URL: http://auth:8080
+      # chat publishes its events to NATS, by its Compose name. 4222 is
+      # NATS's port for programs.
+      NATS_URL: nats://nats:4222
     # No "ports", on purpose: chat trusts the X-User-Id header, which only
     # the gateway may set (ADR 0029). With a published port, anyone could
     # call chat directly and pretend to be any user.
@@ -206,9 +210,12 @@ services:
         - action: rebuild
           path: ./packages/go
     depends_on:
-      # Start only after the migrations finished without an error.
+      # Start only after the migrations finished without an error, and
+      # NATS is ready (chat creates its JetStream stream when it starts).
       chat-migrate:
         condition: service_completed_successfully
+      nats:
+        condition: service_healthy
 
   # The web app's development server (Vite). Reached through the gateway.
   web:

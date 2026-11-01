@@ -74,17 +74,26 @@ func (store *Store) SaveMessage(ctx context.Context, newMessage conversation.New
 			return fmt.Errorf("create the message: %w", err)
 		}
 		saved = toMessage(row)
-		return nil
+
+		// The event, in the same transaction: either the message and its
+		// event are both saved, or neither (ADR 0031).
+		return saveMessageSentEvent(ctx, transactionQueries, saved)
 	})
 
 	// The same id was stored a moment ago, by a request that ran at the
 	// same time (the primary key refused this copy). The transaction was
-	// undone, also the +1 on the counter. Return the stored message.
+	// undone: the +1 on the counter and the event too. Return the stored
+	// message.
 	if isUniqueViolation(err) {
 		existing, _, findErr := store.findMessage(ctx, parameters.ID.String())
 		return existing, findErr
 	}
-	return saved, err
+	if err != nil {
+		return conversation.Message{}, err
+	}
+
+	store.wakeRelay()
+	return saved, nil
 }
 
 // ListMessages returns the messages the query asks for, the oldest first.

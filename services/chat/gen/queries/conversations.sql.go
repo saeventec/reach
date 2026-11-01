@@ -149,6 +149,35 @@ func (q *Queries) ListConversationsOfUser(ctx context.Context, userID pgtype.UUI
 	return items, nil
 }
 
+const listMemberIDs = `-- name: ListMemberIDs :many
+SELECT user_id
+FROM members
+WHERE conversation_id = $1
+ORDER BY joined_at, user_id
+`
+
+// The user ids of one conversation's members: for the events, which say
+// who to deliver them to.
+func (q *Queries) ListMemberIDs(ctx context.Context, conversationID pgtype.UUID) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, listMemberIDs, conversationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []pgtype.UUID
+	for rows.Next() {
+		var user_id pgtype.UUID
+		if err := rows.Scan(&user_id); err != nil {
+			return nil, err
+		}
+		items = append(items, user_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listMembersOfConversations = `-- name: ListMembersOfConversations :many
 SELECT conversation_id, user_id
 FROM members

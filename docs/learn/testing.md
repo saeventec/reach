@@ -111,6 +111,7 @@ testcontainers.CleanupContainer(t, container) // remove it when the test ends
 
 - **One container, many cases:** starting Postgres takes a few seconds, so `TestPostgresStores` starts it once, and each case is a **subtest** (`t.Run("refuses an expired session", ...)`). Each case uses its own usernames, so they don't get in each other's way.
 - **They need Docker running.** `go test -short ./...` skips them (`testing.Short()`), for a quick run without Docker. `task test` and CI run them.
+- **NATS too.** [services/chat/natspublisher/publisher_integration_test.go](../../services/chat/natspublisher/publisher_integration_test.go) starts a NATS server the same way, with Testcontainers' NATS module (`testnats.Run`).
 - **They test what fakes can't:** the SQL (an expired session is refused, a user can't delete another user's session), the migrations, and the database's own rules (`UNIQUE`, `CHECK`).
 - **Break it on purpose:** a test is only useful if it can fail. Removing `AND user_id = ...` from `DeleteSession` makes "a user can't delete another user's session" fail with "frank's session was deleted by another user". Try it yourself, then put the line back.
 

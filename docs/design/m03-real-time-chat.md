@@ -97,7 +97,9 @@ The problem: saving to Postgres and publishing to NATS are two different systems
 
 - The relay can publish an event twice (published, then crashed before marking it). So events are delivered "at least once", and receivers must ignore duplicates: the browser ignores a sequence number it already has.
 - The relay can be woken right away after a send (a Go channel), and also checks every second, so events are fast and never stuck.
-- The event code sits behind a small Go interface (`eventPublisher`), so Kafka can replace NATS later (milestone 12).
+- The event code sits behind a small Go interface (`outbox.Publisher`; first called `eventPublisher` here), so Kafka can replace NATS later (milestone 12).
+- Added while building (step 8): each event is published with its outbox id as the JetStream message id (`Nats-Msg-Id`), so JetStream itself drops most copies. The stream `CHAT` keeps `chat.>` for 24 hours, because the history is in Postgres. The relay reads rows without locking them (no `FOR UPDATE SKIP LOCKED`): with one copy of `chat` there is nothing to share, and with two, the message id drops the copies.
+- Each event comes with the step that first needs it: `chat.message.sent` in step 8, `chat.receipt.updated` in step 10, `chat.conversation.created` in step 11 (a new chat appears live in the list).
 
 ### 6. Live delivery: the `realtime` service and WebSocket
 

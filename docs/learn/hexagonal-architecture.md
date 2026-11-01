@@ -34,6 +34,8 @@ In `services/chat/`:
 | `postgres/` | **adapter** (driven) | Implements `Store` with the chat database and sqlc |
 | `authclient/` | **adapter** (driven) | Implements `UserDirectory` by calling auth's internal API |
 | `api/` | **adapter** (driving) | Offers the core to browsers as the `chat.v1` Connect API |
+| `outbox/` | **adapter** (driven) | Turns changes into events, and its relay publishes them. It has its own two ports: `outbox.Store` and `outbox.Publisher` |
+| `natspublisher/` | **adapter** (driven) | Implements `outbox.Publisher` with NATS JetStream |
 | `main.go` | wiring | Creates the adapters and plugs them into the core |
 
 - **Driving** adapters call the core (the API: a request comes in). **Driven** adapters are called by the core (the database: the core needs data).
@@ -64,12 +66,14 @@ func (directory *Directory) FindUsersByUsername(ctx context.Context, usernames [
 `main.go` plugs them together:
 
 ```go
-store := postgres.NewStore(pool)
+store := postgres.NewStore(pool, eventSaved)
 directory := authclient.NewDirectory(authURL)
 conversations := conversation.NewService(store, directory)
 ```
 
 And a test plugs in fakes instead, with no database and no auth (`conversation/fakes_test.go`).
+
+The events (step 8) are not part of the core: the core doesn't know they exist. The `postgres` adapter saves the event in the same transaction as the message, and the relay, in `outbox/`, publishes it. So swapping NATS for Kafka means one new adapter for the `outbox.Publisher` port, and nothing else changes. See [the transactional outbox](transactional-outbox.md).
 
 ## Compared with auth's flat style
 

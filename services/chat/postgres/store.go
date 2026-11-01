@@ -16,14 +16,19 @@ import (
 	"github.com/saeventec/reach/services/chat/gen/queries"
 )
 
-// Store keeps conversations in Postgres. It implements conversation.Store.
+// Store keeps conversations in Postgres. It implements conversation.Store,
+// and outbox.Store for the relay.
 type Store struct {
-	pool *pgxpool.Pool
+	pool       *pgxpool.Pool
+	eventSaved chan<- struct{}
 }
 
-// NewStore creates a store that uses this connection pool.
-func NewStore(pool *pgxpool.Pool) *Store {
-	return &Store{pool: pool}
+// NewStore creates a store that uses this connection pool. After saving an
+// event in the outbox, it sends a value on eventSaved, to wake the relay.
+// "chan<-" means the store can only send on the channel. It may be nil
+// (in tests): then nobody is woken.
+func NewStore(pool *pgxpool.Pool, eventSaved chan<- struct{}) *Store {
+	return &Store{pool: pool, eventSaved: eventSaved}
 }
 
 // FindOrCreateDirectConversation returns the 1:1 conversation with this

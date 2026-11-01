@@ -41,7 +41,7 @@ func TestStore(t *testing.T) {
 	}
 
 	pool := startTestDatabase(t)
-	store := NewStore(pool)
+	store := NewStore(pool, nil)
 
 	// Each subtest uses its own people, so they can share one database.
 

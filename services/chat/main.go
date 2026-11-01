@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -26,6 +27,8 @@ import (
 	"github.com/saeventec/reach/services/chat/api"
 	"github.com/saeventec/reach/services/chat/authclient"
 	"github.com/saeventec/reach/services/chat/conversation"
+	"github.com/saeventec/reach/services/chat/natspublisher"
+	"github.com/saeventec/reach/services/chat/outbox"
 	"github.com/saeventec/reach/services/chat/postgres"
 )
 
@@ -49,8 +52,8 @@ func main() {
 	}
 }
 
-// run connects the parts, then runs the HTTP server until it fails or is
-// asked to stop.
+// run connects the parts, then runs the outbox relay and the HTTP server
+// until the server fails or the service is asked to stop.
 // Learn more: docs/learn/graceful-shutdown.md
 func run() error {
 	// stopSignal is "done" when the operating system asks us to stop:
@@ -68,6 +71,11 @@ func run() error {
 		return err
 	}
 
+	natsURL, err := readNATSURL()
+	if err != nil {
+		return err
+	}
+
 	pool, err := database.Connect(stopSignal, databaseURL)
 	if err != nil {
 		return err
@@ -75,12 +83,24 @@ func run() error {
 	// Close the database connections last, after the server has stopped.
 	defer pool.Close()
 
+	publisher, err := natspublisher.Connect(stopSignal, natsURL)
+	if err != nil {
+		return err
+	}
+	defer publisher.Close()
+
+	// The store sends on this channel after saving an event, to wake the
+	// relay at once. Room for one value: see Store.wakeRelay.
+	eventSaved := make(chan struct{}, 1)
+
 	// The hexagon: the core gets its two adapters (the database and the
-	// auth service), and the API adapter gets the core.
+	// auth service), and the API adapter gets the core. The relay reads
+	// the events from the database and publishes them to NATS.
 	// Learn more: docs/learn/hexagonal-architecture.md
-	store := postgres.NewStore(pool)
+	store := postgres.NewStore(pool, eventSaved)
 	directory := authclient.NewDirectory(authURL)
 	conversations := conversation.NewService(store, directory)
+	relay := outbox.NewRelay(store, publisher, eventSaved)
 
 	port := config.Port()
 	address := ":" + port
@@ -93,7 +113,21 @@ func run() error {
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
-	return httpserver.Run(stopSignal, "chat", server)
+	// The relay runs in its own goroutine, next to the server. Its context
+	// is stopped when the service stops, and also if the server fails.
+	relayContext, stopRelay := context.WithCancel(stopSignal)
+	var relayRunning sync.WaitGroup
+	relayRunning.Go(func() {
+		relay.Run(relayContext)
+	})
+
+	err = httpserver.Run(stopSignal, "chat", server)
+
+	// Wait for the relay to finish its work before the deferred lines
+	// close NATS and the database.
+	stopRelay()
+	relayRunning.Wait()
+	return err
 }
 
 // newRouter connects each URL path to the code that handles it.

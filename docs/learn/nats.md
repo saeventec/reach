@@ -29,7 +29,7 @@ In [compose.yaml](../../compose.yaml), NATS runs as one container, started with 
 
 ## Tiny example
 
-The idea in Go, with the official `nats.go` library (used from step 8 on):
+The idea in Go, with the official `nats.go` library, core NATS only (`chat` uses JetStream, see below):
 
 ```go
 connection, err := nats.Connect("nats://nats:4222")
@@ -42,6 +42,23 @@ subscription, err := connection.Subscribe("chat.>", func(message *nats.Msg) {
 // chat: announce a new message.
 err = connection.Publish("chat.message.sent", eventBytes)
 ```
+
+## JetStream in chat
+
+`chat` publishes its events with JetStream, in [services/chat/natspublisher/publisher.go](../../services/chat/natspublisher/publisher.go). The library is `nats.go` (v1.55.0), with its `jetstream` package. It replaces an older JetStream API (`nats.JetStreamContext`), which the library calls "legacy".
+
+- **The stream is made by code.** When `chat` starts, `CreateOrUpdateStream` creates the stream `CHAT`, or updates its settings if it exists. Nobody sets it up by hand (Golden rule 8). Look at it at http://localhost:8222/jsz?streams=true.
+- **Its settings:** it keeps every subject that starts with `chat.` (`chat.>`), on disk (the default), for **24 hours** (`MaxAge`). Events are only for live updates: the full history is in Postgres. Without a limit, the stream would keep every event forever.
+- **The ack.** A JetStream publish waits for an answer: "stored". Only then does the relay mark the event published. With core NATS, a publish is "fire and forget": nobody confirms anything, so the relay couldn't know. If no answer comes within 5 seconds (the library's default), the publish fails and the relay tries again.
+- **Dropping copies.** Each event carries a message id, the `Nats-Msg-Id` header: its outbox row id. JetStream remembers the ids of the last **2 minutes** (the default "duplicate window") and drops a second message with a known id. The answer still says "stored" (with `Duplicate: true`), so the relay marks it published as normal.
+- **While NATS is down,** the library reconnects on its own and holds new publishes until then. The events wait in the outbox meanwhile. See [the transactional outbox](transactional-outbox.md).
+
+```go
+// Publish and wait for the ack. WithMsgID lets JetStream drop a copy.
+_, err := jetStream.Publish(ctx, "chat.message.sent", payload, jetstream.WithMsgID("42"))
+```
+
+Core NATS subscribers also get every message published to the stream's subjects. So `realtime` can simply subscribe to `chat.>` (step 9).
 
 ## Delivery guarantees
 

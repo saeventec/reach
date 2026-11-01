@@ -34,3 +34,11 @@ type Message struct {
 	Text           string
 	SentAt         time.Time
 }
+
+type Outbox struct {
+	ID          int64
+	Subject     string
+	Payload     []byte
+	CreatedAt   time.Time
+	PublishedAt pgtype.Timestamptz
+}

@@ -1,0 +1,20 @@
+// Events the chat service publishes on NATS, for other services (like
+// realtime, step 9). They are not called by anyone: they are announcements,
+// "this happened". Each event type has its own NATS subject.
+// Learn more: docs/learn/transactional-outbox.md
+syntax = "proto3";
+
+package chat.v1;
+
+import "chat/v1/message.proto";
+
+// MessageSent is published on the subject "chat.message.sent" after a
+// message was stored. It can arrive twice (ADR 0031): a receiver ignores a
+// message id or sequence number it already has.
+message MessageSent {
+  Message message = 1;
+  // The user ids of all the conversation's members, the sender too (so
+  // the sender's other devices show it as well). With them, realtime knows
+  // who to deliver the event to, without asking chat.
+  repeated string member_ids = 2;
+}

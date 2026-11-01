@@ -19,3 +19,13 @@ func readAuthURL() (string, error) {
 	}
 	return authURL, nil
 }
+
+// readNATSURL returns the NATS server's address, like "nats://nats:4222",
+// from the NATS_URL environment variable. Like AUTH_URL, it has no default.
+func readNATSURL() (string, error) {
+	natsURL := os.Getenv("NATS_URL")
+	if natsURL == "" {
+		return "", errors.New("the NATS_URL environment variable is not set")
+	}
+	return natsURL, nil
+}

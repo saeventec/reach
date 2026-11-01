@@ -146,6 +146,14 @@ The username rule uses a **regular expression** (a small pattern language for te
 | `sa..dra`, `sa._dra` | refused: two separators in a row |
 | `ab` | refused: too short |
 
+### Identity columns, bytea and partial indexes
+
+The `outbox` table ([services/chat/migrations/00003_create_outbox.sql](../../services/chat/migrations/00003_create_outbox.sql)) uses three more ideas:
+
+- **`bigint GENERATED ALWAYS AS IDENTITY`:** the database numbers the rows 1, 2, 3 ... on its own. Here a plain number is right: nobody outside the database makes these ids, and the order matters. (`SERIAL` is the older way to do the same.)
+- **`bytea`:** raw bytes, for the event's Protobuf data. It isn't text, so a `text` column would refuse some of the bytes.
+- **A partial index:** `CREATE INDEX ... ON outbox (id) WHERE published_at IS NULL` only covers the rows that still wait. The relay asks for exactly those every second, so the question stays fast, even with millions of published rows in the table.
+
 ## Transactions
 
 A **transaction** is a group of changes that is saved all together, or not at all. Creating a group writes several rows: one in `conversations`, and one in `members` per person. If the program crashes after the second member, a transaction makes sure no half-made group stays behind.
