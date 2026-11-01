@@ -10,6 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/saeventec/reach/services/auth/gen/queries"
 )
@@ -44,6 +45,11 @@ type loginUser struct {
 type userStore interface {
 	CreateUser(ctx context.Context, username string, passwordHash string) (createdUser, error)
 	FindUserByUsername(ctx context.Context, username string) (loginUser, error)
+
+	// "Embedding" an interface adds all its methods to this one. The
+	// directory only needs these two, so it asks for the smaller interface
+	// (user_directory.go).
+	userDirectoryStore
 }
 
 // postgresUserStore keeps the accounts in the auth database.
@@ -104,4 +110,45 @@ func isUniqueViolation(err error) bool {
 		return false
 	}
 	return postgresError.Code == uniqueViolationCode
+}
+
+// FindUsersByUsernames returns the accounts with these usernames. Usernames
+// with no account are left out.
+func (store *postgresUserStore) FindUsersByUsernames(ctx context.Context, usernames []string) ([]publicUser, error) {
+	rows, err := store.queries.FindUsersByUsernames(ctx, usernames)
+	if err != nil {
+		return nil, fmt.Errorf("find users by username: %w", err)
+	}
+
+	users := make([]publicUser, 0, len(rows))
+	for _, row := range rows {
+		user := publicUser{id: row.ID.String(), username: row.Username}
+		users = append(users, user)
+	}
+	return users, nil
+}
+
+// FindUsersByIDs returns the accounts with these ids. Ids with no account
+// are left out. It returns errInvalidUUID if an id isn't a UUID.
+func (store *postgresUserStore) FindUsersByIDs(ctx context.Context, userIDs []string) ([]publicUser, error) {
+	databaseIDs := make([]pgtype.UUID, 0, len(userIDs))
+	for _, userID := range userIDs {
+		databaseID, err := parseUUID(userID)
+		if err != nil {
+			return nil, err
+		}
+		databaseIDs = append(databaseIDs, databaseID)
+	}
+
+	rows, err := store.queries.FindUsersByIDs(ctx, databaseIDs)
+	if err != nil {
+		return nil, fmt.Errorf("find users by id: %w", err)
+	}
+
+	users := make([]publicUser, 0, len(rows))
+	for _, row := range rows {
+		user := publicUser{id: row.ID.String(), username: row.Username}
+		users = append(users, user)
+	}
+	return users, nil
 }

@@ -23,6 +23,11 @@ type fakeUserStore struct {
 
 	// foundUser is what FindUserByUsername returns when err is nil.
 	foundUser loginUser
+
+	// What the directory's lookups were asked for, and what they return.
+	lookedUpUsernames []string
+	lookedUpUserIDs   []string
+	foundUsers        []publicUser
 }
 
 func (store *fakeUserStore) CreateUser(ctx context.Context, username string, passwordHash string) (createdUser, error) {
@@ -41,6 +46,22 @@ func (store *fakeUserStore) FindUserByUsername(ctx context.Context, username str
 		return loginUser{}, store.err
 	}
 	return store.foundUser, nil
+}
+
+func (store *fakeUserStore) FindUsersByUsernames(ctx context.Context, usernames []string) ([]publicUser, error) {
+	if store.err != nil {
+		return nil, store.err
+	}
+	store.lookedUpUsernames = usernames
+	return store.foundUsers, nil
+}
+
+func (store *fakeUserStore) FindUsersByIDs(ctx context.Context, userIDs []string) ([]publicUser, error) {
+	if store.err != nil {
+		return nil, store.err
+	}
+	store.lookedUpUserIDs = userIDs
+	return store.foundUsers, nil
 }
 
 // testUserID is the id the fake store gives every new account.

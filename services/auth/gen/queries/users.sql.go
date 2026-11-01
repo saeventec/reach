@@ -58,3 +58,70 @@ func (q *Queries) FindUserByUsername(ctx context.Context, username string) (Find
 	err := row.Scan(&i.ID, &i.Username, &i.PasswordHash)
 	return i, err
 }
+
+const findUsersByIDs = `-- name: FindUsersByIDs :many
+SELECT id, username
+FROM users
+WHERE id = ANY($1::uuid[])
+`
+
+type FindUsersByIDsRow struct {
+	ID       pgtype.UUID
+	Username string
+}
+
+// Finds the accounts with any of these ids, for other services.
+func (q *Queries) FindUsersByIDs(ctx context.Context, userIds []pgtype.UUID) ([]FindUsersByIDsRow, error) {
+	rows, err := q.db.Query(ctx, findUsersByIDs, userIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FindUsersByIDsRow
+	for rows.Next() {
+		var i FindUsersByIDsRow
+		if err := rows.Scan(&i.ID, &i.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const findUsersByUsernames = `-- name: FindUsersByUsernames :many
+SELECT id, username
+FROM users
+WHERE username = ANY($1::text[])
+`
+
+type FindUsersByUsernamesRow struct {
+	ID       pgtype.UUID
+	Username string
+}
+
+// Finds the accounts with any of these usernames, for other services
+// (user_directory.go). "= ANY(array)" means "equals one of the array's
+// values". "::text[]" tells sqlc and Postgres that the argument is an
+// array of text. Only the public columns, never the password hash.
+func (q *Queries) FindUsersByUsernames(ctx context.Context, usernames []string) ([]FindUsersByUsernamesRow, error) {
+	rows, err := q.db.Query(ctx, findUsersByUsernames, usernames)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FindUsersByUsernamesRow
+	for rows.Next() {
+		var i FindUsersByUsernamesRow
+		if err := rows.Scan(&i.ID, &i.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

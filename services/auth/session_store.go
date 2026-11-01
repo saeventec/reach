@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/saeventec/reach/services/auth/gen/queries"
 )
@@ -145,14 +144,4 @@ func (store *postgresSessionStore) DeleteSession(ctx context.Context, sessionID 
 		return errNoSession
 	}
 	return nil
-}
-
-// parseUUID turns a UUID in text form into the type the queries use.
-func parseUUID(text string) (pgtype.UUID, error) {
-	var id pgtype.UUID
-	err := id.Scan(text)
-	if err != nil {
-		return pgtype.UUID{}, fmt.Errorf("read the uuid %q: %w", text, err)
-	}
-	return id, nil
 }

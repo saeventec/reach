@@ -75,7 +75,7 @@ Today only `auth` reads the session cookie. `chat` and `realtime` must know the 
 | `messages` | message (append-only) | `id` (made by the client), `conversation_id`, `sequence`, `sender_id`, `text`, `sent_at` |
 | `outbox` | event waiting to be published | `id`, `subject`, `payload` (Protobuf bytes), `created_at`, `published_at` |
 
-- **Usernames:** `chat` stores user ids only. To turn "bob" into an id (and an id back into a name for the screen), it calls `auth` with Connect RPC: a new internal `auth.internal.v1.UserDirectoryService`. Caddy routes only `/auth.v1.*`, so the browser can't reach it.
+- **Usernames:** `chat` stores user ids only. To turn "bob" into an id (and an id back into a name for the screen), it calls `auth` with Connect RPC: a new internal `authinternal.v1.UserDirectoryService`. Caddy routes only `/auth.v1.*`, so the browser can't reach it. (Changed while building: the first idea, `auth.internal.v1`, would put the Go code in a folder named `internal`, which Go lets only nearby code import.)
 - **One 1:1 per pair:** `direct_pair_key` is the two user ids, sorted and joined. A `UNIQUE` constraint means a second "start a chat with bob" finds the existing conversation.
 
 ### 3. Order: a sequence number per conversation

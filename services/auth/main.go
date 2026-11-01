@@ -19,6 +19,7 @@ import (
 	"github.com/saeventec/reach/packages/go/config"
 	"github.com/saeventec/reach/packages/go/database"
 	"github.com/saeventec/reach/packages/go/gen/auth/v1/authv1connect"
+	"github.com/saeventec/reach/packages/go/gen/authinternal/v1/authinternalv1connect"
 	"github.com/saeventec/reach/packages/go/health"
 	"github.com/saeventec/reach/packages/go/httpserver"
 
@@ -113,6 +114,10 @@ func newRouter(users userStore, sessions sessionStore, limiters *loginLimiters, 
 
 	sessionService := &sessionServer{users: users, sessions: sessions, limiters: limiters, secureCookies: secureCookies}
 	authv1connect.RegisterSessionServiceHandler(connectServer, sessionService)
+	// The internal API, for other services (user_directory.go).
+	directoryService := &userDirectoryServer{users: users}
+	authinternalv1connect.RegisterUserDirectoryServiceHandler(connectServer, directoryService)
+
 	connecthttp.Mount(router, connectServer, connecthttp.WithReadMaxBytes(maximumRequestBytes))
 
 	return router

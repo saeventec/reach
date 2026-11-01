@@ -1,0 +1,54 @@
+// The auth service's internal API: for other services, never for browsers.
+// The gateway only forwards /auth.v1.* to auth, so a browser can't reach
+// /authinternal.v1.*. Inside Compose, every service can call it.
+// Learn more: docs/learn/connect-rpc.md#internal-apis
+syntax = "proto3";
+
+package authinternal.v1;
+
+// UserDirectoryService turns usernames into user ids and back. Other
+// services only store user ids (each service owns its own data), so they
+// ask auth when they need a name. chat uses it (milestone 3).
+service UserDirectoryService {
+  // FindUsersByUsername returns the users with these usernames. A username
+  // with no account is left out of the answer, without an error, so the
+  // caller sees which ones are missing. It fails with INVALID_ARGUMENT for
+  // more than 100 usernames.
+  rpc FindUsersByUsername(FindUsersByUsernameRequest) returns (FindUsersByUsernameResponse) {}
+
+  // FindUsersById returns the users with these ids. An id with no account
+  // is left out of the answer. It fails with INVALID_ARGUMENT for more than
+  // 100 ids, or for an id that isn't a UUID.
+  rpc FindUsersById(FindUsersByIdRequest) returns (FindUsersByIdResponse) {}
+}
+
+// FindUsersByUsernameRequest lists the usernames to look up.
+message FindUsersByUsernameRequest {
+  // As typed by a person. auth removes spaces around them and makes them
+  // lowercase, like at login.
+  repeated string usernames = 1;
+}
+
+// FindUsersByUsernameResponse lists the users that were found.
+message FindUsersByUsernameResponse {
+  repeated User users = 1;
+}
+
+// FindUsersByIdRequest lists the user ids to look up.
+message FindUsersByIdRequest {
+  // UUIDv7s, as text.
+  repeated string user_ids = 1;
+}
+
+// FindUsersByIdResponse lists the users that were found.
+message FindUsersByIdResponse {
+  repeated User users = 1;
+}
+
+// User is the public part of an account: no password hash, no sessions.
+message User {
+  // A UUIDv7, as text.
+  string id = 1;
+  // The stored username: lowercase.
+  string username = 2;
+}
