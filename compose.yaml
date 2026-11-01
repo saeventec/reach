@@ -2,7 +2,7 @@
 # Each entry under "services" becomes one container.
 # Start order: postgres (healthy) → postgres-setup (finished) →
 # hello-migrate and auth-migrate (finished) → hello and auth.
-# web and gateway start right away. Open http://localhost:8080.
+# nats, web and gateway start right away. Open http://localhost:8080.
 # Learn more: docs/learn/docker-compose.md
 
 services:
@@ -53,6 +53,33 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+  # NATS: the "post office" between services. A service publishes an event
+  # (like "a message was sent") and every service that subscribed gets it.
+  # JetStream, built into NATS, also keeps the events on disk. Nothing uses
+  # it yet: chat and realtime come next. Learn more: docs/learn/nats.md
+  nats:
+    # The Alpine variant includes a shell and wget, for the health check.
+    # The default "nats" image contains only the server program.
+    image: nats:2.15.2-alpine3.22
+    # Arguments for nats-server. They replace the image's default
+    # configuration file, which doesn't turn JetStream on.
+    # -js: turn JetStream on. -sd: keep its data in /data.
+    # -m: serve the monitoring pages (and /healthz) on port 8222.
+    command: ["-js", "-sd", "/data", "-m", "8222"]
+    ports:
+      # The monitoring pages, for you to look at in the browser:
+      # http://localhost:8222. Only your own computer can reach them.
+      # Services connect on port 4222, inside Compose only.
+      - "127.0.0.1:8222:8222"
+    volumes:
+      # Keep JetStream's events between restarts, like postgres-data.
+      - nats-data:/data
+    healthcheck:
+      # /healthz answers 200 once the server (and JetStream) is ready.
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8222/healthz"]
+      start_period: 30s
+      start_interval: 1s
 
   # Applies the hello database migrations once, then exits.
   hello-migrate:
@@ -175,3 +202,4 @@ services:
 # Named volumes: storage that Docker manages, kept between restarts.
 volumes:
   postgres-data:
+  nats-data:
