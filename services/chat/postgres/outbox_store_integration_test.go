@@ -6,6 +6,7 @@ package postgres
 import (
 	"slices"
 	"testing"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 
@@ -164,6 +165,53 @@ func TestOutboxStore(t *testing.T) {
 		left := listUnpublished(t)
 		if len(left) != 0 {
 			t.Errorf("got %d events, want 0", len(left))
+		}
+	})
+
+	t.Run("cleanup deletes only events published before the cutoff", func(t *testing.T) {
+		// Three events: published long ago, published just now, and waiting.
+		for number := 2; number <= 4; number++ {
+			waiting := conversation.NewMessage{ID: testMessageID(9, number), ConversationID: group.ID, SenderID: aliceID, Text: "hi"}
+			_, err := store.SaveMessage(t.Context(), waiting)
+			if err != nil {
+				t.Fatalf("save: %v", err)
+			}
+		}
+		events := listUnpublished(t)
+		if len(events) != 3 {
+			t.Fatalf("got %d waiting events, want 3", len(events))
+		}
+		oldID := events[0].ID
+		recentID := events[1].ID
+		for _, eventID := range []int64{oldID, recentID} {
+			err := store.MarkEventPublished(t.Context(), eventID)
+			if err != nil {
+				t.Fatalf("mark: %v", err)
+			}
+		}
+		// Make the first one old, straight in the table.
+		_, err := pool.Exec(t.Context(), "UPDATE outbox SET published_at = now() - interval '30 days' WHERE id = $1", oldID)
+		if err != nil {
+			t.Fatalf("make the event old: %v", err)
+		}
+
+		cutoff := time.Now().Add(-24 * time.Hour)
+		deleted, err := store.DeletePublishedEvents(t.Context(), cutoff)
+		if err != nil {
+			t.Fatalf("delete: %v", err)
+		}
+
+		if deleted != 1 {
+			t.Errorf("deleted %d events, want 1 (only the old published one)", deleted)
+		}
+		var remaining int
+		row := pool.QueryRow(t.Context(), "SELECT count(*) FROM outbox WHERE id = ANY($1)", []int64{oldID, recentID, events[2].ID})
+		err = row.Scan(&remaining)
+		if err != nil {
+			t.Fatalf("count: %v", err)
+		}
+		if remaining != 2 {
+			t.Errorf("got %d of the three events left, want 2", remaining)
 		}
 	})
 }

@@ -6,6 +6,9 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/saeventec/reach/services/chat/conversation"
 	"github.com/saeventec/reach/services/chat/gen/queries"
@@ -37,6 +40,21 @@ func (store *Store) MarkEventPublished(ctx context.Context, eventID int64) error
 		return fmt.Errorf("mark the event published: %w", err)
 	}
 	return nil
+}
+
+// DeletePublishedEvents deletes the events published before cutoff, and
+// returns how many. It implements outbox.CleanupStore.
+func (store *Store) DeletePublishedEvents(ctx context.Context, cutoff time.Time) (int64, error) {
+	// published_at can be NULL, so sqlc uses pgtype.Timestamptz for it, not
+	// time.Time. Valid: true means "this is a real time, not NULL".
+	databaseCutoff := pgtype.Timestamptz{Time: cutoff, Valid: true}
+
+	databaseQueries := queries.New(store.pool)
+	deleted, err := databaseQueries.DeletePublishedEvents(ctx, databaseCutoff)
+	if err != nil {
+		return 0, fmt.Errorf("delete the published events: %w", err)
+	}
+	return deleted, nil
 }
 
 // saveMessageSentEvent saves the event that announces a new message, with

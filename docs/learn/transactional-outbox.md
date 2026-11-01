@@ -94,9 +94,9 @@ err := store.inTransaction(ctx, func(transactionQueries *queries.Queries) error 
 - **Claiming rows with `SELECT ... FOR UPDATE SKIP LOCKED`:** with several copies of `chat`, each relay would take different rows. We don't need it yet: with two copies, both relays may publish the same event, and JetStream drops the copy. A good exercise when we run two copies.
 - **Postgres `LISTEN`/`NOTIFY` to wake the relay:** works across several copies of `chat`. The Go channel only wakes the relay in the same program, which is all we need with one copy.
 
-## Later
+## Cleaning up
 
-- Published rows pile up. For now we keep them. Deleting rows older than a few days is a small later job.
+Published rows would pile up forever. Every hour, `chat` deletes the events published more than **7 days** ago ([services/chat/outbox/cleanup.go](../../services/chat/outbox/cleanup.go)). Waiting events are never deleted: `published_at IS NULL` is not "before" any time. The 7 days are kept on purpose, to look at recent events when something goes wrong.
 
 ## Learn more
 

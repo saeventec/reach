@@ -15,3 +15,10 @@ LIMIT sqlc.arg(maximum_count);
 UPDATE outbox
 SET published_at = now()
 WHERE id = sqlc.arg(id);
+
+-- name: DeletePublishedEvents :execrows
+-- Deletes the events published before the cutoff, and returns how many.
+-- Unpublished events are never deleted (published_at IS NULL is not
+-- before anything).
+DELETE FROM outbox
+WHERE published_at < sqlc.arg(cutoff);

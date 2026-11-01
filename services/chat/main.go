@@ -103,6 +103,9 @@ func run() error {
 	conversations := conversation.NewService(store, directory)
 	relay := outbox.NewRelay(store, publisher, eventSaved)
 
+	// Published events are kept for 7 days, then deleted, every hour.
+	go outbox.RemovePublishedEventsRegularly(stopSignal, store)
+
 	// The limit on sending keeps its counts in memory, like auth's limits.
 	// A goroutine forgets old counts every minute, until the stop signal.
 	sendLimiter := api.NewSendLimiter()

@@ -26,3 +26,4 @@ When a message is saved, `chat` must also publish an event on NATS, so `realtime
 - Events are delivered "at least once": the relay can publish one twice (published, then crashed before marking it). Every receiver must ignore duplicates; the browser does it by sequence number.
 - The publishing code sits behind a small interface, so Kafka can replace NATS later.
 - Published rows pile up. For now we keep them; deleting old rows is a small later job.
+  - Update (2026-11-01, end of milestone 3): done. Events published more than 7 days ago are deleted every hour.

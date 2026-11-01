@@ -7,6 +7,8 @@ package queries
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createOutboxEvent = `-- name: CreateOutboxEvent :exec
@@ -23,6 +25,22 @@ type CreateOutboxEventParams struct {
 func (q *Queries) CreateOutboxEvent(ctx context.Context, arg CreateOutboxEventParams) error {
 	_, err := q.db.Exec(ctx, createOutboxEvent, arg.Subject, arg.Payload)
 	return err
+}
+
+const deletePublishedEvents = `-- name: DeletePublishedEvents :execrows
+DELETE FROM outbox
+WHERE published_at < $1
+`
+
+// Deletes the events published before the cutoff, and returns how many.
+// Unpublished events are never deleted (published_at IS NULL is not
+// before anything).
+func (q *Queries) DeletePublishedEvents(ctx context.Context, cutoff pgtype.Timestamptz) (int64, error) {
+	result, err := q.db.Exec(ctx, deletePublishedEvents, cutoff)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const listUnpublishedEvents = `-- name: ListUnpublishedEvents :many
