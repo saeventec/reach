@@ -32,6 +32,11 @@ const (
 	// MessageServiceListMessagesProcedure is the procedure name of the MessageService's ListMessages
 	// RPC.
 	MessageServiceListMessagesProcedure = "/chat.v1.MessageService/ListMessages"
+	// MessageServiceMarkDeliveredProcedure is the procedure name of the MessageService's MarkDelivered
+	// RPC.
+	MessageServiceMarkDeliveredProcedure = "/chat.v1.MessageService/MarkDelivered"
+	// MessageServiceMarkReadProcedure is the procedure name of the MessageService's MarkRead RPC.
+	MessageServiceMarkReadProcedure = "/chat.v1.MessageService/MarkRead"
 )
 
 var (
@@ -49,6 +54,20 @@ var (
 			Procedure:  MessageServiceListMessagesProcedure,
 		}
 	})
+	messageServiceMarkDeliveredSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_chat_v1_message_proto.Services().ByName("MessageService").Methods().ByName("MarkDelivered"),
+			Procedure:  MessageServiceMarkDeliveredProcedure,
+		}
+	})
+	messageServiceMarkReadSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_chat_v1_message_proto.Services().ByName("MessageService").Methods().ByName("MarkRead"),
+			Procedure:  MessageServiceMarkReadProcedure,
+		}
+	})
 )
 
 // MessageServiceClient is a client for the chat.v1.MessageService service.
@@ -63,6 +82,15 @@ type MessageServiceClient interface {
 	// ListMessages returns some of a conversation's messages, the oldest
 	// first. Which ones depends on the position (see ListMessagesRequest).
 	ListMessages(context.Context, *v1.ListMessagesRequest) (*v1.ListMessagesResponse, error)
+	// MarkDelivered says that your device has received the conversation's
+	// messages up to this sequence number. MarkRead says that you have seen
+	// them on screen (and so also received them). Each moves one of your two
+	// "watermarks" in the conversation (see Member). They only go up: a
+	// smaller number than before changes nothing, so a late or repeated call
+	// is safe. A number past the newest message counts as the newest
+	// message. Both fail with INVALID_ARGUMENT for a sequence below 1.
+	MarkDelivered(context.Context, *v1.MarkDeliveredRequest) (*v1.MarkDeliveredResponse, error)
+	MarkRead(context.Context, *v1.MarkReadRequest) (*v1.MarkReadResponse, error)
 }
 
 // NewMessageServiceClient constructs a client for the chat.v1.MessageService service. Multiple
@@ -83,6 +111,15 @@ type MessageServiceHandler interface {
 	// ListMessages returns some of a conversation's messages, the oldest
 	// first. Which ones depends on the position (see ListMessagesRequest).
 	ListMessages(context.Context, *v1.ListMessagesRequest) (*v1.ListMessagesResponse, error)
+	// MarkDelivered says that your device has received the conversation's
+	// messages up to this sequence number. MarkRead says that you have seen
+	// them on screen (and so also received them). Each moves one of your two
+	// "watermarks" in the conversation (see Member). They only go up: a
+	// smaller number than before changes nothing, so a late or repeated call
+	// is safe. A number past the newest message counts as the newest
+	// message. Both fail with INVALID_ARGUMENT for a sequence below 1.
+	MarkDelivered(context.Context, *v1.MarkDeliveredRequest) (*v1.MarkDeliveredResponse, error)
+	MarkRead(context.Context, *v1.MarkReadRequest) (*v1.MarkReadResponse, error)
 }
 
 // RegisterMessageServiceHandler registers svc as the chat.v1.MessageService implementation on
@@ -92,6 +129,8 @@ func RegisterMessageServiceHandler(server *connect.Server, svc MessageServiceHan
 	server.Register(
 		connect.Method{Spec: messageServiceSendMessageSpec(), Handler: adapter.sendMessage},
 		connect.Method{Spec: messageServiceListMessagesSpec(), Handler: adapter.listMessages},
+		connect.Method{Spec: messageServiceMarkDeliveredSpec(), Handler: adapter.markDelivered},
+		connect.Method{Spec: messageServiceMarkReadSpec(), Handler: adapter.markRead},
 	)
 }
 
@@ -104,6 +143,14 @@ func (UnimplementedMessageServiceHandler) SendMessage(context.Context, *v1.SendM
 
 func (UnimplementedMessageServiceHandler) ListMessages(context.Context, *v1.ListMessagesRequest) (*v1.ListMessagesResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "chat.v1.MessageService.ListMessages is not implemented")
+}
+
+func (UnimplementedMessageServiceHandler) MarkDelivered(context.Context, *v1.MarkDeliveredRequest) (*v1.MarkDeliveredResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "chat.v1.MessageService.MarkDelivered is not implemented")
+}
+
+func (UnimplementedMessageServiceHandler) MarkRead(context.Context, *v1.MarkReadRequest) (*v1.MarkReadResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "chat.v1.MessageService.MarkRead is not implemented")
 }
 
 type messageServiceClient struct {
@@ -121,6 +168,22 @@ func (c *messageServiceClient) SendMessage(ctx context.Context, req *v1.SendMess
 func (c *messageServiceClient) ListMessages(ctx context.Context, req *v1.ListMessagesRequest) (*v1.ListMessagesResponse, error) {
 	var res v1.ListMessagesResponse
 	if err := c.client.CallUnary(ctx, messageServiceListMessagesSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *messageServiceClient) MarkDelivered(ctx context.Context, req *v1.MarkDeliveredRequest) (*v1.MarkDeliveredResponse, error) {
+	var res v1.MarkDeliveredResponse
+	if err := c.client.CallUnary(ctx, messageServiceMarkDeliveredSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *messageServiceClient) MarkRead(ctx context.Context, req *v1.MarkReadRequest) (*v1.MarkReadResponse, error) {
+	var res v1.MarkReadResponse
+	if err := c.client.CallUnary(ctx, messageServiceMarkReadSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -146,6 +209,30 @@ func (h messageServiceHandler) listMessages(ctx context.Context, _ connect.Spec,
 		return err
 	}
 	res, err := h.svc.ListMessages(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h messageServiceHandler) markDelivered(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.MarkDeliveredRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.MarkDelivered(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h messageServiceHandler) markRead(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.MarkReadRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.MarkRead(ctx, &req)
 	if err != nil {
 		return err
 	}

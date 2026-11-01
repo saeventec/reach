@@ -218,6 +218,73 @@ func (q *Queries) ListNewestMessages(ctx context.Context, arg ListNewestMessages
 	return items, nil
 }
 
+const markDelivered = `-- name: MarkDelivered :one
+UPDATE members
+SET delivered_up_to = LEAST($1, conversations.last_sequence)
+FROM conversations
+WHERE members.conversation_id = conversations.id
+  AND members.conversation_id = $2
+  AND members.user_id = $3
+  AND LEAST($1, conversations.last_sequence) > members.delivered_up_to
+RETURNING members.delivered_up_to, members.read_up_to
+`
+
+type MarkDeliveredParams struct {
+	Sequence       int64
+	ConversationID pgtype.UUID
+	UserID         pgtype.UUID
+}
+
+type MarkDeliveredRow struct {
+	DeliveredUpTo int64
+	ReadUpTo      int64
+}
+
+// Moves the member's delivered watermark up. LEAST(…) cuts a number past
+// the newest message down to the newest one, so a buggy app can't mark
+// future messages. The last WHERE line makes it change only if the number
+// really goes up: then it returns the watermarks; otherwise it returns no
+// row. The UPDATE locks the member's row, so two calls at the same moment
+// take turns, and the second one sees the first one's number.
+func (q *Queries) MarkDelivered(ctx context.Context, arg MarkDeliveredParams) (MarkDeliveredRow, error) {
+	row := q.db.QueryRow(ctx, markDelivered, arg.Sequence, arg.ConversationID, arg.UserID)
+	var i MarkDeliveredRow
+	err := row.Scan(&i.DeliveredUpTo, &i.ReadUpTo)
+	return i, err
+}
+
+const markRead = `-- name: MarkRead :one
+UPDATE members
+SET read_up_to = LEAST($1, conversations.last_sequence),
+    delivered_up_to = GREATEST(members.delivered_up_to, LEAST($1, conversations.last_sequence))
+FROM conversations
+WHERE members.conversation_id = conversations.id
+  AND members.conversation_id = $2
+  AND members.user_id = $3
+  AND LEAST($1, conversations.last_sequence) > members.read_up_to
+RETURNING members.delivered_up_to, members.read_up_to
+`
+
+type MarkReadParams struct {
+	Sequence       int64
+	ConversationID pgtype.UUID
+	UserID         pgtype.UUID
+}
+
+type MarkReadRow struct {
+	DeliveredUpTo int64
+	ReadUpTo      int64
+}
+
+// Like MarkDelivered, for the read watermark. Read also means received, so
+// it moves the delivered watermark up with it (GREATEST: never down).
+func (q *Queries) MarkRead(ctx context.Context, arg MarkReadParams) (MarkReadRow, error) {
+	row := q.db.QueryRow(ctx, markRead, arg.Sequence, arg.ConversationID, arg.UserID)
+	var i MarkReadRow
+	err := row.Scan(&i.DeliveredUpTo, &i.ReadUpTo)
+	return i, err
+}
+
 const takeNextSequence = `-- name: TakeNextSequence :one
 UPDATE conversations
 SET last_sequence = last_sequence + 1,

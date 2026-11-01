@@ -298,6 +298,186 @@ func (x *ListMessagesResponse) GetHasMore() bool {
 	return false
 }
 
+// MarkDeliveredRequest: "I received everything up to this message".
+type MarkDeliveredRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ConversationId string                 `protobuf:"bytes,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
+	Sequence       int64                  `protobuf:"varint,2,opt,name=sequence,proto3" json:"sequence,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *MarkDeliveredRequest) Reset() {
+	*x = MarkDeliveredRequest{}
+	mi := &file_chat_v1_message_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkDeliveredRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkDeliveredRequest) ProtoMessage() {}
+
+func (x *MarkDeliveredRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_chat_v1_message_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkDeliveredRequest.ProtoReflect.Descriptor instead.
+func (*MarkDeliveredRequest) Descriptor() ([]byte, []int) {
+	return file_chat_v1_message_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *MarkDeliveredRequest) GetConversationId() string {
+	if x != nil {
+		return x.ConversationId
+	}
+	return ""
+}
+
+func (x *MarkDeliveredRequest) GetSequence() int64 {
+	if x != nil {
+		return x.Sequence
+	}
+	return 0
+}
+
+// MarkDeliveredResponse is empty: the call either worked or failed.
+type MarkDeliveredResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkDeliveredResponse) Reset() {
+	*x = MarkDeliveredResponse{}
+	mi := &file_chat_v1_message_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkDeliveredResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkDeliveredResponse) ProtoMessage() {}
+
+func (x *MarkDeliveredResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_chat_v1_message_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkDeliveredResponse.ProtoReflect.Descriptor instead.
+func (*MarkDeliveredResponse) Descriptor() ([]byte, []int) {
+	return file_chat_v1_message_proto_rawDescGZIP(), []int{5}
+}
+
+// MarkReadRequest: "I have seen everything up to this message".
+type MarkReadRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ConversationId string                 `protobuf:"bytes,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
+	Sequence       int64                  `protobuf:"varint,2,opt,name=sequence,proto3" json:"sequence,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *MarkReadRequest) Reset() {
+	*x = MarkReadRequest{}
+	mi := &file_chat_v1_message_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkReadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkReadRequest) ProtoMessage() {}
+
+func (x *MarkReadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_chat_v1_message_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkReadRequest.ProtoReflect.Descriptor instead.
+func (*MarkReadRequest) Descriptor() ([]byte, []int) {
+	return file_chat_v1_message_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *MarkReadRequest) GetConversationId() string {
+	if x != nil {
+		return x.ConversationId
+	}
+	return ""
+}
+
+func (x *MarkReadRequest) GetSequence() int64 {
+	if x != nil {
+		return x.Sequence
+	}
+	return 0
+}
+
+// MarkReadResponse is empty, like MarkDeliveredResponse.
+type MarkReadResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkReadResponse) Reset() {
+	*x = MarkReadResponse{}
+	mi := &file_chat_v1_message_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkReadResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkReadResponse) ProtoMessage() {}
+
+func (x *MarkReadResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_chat_v1_message_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkReadResponse.ProtoReflect.Descriptor instead.
+func (*MarkReadResponse) Descriptor() ([]byte, []int) {
+	return file_chat_v1_message_proto_rawDescGZIP(), []int{7}
+}
+
 // Message is one message in a conversation.
 type Message struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -319,7 +499,7 @@ type Message struct {
 
 func (x *Message) Reset() {
 	*x = Message{}
-	mi := &file_chat_v1_message_proto_msgTypes[4]
+	mi := &file_chat_v1_message_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -331,7 +511,7 @@ func (x *Message) String() string {
 func (*Message) ProtoMessage() {}
 
 func (x *Message) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_v1_message_proto_msgTypes[4]
+	mi := &file_chat_v1_message_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -344,7 +524,7 @@ func (x *Message) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Message.ProtoReflect.Descriptor instead.
 func (*Message) Descriptor() ([]byte, []int) {
-	return file_chat_v1_message_proto_rawDescGZIP(), []int{4}
+	return file_chat_v1_message_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Message) GetId() string {
@@ -410,17 +590,27 @@ const file_chat_v1_message_proto_rawDesc = "" +
 	"\bposition\"_\n" +
 	"\x14ListMessagesResponse\x12,\n" +
 	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageR\bmessages\x12\x19\n" +
-	"\bhas_more\x18\x02 \x01(\bR\ahasMore\"\xc4\x01\n" +
+	"\bhas_more\x18\x02 \x01(\bR\ahasMore\"[\n" +
+	"\x14MarkDeliveredRequest\x12'\n" +
+	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\x12\x1a\n" +
+	"\bsequence\x18\x02 \x01(\x03R\bsequence\"\x17\n" +
+	"\x15MarkDeliveredResponse\"V\n" +
+	"\x0fMarkReadRequest\x12'\n" +
+	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\x12\x1a\n" +
+	"\bsequence\x18\x02 \x01(\x03R\bsequence\"\x12\n" +
+	"\x10MarkReadResponse\"\xc4\x01\n" +
 	"\aMessage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12'\n" +
 	"\x0fconversation_id\x18\x02 \x01(\tR\x0econversationId\x12\x1a\n" +
 	"\bsequence\x18\x03 \x01(\x03R\bsequence\x12\x1b\n" +
 	"\tsender_id\x18\x04 \x01(\tR\bsenderId\x12\x12\n" +
 	"\x04text\x18\x05 \x01(\tR\x04text\x123\n" +
-	"\asent_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x06sentAt2\xab\x01\n" +
+	"\asent_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x06sentAt2\xc0\x02\n" +
 	"\x0eMessageService\x12J\n" +
 	"\vSendMessage\x12\x1b.chat.v1.SendMessageRequest\x1a\x1c.chat.v1.SendMessageResponse\"\x00\x12M\n" +
-	"\fListMessages\x12\x1c.chat.v1.ListMessagesRequest\x1a\x1d.chat.v1.ListMessagesResponse\"\x00B\x93\x01\n" +
+	"\fListMessages\x12\x1c.chat.v1.ListMessagesRequest\x1a\x1d.chat.v1.ListMessagesResponse\"\x00\x12P\n" +
+	"\rMarkDelivered\x12\x1d.chat.v1.MarkDeliveredRequest\x1a\x1e.chat.v1.MarkDeliveredResponse\"\x00\x12A\n" +
+	"\bMarkRead\x12\x18.chat.v1.MarkReadRequest\x1a\x19.chat.v1.MarkReadResponse\"\x00B\x93\x01\n" +
 	"\vcom.chat.v1B\fMessageProtoP\x01Z9github.com/saeventec/reach/packages/go/gen/chat/v1;chatv1\xa2\x02\x03CXX\xaa\x02\aChat.V1\xca\x02\aChat\\V1\xe2\x02\x13Chat\\V1\\GPBMetadata\xea\x02\bChat::V1b\x06proto3"
 
 var (
@@ -435,25 +625,33 @@ func file_chat_v1_message_proto_rawDescGZIP() []byte {
 	return file_chat_v1_message_proto_rawDescData
 }
 
-var file_chat_v1_message_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_chat_v1_message_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_chat_v1_message_proto_goTypes = []any{
 	(*SendMessageRequest)(nil),    // 0: chat.v1.SendMessageRequest
 	(*SendMessageResponse)(nil),   // 1: chat.v1.SendMessageResponse
 	(*ListMessagesRequest)(nil),   // 2: chat.v1.ListMessagesRequest
 	(*ListMessagesResponse)(nil),  // 3: chat.v1.ListMessagesResponse
-	(*Message)(nil),               // 4: chat.v1.Message
-	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
+	(*MarkDeliveredRequest)(nil),  // 4: chat.v1.MarkDeliveredRequest
+	(*MarkDeliveredResponse)(nil), // 5: chat.v1.MarkDeliveredResponse
+	(*MarkReadRequest)(nil),       // 6: chat.v1.MarkReadRequest
+	(*MarkReadResponse)(nil),      // 7: chat.v1.MarkReadResponse
+	(*Message)(nil),               // 8: chat.v1.Message
+	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
 }
 var file_chat_v1_message_proto_depIdxs = []int32{
-	4, // 0: chat.v1.SendMessageResponse.message:type_name -> chat.v1.Message
-	4, // 1: chat.v1.ListMessagesResponse.messages:type_name -> chat.v1.Message
-	5, // 2: chat.v1.Message.sent_at:type_name -> google.protobuf.Timestamp
+	8, // 0: chat.v1.SendMessageResponse.message:type_name -> chat.v1.Message
+	8, // 1: chat.v1.ListMessagesResponse.messages:type_name -> chat.v1.Message
+	9, // 2: chat.v1.Message.sent_at:type_name -> google.protobuf.Timestamp
 	0, // 3: chat.v1.MessageService.SendMessage:input_type -> chat.v1.SendMessageRequest
 	2, // 4: chat.v1.MessageService.ListMessages:input_type -> chat.v1.ListMessagesRequest
-	1, // 5: chat.v1.MessageService.SendMessage:output_type -> chat.v1.SendMessageResponse
-	3, // 6: chat.v1.MessageService.ListMessages:output_type -> chat.v1.ListMessagesResponse
-	5, // [5:7] is the sub-list for method output_type
-	3, // [3:5] is the sub-list for method input_type
+	4, // 5: chat.v1.MessageService.MarkDelivered:input_type -> chat.v1.MarkDeliveredRequest
+	6, // 6: chat.v1.MessageService.MarkRead:input_type -> chat.v1.MarkReadRequest
+	1, // 7: chat.v1.MessageService.SendMessage:output_type -> chat.v1.SendMessageResponse
+	3, // 8: chat.v1.MessageService.ListMessages:output_type -> chat.v1.ListMessagesResponse
+	5, // 9: chat.v1.MessageService.MarkDelivered:output_type -> chat.v1.MarkDeliveredResponse
+	7, // 10: chat.v1.MessageService.MarkRead:output_type -> chat.v1.MarkReadResponse
+	7, // [7:11] is the sub-list for method output_type
+	3, // [3:7] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
 	3, // [3:3] is the sub-list for extension extendee
 	0, // [0:3] is the sub-list for field type_name
@@ -474,7 +672,7 @@ func file_chat_v1_message_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_chat_v1_message_proto_rawDesc), len(file_chat_v1_message_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

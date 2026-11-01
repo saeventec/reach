@@ -46,7 +46,7 @@ ORDER BY conversations.last_activity_at DESC, conversations.id DESC;
 -- name: ListMembersOfConversations :many
 -- The members of several conversations at once, so listing 20
 -- conversations takes one query, not 20.
-SELECT conversation_id, user_id
+SELECT conversation_id, user_id, delivered_up_to, read_up_to
 FROM members
 WHERE conversation_id = ANY(sqlc.arg(conversation_ids)::uuid[])
 ORDER BY conversation_id, joined_at, user_id;

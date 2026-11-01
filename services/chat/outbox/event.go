@@ -44,6 +44,26 @@ func NewMessageSent(message conversation.Message, memberIDs []string) (Event, er
 	return event, nil
 }
 
+// NewReceiptUpdated makes the event that announces a member's new
+// watermarks to the conversation's members.
+func NewReceiptUpdated(receipt conversation.Receipt, memberIDs []string) (Event, error) {
+	receiptUpdated := &chatv1.ReceiptUpdated{
+		ConversationId: receipt.ConversationID,
+		UserId:         receipt.UserID,
+		DeliveredUpTo:  receipt.DeliveredUpTo,
+		ReadUpTo:       receipt.ReadUpTo,
+		MemberIds:      memberIDs,
+	}
+
+	payload, err := proto.Marshal(receiptUpdated)
+	if err != nil {
+		return Event{}, fmt.Errorf("encode the receipt updated event: %w", err)
+	}
+
+	event := Event{Subject: chatevents.ReceiptUpdated, Payload: payload}
+	return event, nil
+}
+
 // toEventMessage turns the core's message into the Protobuf message. The
 // api adapter has the same function: each adapter keeps its own
 // translation, so the API and the events can change apart.

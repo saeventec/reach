@@ -60,6 +60,34 @@ func (server *MessageServer) ListMessages(ctx context.Context, request *chatv1.L
 	return response, nil
 }
 
+// MarkDelivered moves the caller's delivered watermark.
+func (server *MessageServer) MarkDelivered(ctx context.Context, request *chatv1.MarkDeliveredRequest) (*chatv1.MarkDeliveredResponse, error) {
+	userID, err := callerID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = server.conversations.MarkDelivered(ctx, userID, request.GetConversationId(), request.GetSequence())
+	if err != nil {
+		return nil, toConnectError(err, "could not mark the messages delivered")
+	}
+	return &chatv1.MarkDeliveredResponse{}, nil
+}
+
+// MarkRead moves the caller's read watermark.
+func (server *MessageServer) MarkRead(ctx context.Context, request *chatv1.MarkReadRequest) (*chatv1.MarkReadResponse, error) {
+	userID, err := callerID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = server.conversations.MarkRead(ctx, userID, request.GetConversationId(), request.GetSequence())
+	if err != nil {
+		return nil, toConnectError(err, "could not mark the messages read")
+	}
+	return &chatv1.MarkReadResponse{}, nil
+}
+
 // toPosition reads which field of the "position" oneof is set. In Go, a
 // oneof is an interface field, and each choice is its own small type. A
 // "type switch" finds out which one it holds.

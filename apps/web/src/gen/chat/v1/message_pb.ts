@@ -15,7 +15,7 @@ import type { Message as Message$1 } from "@bufbuild/protobuf";
  * Describes the file chat/v1/message.proto.
  */
 export const file_chat_v1_message: GenFile = /*@__PURE__*/
-  fileDesc("ChVjaGF0L3YxL21lc3NhZ2UucHJvdG8SB2NoYXQudjEiTwoSU2VuZE1lc3NhZ2VSZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRISCgptZXNzYWdlX2lkGAIgASgJEgwKBHRleHQYAyABKAkiOAoTU2VuZE1lc3NhZ2VSZXNwb25zZRIhCgdtZXNzYWdlGAEgASgLMhAuY2hhdC52MS5NZXNzYWdlIn4KE0xpc3RNZXNzYWdlc1JlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEhgKDmFmdGVyX3NlcXVlbmNlGAIgASgDSAASGQoPYmVmb3JlX3NlcXVlbmNlGAMgASgDSAASDQoFbGltaXQYBCABKAVCCgoIcG9zaXRpb24iTAoUTGlzdE1lc3NhZ2VzUmVzcG9uc2USIgoIbWVzc2FnZXMYASADKAsyEC5jaGF0LnYxLk1lc3NhZ2USEAoIaGFzX21vcmUYAiABKAgijgEKB01lc3NhZ2USCgoCaWQYASABKAkSFwoPY29udmVyc2F0aW9uX2lkGAIgASgJEhAKCHNlcXVlbmNlGAMgASgDEhEKCXNlbmRlcl9pZBgEIAEoCRIMCgR0ZXh0GAUgASgJEisKB3NlbnRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wMqsBCg5NZXNzYWdlU2VydmljZRJKCgtTZW5kTWVzc2FnZRIbLmNoYXQudjEuU2VuZE1lc3NhZ2VSZXF1ZXN0GhwuY2hhdC52MS5TZW5kTWVzc2FnZVJlc3BvbnNlIgASTQoMTGlzdE1lc3NhZ2VzEhwuY2hhdC52MS5MaXN0TWVzc2FnZXNSZXF1ZXN0Gh0uY2hhdC52MS5MaXN0TWVzc2FnZXNSZXNwb25zZSIAQpMBCgtjb20uY2hhdC52MUIMTWVzc2FnZVByb3RvUAFaOWdpdGh1Yi5jb20vc2FldmVudGVjL3JlYWNoL3BhY2thZ2VzL2dvL2dlbi9jaGF0L3YxO2NoYXR2MaICA0NYWKoCB0NoYXQuVjHKAgdDaGF0XFYx4gITQ2hhdFxWMVxHUEJNZXRhZGF0YeoCCENoYXQ6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp]);
+  fileDesc("ChVjaGF0L3YxL21lc3NhZ2UucHJvdG8SB2NoYXQudjEiTwoSU2VuZE1lc3NhZ2VSZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRISCgptZXNzYWdlX2lkGAIgASgJEgwKBHRleHQYAyABKAkiOAoTU2VuZE1lc3NhZ2VSZXNwb25zZRIhCgdtZXNzYWdlGAEgASgLMhAuY2hhdC52MS5NZXNzYWdlIn4KE0xpc3RNZXNzYWdlc1JlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEhgKDmFmdGVyX3NlcXVlbmNlGAIgASgDSAASGQoPYmVmb3JlX3NlcXVlbmNlGAMgASgDSAASDQoFbGltaXQYBCABKAVCCgoIcG9zaXRpb24iTAoUTGlzdE1lc3NhZ2VzUmVzcG9uc2USIgoIbWVzc2FnZXMYASADKAsyEC5jaGF0LnYxLk1lc3NhZ2USEAoIaGFzX21vcmUYAiABKAgiQQoUTWFya0RlbGl2ZXJlZFJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEhAKCHNlcXVlbmNlGAIgASgDIhcKFU1hcmtEZWxpdmVyZWRSZXNwb25zZSI8Cg9NYXJrUmVhZFJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEhAKCHNlcXVlbmNlGAIgASgDIhIKEE1hcmtSZWFkUmVzcG9uc2UijgEKB01lc3NhZ2USCgoCaWQYASABKAkSFwoPY29udmVyc2F0aW9uX2lkGAIgASgJEhAKCHNlcXVlbmNlGAMgASgDEhEKCXNlbmRlcl9pZBgEIAEoCRIMCgR0ZXh0GAUgASgJEisKB3NlbnRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wMsACCg5NZXNzYWdlU2VydmljZRJKCgtTZW5kTWVzc2FnZRIbLmNoYXQudjEuU2VuZE1lc3NhZ2VSZXF1ZXN0GhwuY2hhdC52MS5TZW5kTWVzc2FnZVJlc3BvbnNlIgASTQoMTGlzdE1lc3NhZ2VzEhwuY2hhdC52MS5MaXN0TWVzc2FnZXNSZXF1ZXN0Gh0uY2hhdC52MS5MaXN0TWVzc2FnZXNSZXNwb25zZSIAElAKDU1hcmtEZWxpdmVyZWQSHS5jaGF0LnYxLk1hcmtEZWxpdmVyZWRSZXF1ZXN0Gh4uY2hhdC52MS5NYXJrRGVsaXZlcmVkUmVzcG9uc2UiABJBCghNYXJrUmVhZBIYLmNoYXQudjEuTWFya1JlYWRSZXF1ZXN0GhkuY2hhdC52MS5NYXJrUmVhZFJlc3BvbnNlIgBCkwEKC2NvbS5jaGF0LnYxQgxNZXNzYWdlUHJvdG9QAVo5Z2l0aHViLmNvbS9zYWV2ZW50ZWMvcmVhY2gvcGFja2FnZXMvZ28vZ2VuL2NoYXQvdjE7Y2hhdHYxogIDQ1hYqgIHQ2hhdC5WMcoCB0NoYXRcVjHiAhNDaGF0XFYxXEdQQk1ldGFkYXRh6gIIQ2hhdDo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
 
 /**
  * SendMessageRequest is one new message.
@@ -153,6 +153,84 @@ export const ListMessagesResponseSchema: GenMessage<ListMessagesResponse> = /*@_
   messageDesc(file_chat_v1_message, 3);
 
 /**
+ * MarkDeliveredRequest: "I received everything up to this message".
+ *
+ * @generated from message chat.v1.MarkDeliveredRequest
+ */
+export type MarkDeliveredRequest = Message$1<"chat.v1.MarkDeliveredRequest"> & {
+  /**
+   * @generated from field: string conversation_id = 1;
+   */
+  conversationId: string;
+
+  /**
+   * @generated from field: int64 sequence = 2;
+   */
+  sequence: bigint;
+};
+
+/**
+ * Describes the message chat.v1.MarkDeliveredRequest.
+ * Use `create(MarkDeliveredRequestSchema)` to create a new message.
+ */
+export const MarkDeliveredRequestSchema: GenMessage<MarkDeliveredRequest> = /*@__PURE__*/
+  messageDesc(file_chat_v1_message, 4);
+
+/**
+ * MarkDeliveredResponse is empty: the call either worked or failed.
+ *
+ * @generated from message chat.v1.MarkDeliveredResponse
+ */
+export type MarkDeliveredResponse = Message$1<"chat.v1.MarkDeliveredResponse"> & {
+};
+
+/**
+ * Describes the message chat.v1.MarkDeliveredResponse.
+ * Use `create(MarkDeliveredResponseSchema)` to create a new message.
+ */
+export const MarkDeliveredResponseSchema: GenMessage<MarkDeliveredResponse> = /*@__PURE__*/
+  messageDesc(file_chat_v1_message, 5);
+
+/**
+ * MarkReadRequest: "I have seen everything up to this message".
+ *
+ * @generated from message chat.v1.MarkReadRequest
+ */
+export type MarkReadRequest = Message$1<"chat.v1.MarkReadRequest"> & {
+  /**
+   * @generated from field: string conversation_id = 1;
+   */
+  conversationId: string;
+
+  /**
+   * @generated from field: int64 sequence = 2;
+   */
+  sequence: bigint;
+};
+
+/**
+ * Describes the message chat.v1.MarkReadRequest.
+ * Use `create(MarkReadRequestSchema)` to create a new message.
+ */
+export const MarkReadRequestSchema: GenMessage<MarkReadRequest> = /*@__PURE__*/
+  messageDesc(file_chat_v1_message, 6);
+
+/**
+ * MarkReadResponse is empty, like MarkDeliveredResponse.
+ *
+ * @generated from message chat.v1.MarkReadResponse
+ */
+export type MarkReadResponse = Message$1<"chat.v1.MarkReadResponse"> & {
+};
+
+/**
+ * Describes the message chat.v1.MarkReadResponse.
+ * Use `create(MarkReadResponseSchema)` to create a new message.
+ */
+export const MarkReadResponseSchema: GenMessage<MarkReadResponse> = /*@__PURE__*/
+  messageDesc(file_chat_v1_message, 7);
+
+/**
  * Message is one message in a conversation.
  *
  * @generated from message chat.v1.Message
@@ -204,7 +282,7 @@ export type Message = Message$1<"chat.v1.Message"> & {
  * Use `create(MessageSchema)` to create a new message.
  */
 export const MessageSchema: GenMessage<Message> = /*@__PURE__*/
-  messageDesc(file_chat_v1_message, 4);
+  messageDesc(file_chat_v1_message, 8);
 
 /**
  * MessageService sends and lists messages. Every call checks that you are
@@ -240,6 +318,30 @@ export const MessageService: GenService<{
     methodKind: "unary";
     input: typeof ListMessagesRequestSchema;
     output: typeof ListMessagesResponseSchema;
+  },
+  /**
+   * MarkDelivered says that your device has received the conversation's
+   * messages up to this sequence number. MarkRead says that you have seen
+   * them on screen (and so also received them). Each moves one of your two
+   * "watermarks" in the conversation (see Member). They only go up: a
+   * smaller number than before changes nothing, so a late or repeated call
+   * is safe. A number past the newest message counts as the newest
+   * message. Both fail with INVALID_ARGUMENT for a sequence below 1.
+   *
+   * @generated from rpc chat.v1.MessageService.MarkDelivered
+   */
+  markDelivered: {
+    methodKind: "unary";
+    input: typeof MarkDeliveredRequestSchema;
+    output: typeof MarkDeliveredResponseSchema;
+  },
+  /**
+   * @generated from rpc chat.v1.MessageService.MarkRead
+   */
+  markRead: {
+    methodKind: "unary";
+    input: typeof MarkReadRequestSchema;
+    output: typeof MarkReadResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_chat_v1_message, 0);

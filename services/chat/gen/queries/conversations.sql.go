@@ -179,7 +179,7 @@ func (q *Queries) ListMemberIDs(ctx context.Context, conversationID pgtype.UUID)
 }
 
 const listMembersOfConversations = `-- name: ListMembersOfConversations :many
-SELECT conversation_id, user_id
+SELECT conversation_id, user_id, delivered_up_to, read_up_to
 FROM members
 WHERE conversation_id = ANY($1::uuid[])
 ORDER BY conversation_id, joined_at, user_id
@@ -188,6 +188,8 @@ ORDER BY conversation_id, joined_at, user_id
 type ListMembersOfConversationsRow struct {
 	ConversationID pgtype.UUID
 	UserID         pgtype.UUID
+	DeliveredUpTo  int64
+	ReadUpTo       int64
 }
 
 // The members of several conversations at once, so listing 20
@@ -201,7 +203,12 @@ func (q *Queries) ListMembersOfConversations(ctx context.Context, conversationId
 	var items []ListMembersOfConversationsRow
 	for rows.Next() {
 		var i ListMembersOfConversationsRow
-		if err := rows.Scan(&i.ConversationID, &i.UserID); err != nil {
+		if err := rows.Scan(
+			&i.ConversationID,
+			&i.UserID,
+			&i.DeliveredUpTo,
+			&i.ReadUpTo,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

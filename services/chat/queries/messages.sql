@@ -57,3 +57,32 @@ FROM messages
 WHERE conversation_id = sqlc.arg(conversation_id)
 ORDER BY sequence DESC
 LIMIT sqlc.arg(maximum_count);
+
+-- name: MarkDelivered :one
+-- Moves the member's delivered watermark up. LEAST(…) cuts a number past
+-- the newest message down to the newest one, so a buggy app can't mark
+-- future messages. The last WHERE line makes it change only if the number
+-- really goes up: then it returns the watermarks; otherwise it returns no
+-- row. The UPDATE locks the member's row, so two calls at the same moment
+-- take turns, and the second one sees the first one's number.
+UPDATE members
+SET delivered_up_to = LEAST(sqlc.arg(sequence), conversations.last_sequence)
+FROM conversations
+WHERE members.conversation_id = conversations.id
+  AND members.conversation_id = sqlc.arg(conversation_id)
+  AND members.user_id = sqlc.arg(user_id)
+  AND LEAST(sqlc.arg(sequence), conversations.last_sequence) > members.delivered_up_to
+RETURNING members.delivered_up_to, members.read_up_to;
+
+-- name: MarkRead :one
+-- Like MarkDelivered, for the read watermark. Read also means received, so
+-- it moves the delivered watermark up with it (GREATEST: never down).
+UPDATE members
+SET read_up_to = LEAST(sqlc.arg(sequence), conversations.last_sequence),
+    delivered_up_to = GREATEST(members.delivered_up_to, LEAST(sqlc.arg(sequence), conversations.last_sequence))
+FROM conversations
+WHERE members.conversation_id = conversations.id
+  AND members.conversation_id = sqlc.arg(conversation_id)
+  AND members.user_id = sqlc.arg(user_id)
+  AND LEAST(sqlc.arg(sequence), conversations.last_sequence) > members.read_up_to
+RETURNING members.delivered_up_to, members.read_up_to;

@@ -22,6 +22,16 @@ service MessageService {
   // ListMessages returns some of a conversation's messages, the oldest
   // first. Which ones depends on the position (see ListMessagesRequest).
   rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse) {}
+
+  // MarkDelivered says that your device has received the conversation's
+  // messages up to this sequence number. MarkRead says that you have seen
+  // them on screen (and so also received them). Each moves one of your two
+  // "watermarks" in the conversation (see Member). They only go up: a
+  // smaller number than before changes nothing, so a late or repeated call
+  // is safe. A number past the newest message counts as the newest
+  // message. Both fail with INVALID_ARGUMENT for a sequence below 1.
+  rpc MarkDelivered(MarkDeliveredRequest) returns (MarkDeliveredResponse) {}
+  rpc MarkRead(MarkReadRequest) returns (MarkReadResponse) {}
 }
 
 // SendMessageRequest is one new message.
@@ -67,6 +77,24 @@ message ListMessagesResponse {
   // last (or first) message to get them.
   bool has_more = 2;
 }
+
+// MarkDeliveredRequest: "I received everything up to this message".
+message MarkDeliveredRequest {
+  string conversation_id = 1;
+  int64 sequence = 2;
+}
+
+// MarkDeliveredResponse is empty: the call either worked or failed.
+message MarkDeliveredResponse {}
+
+// MarkReadRequest: "I have seen everything up to this message".
+message MarkReadRequest {
+  string conversation_id = 1;
+  int64 sequence = 2;
+}
+
+// MarkReadResponse is empty, like MarkDeliveredResponse.
+message MarkReadResponse {}
 
 // Message is one message in a conversation.
 message Message {

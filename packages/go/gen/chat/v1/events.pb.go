@@ -84,6 +84,89 @@ func (x *MessageSent) GetMemberIds() []string {
 	return nil
 }
 
+// ReceiptUpdated is published on the subject "chat.receipt.updated" when a
+// member's watermarks moved up (see Member in conversation.proto). It
+// carries both watermarks, as they are now, so a receiver that missed an
+// earlier one is right again after this one.
+type ReceiptUpdated struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ConversationId string                 `protobuf:"bytes,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
+	// Whose watermarks moved.
+	UserId        string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	DeliveredUpTo int64  `protobuf:"varint,3,opt,name=delivered_up_to,json=deliveredUpTo,proto3" json:"delivered_up_to,omitempty"`
+	ReadUpTo      int64  `protobuf:"varint,4,opt,name=read_up_to,json=readUpTo,proto3" json:"read_up_to,omitempty"`
+	// All the conversation's members, as in MessageSent: in a group,
+	// everyone sees who has read what.
+	MemberIds     []string `protobuf:"bytes,5,rep,name=member_ids,json=memberIds,proto3" json:"member_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReceiptUpdated) Reset() {
+	*x = ReceiptUpdated{}
+	mi := &file_chat_v1_events_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReceiptUpdated) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReceiptUpdated) ProtoMessage() {}
+
+func (x *ReceiptUpdated) ProtoReflect() protoreflect.Message {
+	mi := &file_chat_v1_events_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReceiptUpdated.ProtoReflect.Descriptor instead.
+func (*ReceiptUpdated) Descriptor() ([]byte, []int) {
+	return file_chat_v1_events_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ReceiptUpdated) GetConversationId() string {
+	if x != nil {
+		return x.ConversationId
+	}
+	return ""
+}
+
+func (x *ReceiptUpdated) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *ReceiptUpdated) GetDeliveredUpTo() int64 {
+	if x != nil {
+		return x.DeliveredUpTo
+	}
+	return 0
+}
+
+func (x *ReceiptUpdated) GetReadUpTo() int64 {
+	if x != nil {
+		return x.ReadUpTo
+	}
+	return 0
+}
+
+func (x *ReceiptUpdated) GetMemberIds() []string {
+	if x != nil {
+		return x.MemberIds
+	}
+	return nil
+}
+
 var File_chat_v1_events_proto protoreflect.FileDescriptor
 
 const file_chat_v1_events_proto_rawDesc = "" +
@@ -92,7 +175,15 @@ const file_chat_v1_events_proto_rawDesc = "" +
 	"\vMessageSent\x12*\n" +
 	"\amessage\x18\x01 \x01(\v2\x10.chat.v1.MessageR\amessage\x12\x1d\n" +
 	"\n" +
-	"member_ids\x18\x02 \x03(\tR\tmemberIdsB\x92\x01\n" +
+	"member_ids\x18\x02 \x03(\tR\tmemberIds\"\xb7\x01\n" +
+	"\x0eReceiptUpdated\x12'\n" +
+	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12&\n" +
+	"\x0fdelivered_up_to\x18\x03 \x01(\x03R\rdeliveredUpTo\x12\x1c\n" +
+	"\n" +
+	"read_up_to\x18\x04 \x01(\x03R\breadUpTo\x12\x1d\n" +
+	"\n" +
+	"member_ids\x18\x05 \x03(\tR\tmemberIdsB\x92\x01\n" +
 	"\vcom.chat.v1B\vEventsProtoP\x01Z9github.com/saeventec/reach/packages/go/gen/chat/v1;chatv1\xa2\x02\x03CXX\xaa\x02\aChat.V1\xca\x02\aChat\\V1\xe2\x02\x13Chat\\V1\\GPBMetadata\xea\x02\bChat::V1b\x06proto3"
 
 var (
@@ -107,13 +198,14 @@ func file_chat_v1_events_proto_rawDescGZIP() []byte {
 	return file_chat_v1_events_proto_rawDescData
 }
 
-var file_chat_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_chat_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_chat_v1_events_proto_goTypes = []any{
-	(*MessageSent)(nil), // 0: chat.v1.MessageSent
-	(*Message)(nil),     // 1: chat.v1.Message
+	(*MessageSent)(nil),    // 0: chat.v1.MessageSent
+	(*ReceiptUpdated)(nil), // 1: chat.v1.ReceiptUpdated
+	(*Message)(nil),        // 2: chat.v1.Message
 }
 var file_chat_v1_events_proto_depIdxs = []int32{
-	1, // 0: chat.v1.MessageSent.message:type_name -> chat.v1.Message
+	2, // 0: chat.v1.MessageSent.message:type_name -> chat.v1.Message
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -133,7 +225,7 @@ func file_chat_v1_events_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_chat_v1_events_proto_rawDesc), len(file_chat_v1_events_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

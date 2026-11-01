@@ -74,6 +74,18 @@ The fixed test makes the collision certain:
 
 Now the test fails with "duplicate key value violates unique constraint" when the code for "try B" is removed. **A test only counts once you have seen it fail for the bug it is meant to catch.**
 
+## Delivered and read
+
+Sequence numbers also make "delivered" (✓✓) and "read" small. Each member has two numbers, called **watermarks**, in the `members` table: `delivered_up_to` and `read_up_to`. "bob: read up to 42" means bob has read messages 1 to 42. Like the line a flood leaves on a wall: it says how high the water came, and everything below it is covered.
+
+- One pair of numbers per member, not one row per message per person. A group of 50 with 10 000 messages needs 50 rows, not 500 000.
+- `MarkDelivered(conversation, 42)`: the app received the messages up to 42 (live, or by catching up). `MarkRead(conversation, 42)`: they were on screen. Read also moves delivered, because you can't read what you didn't receive. A `CHECK` in the database makes sure `read_up_to` is never above `delivered_up_to`.
+- **They only go up.** The query ([services/chat/queries/messages.sql](../../services/chat/queries/messages.sql)) changes the row only if the new number is higher (`… > members.delivered_up_to` in its `WHERE`). A late or repeated call changes nothing, so the calls are idempotent too.
+- **Never past the newest message.** `LEAST(42, conversations.last_sequence)` cuts a too-high number down. Otherwise a buggy app could mark message 1000 "read" before it was even sent.
+- **Two calls at the same moment:** the `UPDATE` locks the member's row, so they take turns. With Postgres's default isolation ("read committed"), the second one checks its `WHERE` again against the first one's new number. A test sends 30 calls at once with 1, 2 and 3: the result is always 3. Without the "only up" line, it ended at 2, with 30 events.
+- **An event only when something changed:** the query returns a row only when the number moved. Then the store saves a `chat.receipt.updated` event, in the same transaction ([the outbox](transactional-outbox.md)). The event carries both numbers as they are now, so a receiver that missed one event is right again after the next.
+- **How the app shows it:** alice's message 42 is delivered to bob when bob's `delivered_up_to` is 42 or more, and read when his `read_up_to` is. In a group, ✓✓ means "everyone else's number is that high". `ListConversations` returns every member's watermarks, so the app knows them when it opens.
+
 ## Alternatives
 
 - **Timestamps:** simple, but clocks disagree and times can repeat.

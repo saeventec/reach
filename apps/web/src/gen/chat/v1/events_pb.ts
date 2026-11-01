@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file chat/v1/events.proto.
  */
 export const file_chat_v1_events: GenFile = /*@__PURE__*/
-  fileDesc("ChRjaGF0L3YxL2V2ZW50cy5wcm90bxIHY2hhdC52MSJECgtNZXNzYWdlU2VudBIhCgdtZXNzYWdlGAEgASgLMhAuY2hhdC52MS5NZXNzYWdlEhIKCm1lbWJlcl9pZHMYAiADKAlCkgEKC2NvbS5jaGF0LnYxQgtFdmVudHNQcm90b1ABWjlnaXRodWIuY29tL3NhZXZlbnRlYy9yZWFjaC9wYWNrYWdlcy9nby9nZW4vY2hhdC92MTtjaGF0djGiAgNDWFiqAgdDaGF0LlYxygIHQ2hhdFxWMeICE0NoYXRcVjFcR1BCTWV0YWRhdGHqAghDaGF0OjpWMWIGcHJvdG8z", [file_chat_v1_message]);
+  fileDesc("ChRjaGF0L3YxL2V2ZW50cy5wcm90bxIHY2hhdC52MSJECgtNZXNzYWdlU2VudBIhCgdtZXNzYWdlGAEgASgLMhAuY2hhdC52MS5NZXNzYWdlEhIKCm1lbWJlcl9pZHMYAiADKAkiewoOUmVjZWlwdFVwZGF0ZWQSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSFwoPZGVsaXZlcmVkX3VwX3RvGAMgASgDEhIKCnJlYWRfdXBfdG8YBCABKAMSEgoKbWVtYmVyX2lkcxgFIAMoCUKSAQoLY29tLmNoYXQudjFCC0V2ZW50c1Byb3RvUAFaOWdpdGh1Yi5jb20vc2FldmVudGVjL3JlYWNoL3BhY2thZ2VzL2dvL2dlbi9jaGF0L3YxO2NoYXR2MaICA0NYWKoCB0NoYXQuVjHKAgdDaGF0XFYx4gITQ2hhdFxWMVxHUEJNZXRhZGF0YeoCCENoYXQ6OlYxYgZwcm90bzM", [file_chat_v1_message]);
 
 /**
  * MessageSent is published on the subject "chat.message.sent" after a
@@ -48,4 +48,51 @@ export type MessageSent = Message<"chat.v1.MessageSent"> & {
  */
 export const MessageSentSchema: GenMessage<MessageSent> = /*@__PURE__*/
   messageDesc(file_chat_v1_events, 0);
+
+/**
+ * ReceiptUpdated is published on the subject "chat.receipt.updated" when a
+ * member's watermarks moved up (see Member in conversation.proto). It
+ * carries both watermarks, as they are now, so a receiver that missed an
+ * earlier one is right again after this one.
+ *
+ * @generated from message chat.v1.ReceiptUpdated
+ */
+export type ReceiptUpdated = Message<"chat.v1.ReceiptUpdated"> & {
+  /**
+   * @generated from field: string conversation_id = 1;
+   */
+  conversationId: string;
+
+  /**
+   * Whose watermarks moved.
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+
+  /**
+   * @generated from field: int64 delivered_up_to = 3;
+   */
+  deliveredUpTo: bigint;
+
+  /**
+   * @generated from field: int64 read_up_to = 4;
+   */
+  readUpTo: bigint;
+
+  /**
+   * All the conversation's members, as in MessageSent: in a group,
+   * everyone sees who has read what.
+   *
+   * @generated from field: repeated string member_ids = 5;
+   */
+  memberIds: string[];
+};
+
+/**
+ * Describes the message chat.v1.ReceiptUpdated.
+ * Use `create(ReceiptUpdatedSchema)` to create a new message.
+ */
+export const ReceiptUpdatedSchema: GenMessage<ReceiptUpdated> = /*@__PURE__*/
+  messageDesc(file_chat_v1_events, 1);
 

@@ -53,7 +53,11 @@ func addMembersToList(ctx context.Context, databaseQueries *queries.Queries, con
 
 	for _, row := range rows {
 		index := indexByID[row.ConversationID.String()]
-		member := conversation.Member{UserID: row.UserID.String()}
+		member := conversation.Member{
+			UserID:        row.UserID.String(),
+			DeliveredUpTo: row.DeliveredUpTo,
+			ReadUpTo:      row.ReadUpTo,
+		}
 		conversations[index].Members = append(conversations[index].Members, member)
 	}
 	return nil

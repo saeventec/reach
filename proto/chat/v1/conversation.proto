@@ -91,4 +91,12 @@ message Member {
   // A UUIDv7, as text.
   string user_id = 1;
   string username = 2;
+  // The member's two "watermarks": the sequence numbers up to which their
+  // devices have received the messages, and up to which they have read
+  // them. 0 means none yet. A message of yours is "delivered" to someone
+  // when their delivered_up_to reaches its sequence number, and "read"
+  // when their read_up_to does. read_up_to is never above
+  // delivered_up_to.
+  int64 delivered_up_to = 3;
+  int64 read_up_to = 4;
 }

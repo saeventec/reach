@@ -448,8 +448,16 @@ func (x *Conversation) GetLastActivityAt() *timestamppb.Timestamp {
 type Member struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// A UUIDv7, as text.
-	UserId        string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Username      string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	UserId   string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	// The member's two "watermarks": the sequence numbers up to which their
+	// devices have received the messages, and up to which they have read
+	// them. 0 means none yet. A message of yours is "delivered" to someone
+	// when their delivered_up_to reaches its sequence number, and "read"
+	// when their read_up_to does. read_up_to is never above
+	// delivered_up_to.
+	DeliveredUpTo int64 `protobuf:"varint,3,opt,name=delivered_up_to,json=deliveredUpTo,proto3" json:"delivered_up_to,omitempty"`
+	ReadUpTo      int64 `protobuf:"varint,4,opt,name=read_up_to,json=readUpTo,proto3" json:"read_up_to,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -498,6 +506,20 @@ func (x *Member) GetUsername() string {
 	return ""
 }
 
+func (x *Member) GetDeliveredUpTo() int64 {
+	if x != nil {
+		return x.DeliveredUpTo
+	}
+	return 0
+}
+
+func (x *Member) GetReadUpTo() int64 {
+	if x != nil {
+		return x.ReadUpTo
+	}
+	return 0
+}
+
 var File_chat_v1_conversation_proto protoreflect.FileDescriptor
 
 const file_chat_v1_conversation_proto_rawDesc = "" +
@@ -523,10 +545,13 @@ const file_chat_v1_conversation_proto_rawDesc = "" +
 	"\amembers\x18\x04 \x03(\v2\x0f.chat.v1.MemberR\amembers\x129\n" +
 	"\n" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12D\n" +
-	"\x10last_activity_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x0elastActivityAt\"=\n" +
+	"\x10last_activity_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x0elastActivityAt\"\x83\x01\n" +
 	"\x06Member\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername*p\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12&\n" +
+	"\x0fdelivered_up_to\x18\x03 \x01(\x03R\rdeliveredUpTo\x12\x1c\n" +
+	"\n" +
+	"read_up_to\x18\x04 \x01(\x03R\breadUpTo*p\n" +
 	"\x10ConversationKind\x12!\n" +
 	"\x1dCONVERSATION_KIND_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18CONVERSATION_KIND_DIRECT\x10\x01\x12\x1b\n" +

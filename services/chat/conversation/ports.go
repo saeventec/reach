@@ -35,6 +35,16 @@ type Store interface {
 	// ListMessages returns the messages the query asks for, the oldest
 	// first.
 	ListMessages(ctx context.Context, query MessageQuery) ([]Message, error)
+
+	// MarkDelivered moves the member's delivered watermark up to the
+	// sequence number (or to the newest message, if that is lower). If it
+	// moves, the store also saves a receipt event. A lower number changes
+	// nothing.
+	MarkDelivered(ctx context.Context, conversationID string, userID string, sequence int64) error
+
+	// MarkRead does the same for the read watermark, and moves the
+	// delivered watermark up with it.
+	MarkRead(ctx context.Context, conversationID string, userID string, sequence int64) error
 }
 
 // UserDirectory finds people by username or id. The auth service owns

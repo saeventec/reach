@@ -42,18 +42,9 @@ func (store *Store) MarkEventPublished(ctx context.Context, eventID int64) error
 // saveMessageSentEvent saves the event that announces a new message, with
 // the conversation's members. It runs inside the message's transaction.
 func saveMessageSentEvent(ctx context.Context, transactionQueries *queries.Queries, message conversation.Message) error {
-	conversationID, err := parseUUID(message.ConversationID)
+	memberIDs, err := listMemberIDs(ctx, transactionQueries, message.ConversationID)
 	if err != nil {
 		return err
-	}
-	memberRows, err := transactionQueries.ListMemberIDs(ctx, conversationID)
-	if err != nil {
-		return fmt.Errorf("list the members for the event: %w", err)
-	}
-
-	memberIDs := make([]string, 0, len(memberRows))
-	for _, memberID := range memberRows {
-		memberIDs = append(memberIDs, memberID.String())
 	}
 
 	event, err := outbox.NewMessageSent(message, memberIDs)
@@ -61,6 +52,40 @@ func saveMessageSentEvent(ctx context.Context, transactionQueries *queries.Queri
 		return err
 	}
 	return saveEvent(ctx, transactionQueries, event)
+}
+
+// saveReceiptUpdatedEvent saves the event that announces a member's new
+// watermarks. It runs inside the watermark's transaction.
+func saveReceiptUpdatedEvent(ctx context.Context, transactionQueries *queries.Queries, receipt conversation.Receipt) error {
+	memberIDs, err := listMemberIDs(ctx, transactionQueries, receipt.ConversationID)
+	if err != nil {
+		return err
+	}
+
+	event, err := outbox.NewReceiptUpdated(receipt, memberIDs)
+	if err != nil {
+		return err
+	}
+	return saveEvent(ctx, transactionQueries, event)
+}
+
+// listMemberIDs returns the user ids of a conversation's members, for an
+// event.
+func listMemberIDs(ctx context.Context, transactionQueries *queries.Queries, conversationID string) ([]string, error) {
+	databaseConversationID, err := parseUUID(conversationID)
+	if err != nil {
+		return nil, err
+	}
+	memberRows, err := transactionQueries.ListMemberIDs(ctx, databaseConversationID)
+	if err != nil {
+		return nil, fmt.Errorf("list the members for the event: %w", err)
+	}
+
+	memberIDs := make([]string, 0, len(memberRows))
+	for _, memberID := range memberRows {
+		memberIDs = append(memberIDs, memberID.String())
+	}
+	return memberIDs, nil
 }
 
 // saveEvent writes one event into the outbox table.

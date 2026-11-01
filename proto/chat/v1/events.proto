@@ -18,3 +18,18 @@ message MessageSent {
   // who to deliver the event to, without asking chat.
   repeated string member_ids = 2;
 }
+
+// ReceiptUpdated is published on the subject "chat.receipt.updated" when a
+// member's watermarks moved up (see Member in conversation.proto). It
+// carries both watermarks, as they are now, so a receiver that missed an
+// earlier one is right again after this one.
+message ReceiptUpdated {
+  string conversation_id = 1;
+  // Whose watermarks moved.
+  string user_id = 2;
+  int64 delivered_up_to = 3;
+  int64 read_up_to = 4;
+  // All the conversation's members, as in MessageSent: in a group,
+  // everyone sees who has read what.
+  repeated string member_ids = 5;
+}

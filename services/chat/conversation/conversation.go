@@ -32,6 +32,18 @@ type Conversation struct {
 type Member struct {
 	UserID   string
 	Username string
+	// The member's watermarks: their devices received the messages up to
+	// DeliveredUpTo, and they read them up to ReadUpTo. 0 means none yet.
+	DeliveredUpTo int64
+	ReadUpTo      int64
+}
+
+// Receipt is one member's watermarks in one conversation, after a change.
+type Receipt struct {
+	ConversationID string
+	UserID         string
+	DeliveredUpTo  int64
+	ReadUpTo       int64
 }
 
 // User is a person, as the user directory (the auth service) knows them.

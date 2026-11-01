@@ -61,6 +61,16 @@ type fakeStore struct {
 	messages []Message
 	// lastQuery is what ListMessages was last asked for.
 	lastQuery MessageQuery
+	// lastMark is what MarkDelivered or MarkRead was last asked for.
+	lastMark fakeMark
+}
+
+// fakeMark is one MarkDelivered or MarkRead call.
+type fakeMark struct {
+	kind           string
+	conversationID string
+	userID         string
+	sequence       int64
 }
 
 func newFakeStore() *fakeStore {
@@ -190,4 +200,14 @@ func (store *fakeStore) ListMessages(ctx context.Context, query MessageQuery) ([
 	}
 	start := len(matching) - query.MaximumCount
 	return matching[start:], nil
+}
+
+func (store *fakeStore) MarkDelivered(ctx context.Context, conversationID string, userID string, sequence int64) error {
+	store.lastMark = fakeMark{kind: "delivered", conversationID: conversationID, userID: userID, sequence: sequence}
+	return nil
+}
+
+func (store *fakeStore) MarkRead(ctx context.Context, conversationID string, userID string, sequence int64) error {
+	store.lastMark = fakeMark{kind: "read", conversationID: conversationID, userID: userID, sequence: sequence}
+	return nil
 }

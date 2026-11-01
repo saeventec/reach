@@ -24,6 +24,8 @@ type Member struct {
 	ConversationID pgtype.UUID
 	UserID         pgtype.UUID
 	JoinedAt       time.Time
+	DeliveredUpTo  int64
+	ReadUpTo       int64
 }
 
 type Message struct {

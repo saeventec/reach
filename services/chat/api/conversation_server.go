@@ -78,7 +78,12 @@ func (server *ConversationServer) ListConversations(ctx context.Context, request
 func toAPIConversation(found conversation.Conversation) *chatv1.Conversation {
 	members := make([]*chatv1.Member, 0, len(found.Members))
 	for _, member := range found.Members {
-		apiMember := &chatv1.Member{UserId: member.UserID, Username: member.Username}
+		apiMember := &chatv1.Member{
+			UserId:        member.UserID,
+			Username:      member.Username,
+			DeliveredUpTo: member.DeliveredUpTo,
+			ReadUpTo:      member.ReadUpTo,
+		}
 		members = append(members, apiMember)
 	}
 
