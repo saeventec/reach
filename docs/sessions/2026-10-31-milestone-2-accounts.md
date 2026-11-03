@@ -33,7 +33,7 @@ A final review fixed stale doc lines, moved sqlc, Testcontainers, argon2id and r
 
 - Database: [one user per service, idempotent setup](../learn/postgresql.md#one-user-per-service), [connecting from your computer](../learn/postgresql.md#connect-from-your-computer), [UUIDv7, constraints, regular expressions](../learn/postgresql.md#ids-and-constraints), [sqlc](../learn/sqlc.md), foreign keys and indexes ([sessions.md](../learn/sessions.md))
 - Security: [password hashing, salts, NFC, timing attacks](../learn/password-hashing.md), [sessions, cookies, CSRF and SameSite](../learn/sessions.md), [rate limiting](../learn/rate-limiting.md), [message size limits](../learn/connect-rpc.md#a-limit-on-message-size), [settings with a safe default](../learn/environment-variables.md#settings-with-a-safe-default)
-- API: [lists, Timestamps and default values](../learn/protobuf.md#lists-dates-and-default-values), [one API per service in buf](../learn/protobuf.md#one-api-per-service)
+- API: [lists, Timestamps and default values](../learn/protobuf.md#lists-dates-and-default-values), [one API per service in buf](../learn/protobuf.md#all-go-code-in-one-shared-place)
 - Frontend: [React Router](../learn/react-router.md), [forms](../learn/react.md#forms), [lists and keys](../learn/react.md#lists-and-keys)
 - Testing: [table-driven tests](../learn/testing.md#table-driven-tests), [integration tests](../learn/testing.md#integration-tests), and breaking code on purpose to prove a test can fail
 - Tooling: [why the Lefthook rc path needs `./`](../learn/lefthook.md)

@@ -8,7 +8,7 @@ Reach is built from scratch as a learning project and a showcase. It practices w
 
 ## Status
 
-Milestone 2 done: accounts. You can sign up, log in, stay logged in, see the devices you are logged in on, and log out (also another device). Passwords are hashed with argon2id, sessions live in HttpOnly cookies, and logins are rate limited. See [docs/milestones/](docs/milestones/).
+Milestone 3 done: real-time chat. Logged-in people start 1:1 chats and groups, messages arrive live over WebSocket, and senders see "delivered" and "read". Next: milestone 4, the first release. See [docs/milestones/](docs/milestones/README.md).
 
 ## Set up
 
@@ -31,8 +31,8 @@ Run `task` to see all available commands.
 ## Documentation
 
 - [Project brief](docs/PROJECT_BRIEF.md): goals, architecture, tech stack, milestones
-- [Rules for agents](AGENTS.md): how code is written and how work is done
-- [Decisions](docs/decisions/), [design docs](docs/design/), [learning notes](docs/learn/), [milestones](docs/milestones/), [sessions](docs/sessions/), [reviews](docs/reviews/)
+- [Rules for agents](AGENTS.md): how code is written, how work is done, and where every doc is
+- [Decisions](docs/decisions/), [design docs](docs/design/), [learning notes](docs/learn/), [milestones](docs/milestones/), [sessions](docs/sessions/), [reviews](docs/reviews/), [style](docs/style/)
 
 ## License
 

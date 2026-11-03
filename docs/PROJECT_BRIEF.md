@@ -4,12 +4,12 @@ Oct 30, 2026 · @Sadra Samadi
 
 ## How to use this document
 
-This is the source of truth for the Reach project. Every agent (Claude Code or any other) must read it fully before doing any work in the repository.
+The reference for what Reach is and where it is going: goals, scope, architecture, stack and milestones.
 
-- **Who it is for:** the owner of the project (a junior engineer who is learning) and any AI agent that helps build it.
-- **Where it lives:** in the repo as `docs/PROJECT_BRIEF.md`. Its rules are summarized in AGENTS.md (which CLAUDE.md imports), so every agent session follows them automatically.
+- **Read it by section, when a task needs it.** It is not read at the start of every session ([AGENTS.md](../AGENTS.md#reading-docs)).
+- **The rules** (golden rules, code rules, workflow, where the docs are) live only in [AGENTS.md](../AGENTS.md).
 - **If something here is unclear or seems wrong:** stop and ask the owner. Never guess.
-- **If a decision changes:** update this document and record the change as a decision record (see "Knowledge folder"). Everything here is flexible, but every change is written down.
+- **If a decision changes:** update this document and write an ADR in `docs/decisions/`.
 
 ## The goal
 
@@ -25,57 +25,6 @@ Reach is a communication app built from scratch, so the owner learns what a seni
 - **Observe first, direct later.** For now the owner doesn't write code: the agent builds and explains everything, and the owner reviews and learns each step before moving on. Later, with the full picture, the owner directs the structure, design and style.
 - **Understanding beats speed.** The owner must understand every file and every line in the project. A slower, clearer solution always wins over a faster, clever one.
 - **The repo is public** on GitHub.
-
-## Golden rules (non-negotiable)
-
-These rules apply to every task, every file and every answer, forever. If a task conflicts with a rule, the rule wins: stop and ask the owner.
-
-1. **Assume no background knowledge.** The owner is a junior engineer. Never assume they know a tool, concept, command or term.
-2. **Never leave anything unexplained.** Every new tool, concept, library, command, config option and pattern gets a short, simple explanation the first time it appears.
-3. **Explain in simple terms.** Plain, beginner-friendly English. Short sentences. No jargon without a definition. Use small examples and analogies.
-4. **Always show alternatives.** For each tech choice: what it is, why we chose it, 2 to 4 alternatives with one line each, and a tiny example.
-5. **The owner must understand every single line.** If a line can't be explained simply, rewrite it until it can.
-6. **Simple, clean, small and organized.** Prefer the simplest solution that works. No cleverness, no premature optimization, no "just in case" code.
-7. **Use the best stack, standards and best practices, always up to date.** Choose industry-standard, well-documented, lightweight tools. Follow official standards and best practices. Use current stable versions, check the official up-to-date documentation before writing code or config, never rely on memory or old tutorials, and never use deprecated APIs. Don't skip advanced concepts; introduce them step by step, when they solve a real problem.
-8. **Everything as code.** Nothing is configured by hand: no clicking in dashboards, no manual setup steps. If it isn't in the repo, it doesn't exist.
-9. **Self-hosted.** No dependency on cloud platforms (GCP, AWS, Azure, Firebase, Vercel, ...). Allowed external services: GitHub (code, CI), app stores, and push notification services (Apple APNs, Google FCM).
-10. **Runs on one computer.** The whole system must start on the owner's Mac or Windows machine with Docker Compose and one command.
-11. **One repository.** All code, infrastructure, docs and decisions live in one GitHub repo (a monorepo).
-12. **Use defaults.** Prefer each tool's default settings and conventions. Only add configuration that is truly needed, and explain each setting you add.
-13. **Document everything, in git.** Decisions, reviews, chat summaries and learning notes are saved in the repo, so all context moves between devices and agents.
-14. **Small steps.** One small, reviewable change at a time. Each step ends with something that runs and is explained.
-15. **Ask when unsure.** If a request is ambiguous, ask questions before building. Try to understand the owner's real goal, not only the words.
-16. **Stay flexible.** Every decision can change later. Design so a part can be swapped without rewriting everything.
-17. **Security and secrets.** The repo is public: never commit secrets, passwords, keys or tokens. Use example files (`.env.example`) and local files ignored by git.
-18. **Be a senior mentor, not only a builder.** The owner's ideas are a starting point, not orders. Challenge them when there is a better way, point out mistakes and missing pieces, and always add your own suggestion and recommendation.
-
-## Code rules
-
-Every line of code is written so a beginner can read it top to bottom and understand it.
-
-- **One line does one thing.** No long chains, nested calls, or one-liners that do several steps. Split them into named steps.
-- **Small functions.** Each function does one job and is short. Extract helpers instead of growing a function.
-- **Modules and folders by feature.** Group code by what it does (`auth`, `chat`), not by file type. Keep files small.
-- **Clear, simple, declarative names everywhere.** Names say what something is or does: `sendMessage`, `findUserByEmail`, `isTokenExpired`. No abbreviations (`usr`, `msg`, `cfg`), except well-known ones (`id`, `url`, `http`).
-- **Prefer declarative over clever.** Say *what* happens in plain steps. Avoid tricks, magic values and hidden behavior.
-- **Use defaults.** Use each language's and framework's standard layout, formatter and conventions. Don't add custom config unless needed.
-- **Comments explain why, not what.** The code shows what it does. Comments explain the reason, and explain any concept that is new to the owner.
-- **Explicit error handling.** Handle errors where they happen, with clear messages. Never ignore an error silently.
-- **Few dependencies.** Prefer the standard library. Add a library only when it clearly saves complexity, and explain why it was added.
-- **Automatic formatting and linting.** Use the standard tools (`gofmt`, golangci-lint, Oxlint, Prettier, buf) with default settings, run before each commit and in CI.
-- **Tests from day one.** Simple tests next to the code they test, readable like examples.
-
-Example of the style we want:
-
-```go
-// Bad: several things in one line
-user, err := repo.Find(strings.ToLower(strings.TrimSpace(req.Email)))
-
-// Good: one step per line, clear names
-email := strings.TrimSpace(request.Email)
-normalizedEmail := strings.ToLower(email)
-user, err := userRepository.FindByEmail(normalizedEmail)
-```
 
 ## Product scope and phases
 
@@ -136,7 +85,7 @@ The web app only knows the gateway's address. The chat service stores a message 
 
 ## Tech stack decisions
 
-These are the current choices. When an agent introduces any of them for the first time, it explains: what it is, why we chose it, the alternatives, and a tiny example (Golden rules 2 and 4).
+These are the current choices. When an agent introduces any of them for the first time, it explains: what it is, why we chose it, the alternatives, and a tiny example ([golden rules 2 and 4](../AGENTS.md#golden-rules)).
 
 **Used from the start**
 
@@ -230,7 +179,7 @@ One monorepo named `reach`, organized by purpose. Folders that are not needed ye
 reach/
 ├── README.md              # what Reach is, how to run it in 3 commands
 ├── CLAUDE.md              # imports AGENTS.md for Claude Code
-├── AGENTS.md              # the rules for every agent (from this brief)
+├── AGENTS.md              # all the rules for agents (read at every start)
 ├── Taskfile.yml           # all common commands: task dev, task test, ...
 ├── .mise.toml             # exact tool versions (Go, Node, Task, buf, ...)
 ├── compose.yaml           # starts the whole system with Docker Compose
@@ -260,33 +209,13 @@ reach/
 │   ├── sessions/          # summaries of chats with agents
 │   ├── reviews/           # code review notes and feedback
 │   ├── learn/             # learning notes per concept and milestone
-│   └── milestones/        # plan and status of each milestone
+│   ├── milestones/        # plan and status of each milestone
+│   └── style/             # the owner's habits and patterns
 └── .github/
     └── workflows/         # CI: lint, test, build
 ```
 
 The exact service list may change; the services above are the starting proposal and are created in milestone 1 or later, not during initialization.
-
-## Knowledge folder (docs/)
-
-Everything discussed with an agent is saved as plain Markdown in `docs/` and committed to git, so the owner can continue on any device and any agent can pick up the full context.
-
-| Folder | What goes in it | File name pattern | When it is written |
-| --- | --- | --- | --- |
-| `docs/decisions/` | Decision records (ADRs): the choice, the reason, the alternatives considered | `0001-use-go-for-services.md` | Every time a tech or design decision is made or changed |
-| `docs/design/` | Design docs (also called RFCs): the problem, the options, the trade-offs and a diagram, before any code | `m03-real-time-chat.md` | At the start of every milestone |
-| `docs/sessions/` | Summary of each working session with an agent: goal, what was done, what was explained, open questions, next step | `2026-10-30-project-initialization.md` | At the end of every session |
-| `docs/reviews/` | The owner's review feedback and how it was addressed | `2026-11-02-review-auth-service.md` | After each review |
-| `docs/learn/` | Learning notes: simple explanations of concepts and tools, with examples and alternatives | `docker.md`, `websocket.md` | The first time a concept or tool is introduced |
-| `docs/milestones/` | One file per milestone: goal, steps, status, what was learned | `m01-hello-world.md` | When a milestone starts, updated as it goes |
-
-Rules for these files:
-
-- Each folder has a short `README.md` explaining its purpose and a `_template.md` to copy.
-- Keep files short and simple, in the same plain style as the code.
-- Session summaries record **decisions and reasons**, not full transcripts.
-- Never write secrets or private personal data into these files: the repo is public.
-- `docs/learn/` is the owner's personal textbook. Link to it from code comments when a concept appears.
 
 ## Development environment
 
@@ -299,22 +228,6 @@ The owner works on both a Mac and a Windows PC, and everything must work the sam
 - **Commands:** always through Task (`task dev`, `task test`, `task lint`). No Mac-only or Windows-only scripts.
 - **Line endings:** `.gitattributes` forces LF, so Mac and Windows don't create noisy diffs.
 - **Setup goal:** on a fresh machine, the owner installs Git, Docker and mise, clones the repo, and runs `task setup` then `task dev`. Nothing else.
-
-## Working with agents
-
-The agent writes the code; the owner reviews, learns and gives feedback. Every step must be easy to review.
-
-1. **Read first.** At the start of every session, read `CLAUDE.md`, this brief, the current milestone file, and the latest session summary.
-2. **Plan before coding.** At the start of a milestone, write its design doc in `docs/design/` and its plan in `docs/milestones/`. Say in simple words what will change and why. Ask questions if anything is unclear. Wait for the owner's go-ahead on anything big.
-3. **Small changes.** One focused change at a time, a few files at most. One commit per logical step, with a clear message (Conventional Commits, for example `feat(auth): add sign-up endpoint`).
-4. **Explain as you go.** For each new file: what it is for. For each new concept or tool: a short explanation, alternatives and a tiny example, also saved in `docs/learn/`.
-5. **It must run.** After each step, the system starts with `task dev` and the tests pass.
-6. **Commit, then the owner reviews.** The agent commits each finished step right away, without waiting, and explains what changed in its summary. The owner then reads the commits and asks questions. Feedback and answers are saved in `docs/reviews/`.
-7. **Record decisions.** Any decision becomes an ADR in `docs/decisions/`.
-8. **Close the session.** Write a session summary in `docs/sessions/` and update the milestone file. The next agent starts from there.
-9. **Never do unrequested work.** Don't add features, tools or config the owner didn't ask for. Suggest them instead.
-10. **Learning exercises.** Now and then, suggest a small exercise: explain a file back, change something small by hand, or break and fix something on purpose.
-11. **Mentor.** Review the owner's ideas like a senior engineer would (Golden rule 18). When a milestone fits an area from the [learning map](#learning-map), say so.
 
 ## Milestones
 
@@ -337,9 +250,9 @@ There is no timeline; each milestone ends with something that runs and with its 
 | 12 | Kubernetes and Kafka, first with k3s on the owner's computer | Orchestration, several copies of a service, GitOps, event streaming |
 | 13 | Group calls and app releases | SFU media servers, signing, app stores, auto-update |
 
-Milestone 4 was added on 2026-11-01, and each later milestone got the next number: the old 4 is now 5, and so on (ADR 0028). It brings releases forward, so every later milestone ends with a new version. When the owner rents a VPS, milestone 11 makes a release reachable for friends.
+Milestone 4 brings releases forward, so every later milestone ends with a new version (ADR 0028). When the owner rents a VPS, milestone 11 makes a release reachable for friends.
 
-Milestone 0 (the repository scaffold) is done. Its plan and checklist are in [m00-initialization.md](milestones/m00-initialization.md).
+The status of each milestone is in [milestones/README.md](milestones/README.md).
 
 ## Future considerations
 
@@ -349,9 +262,9 @@ These are ideas only, not part of any milestone yet. An agent must not build the
 
 | Idea | What it teaches | Could fit in |
 | --- | --- | --- |
-| Invite-only sign-up (invite links, QR codes) | Tokens, expiry, abuse prevention | Milestone 2 |
-| Replies, reactions, edits, deletes | The event model in practice | Milestone 3 |
-| Typing indicators and online status | Short-lived data, TTLs | Milestone 3 |
+| Invite-only sign-up (invite links, QR codes) | Tokens, expiry, abuse prevention | Any time (sign-up is open for now, ADR 0021) |
+| Replies, reactions, edits, deletes | The event model in practice | After milestone 3 |
+| Typing indicators and online status | Short-lived data, TTLs | After milestone 3 |
 | Web push notifications (Web Push standard) | Service workers, browser standards | Milestones 3–5 |
 | Message search | Full-text search, later a search index fed by events | Milestone 5+ |
 | Link previews | Server-side request forgery (SSRF) protection | Milestone 5 |
@@ -364,11 +277,10 @@ These are ideas only, not part of any milestone yet. An agent must not build the
 
 **Concepts to practice on purpose**
 
-- **Transactional outbox:** save data and its event in one transaction, then publish, so nothing is "saved but never announced".
+Already practiced: the transactional outbox (ADR 0031), rate limiting (ADR 0027), and testing layers: unit, integration and end-to-end (ADR 0023, 0034).
+
 - **Resilience:** timeouts, retries with backoff, graceful degradation. Stop a container on purpose and observe.
 - **API evolution:** change Protobuf messages without breaking older clients.
-- **Testing layers:** unit, integration (real Postgres and NATS in containers), end-to-end in a real browser.
-- **Rate limiting:** protect login and message sending.
 - **Supply-chain security:** automatic dependency updates, vulnerability scanning, signed container images.
 - **Profiling and load testing:** measure before optimizing.
 - **Backups and restore drills:** a backup only counts once a restore has been tested.
@@ -378,8 +290,8 @@ These are ideas only, not part of any milestone yet. An agent must not build the
 
 | Tool | What it is | Why it could fit | When | Alternatives |
 | --- | --- | --- | --- | --- |
-| TanStack Query | Fetches, caches and refreshes server data in React | Removes lots of hand-written loading and caching code | Later (not needed in milestone 2) | SWR, plain fetch |
-| Mailpit | A fake email server with a web inbox, for development | Test invite and password-reset emails locally | Milestone 2 | MailHog |
+| TanStack Query | Fetches, caches and refreshes server data in React | Removes lots of hand-written loading and caching code | Later | SWR, plain fetch |
+| Mailpit | A fake email server with a web inbox, for development | Test invite and password-reset emails locally | When emails are needed | MailHog |
 | Valkey | In-memory key-value store (open-source Redis fork) | Rate limiting, caching, presence, if NATS KV is not enough | Milestone 3+ | Redis, NATS KV |
 | Renovate | Opens pull requests to update dependencies | Keeps everything up to date automatically | Later (not wanted yet) | Dependabot |
 | Trivy, govulncheck | Scan images and Go code for known vulnerabilities | Security basics for a public repo | Milestone 2+ | Grype, Snyk |
@@ -422,7 +334,7 @@ Everything in this brief can change. These points are still open and must not be
 - **App name:** "Reach" for now.
 - **License:** MIT (decided). It is short and easy to read, the most widely used open-source license, and lets anyone learn from and reuse the code with only a copyright notice.
 - **Native app stack:** Flutter (native only, React stays for web) or Tauri (wraps the React app). Decided at phase 2 (milestone 9).
-- **Exact service split:** starting proposal is `auth`, `chat`, `realtime`; `files` and `calls` added later. The `hello` service from milestone 1 stays as a small example (ADR 0011).
+- **Exact service split:** `auth`, `chat` and `realtime` exist; `files` and `calls` come later. The `hello` service from milestone 1 stays as a small example (ADR 0011).
 - **File storage:** Garage or SeaweedFS.
 - **Group call server:** LiveKit, or a small SFU built with Pion for learning.
 - **End-to-end encryption design:** which protocol (custom with libsodium, Signal-style, or MLS).
